@@ -25,6 +25,7 @@
 - **Subscription Compatible**: Works with Claude subscription instead of API access
 - **Triple Fallback System**: SDK → CLI → Local operations
 - **Session Management**: Persistent conversations across mode transitions
+- **Modular Design**: Built on the separate [claude-cli-authentication](https://github.com/milhy545/claude-cli-authentication) module
 
 ## 🚀 Quick Start
 
@@ -44,7 +45,7 @@ claude auth login
 ### Basic Usage
 
 ```python
-from claude_cli_auth import EnhancedMyCoder
+from mycoder import EnhancedMyCoder
 from pathlib import Path
 
 # Initialize MyCoder with automatic mode detection
