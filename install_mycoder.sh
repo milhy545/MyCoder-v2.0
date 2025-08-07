@@ -156,6 +156,19 @@ echo "🎉 INSTALACE DOKONČENA!"
 echo "======================"
 print_status "MyCoder v2.0 nainstalován do: $INSTALL_DIR"
 print_status "Aliasy vytvořeny v: $ALIAS_SCRIPT"
+
+echo
+echo "📁 INSTALAČNÍ CESTY:"
+echo "   📂 Hlavní projekt:    $INSTALL_DIR"
+echo "   📂 Zdrojový kód:      $INSTALL_DIR/src/mycoder/"
+echo "   📂 Virtual env:       $INSTALL_DIR/.venv/"
+echo "   📂 Python balíky:     $INSTALL_DIR/.venv/lib/python*/site-packages/"
+echo "   📄 Aliasy:            $ALIAS_SCRIPT"
+echo "   📄 Shell konfig:      $SHELL_PROFILE"
+echo
+echo "💾 VELIKOST INSTALACE:"
+INSTALL_SIZE=$(du -sh "$INSTALL_DIR" 2>/dev/null | cut -f1 || echo "~80MB")
+echo "   📊 Celková velikost:  $INSTALL_SIZE"
 echo
 echo "🚀 SPUŠTĚNÍ:"
 echo "   cd ~/MyCoder-v2.0 && poetry shell"

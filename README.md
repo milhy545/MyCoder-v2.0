@@ -31,16 +31,25 @@
 
 ### Installation
 
+**Automatic Installation (Recommended):**
 ```bash
-# Install MyCoder v2.0
-pip install mycoder-v2
-
-# Install Claude CLI (required)
-npm install -g @anthropic-ai/claude-code
-
-# Authenticate with Claude
-claude auth login
+curl -sSL https://raw.githubusercontent.com/milhy545/MyCoder-v2.0/main/install_mycoder.sh | bash
 ```
+
+**Manual Installation:**
+```bash
+git clone https://github.com/milhy545/MyCoder-v2.0.git
+cd MyCoder-v2.0
+poetry install
+poetry shell
+```
+
+**Installation Paths:**
+- Main project: `~/MyCoder-v2.0/`
+- Source code: `~/MyCoder-v2.0/src/mycoder/`
+- Virtual environment: `~/MyCoder-v2.0/.venv/`
+- Configuration: `~/.mycoder_aliases`
+- Total size: ~80-150 MB
 
 ### Basic Usage
 
