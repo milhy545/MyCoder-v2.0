@@ -39,6 +39,7 @@ Example:
     ```
 """
 
+from .adaptive_modes import AdaptiveModeManager, OperationalMode
 from .auth_manager import AuthManager
 from .cli_interface import CLIInterface, CLIResponse
 from .exceptions import (
@@ -51,21 +52,27 @@ from .exceptions import (
 )
 from .facade import ClaudeAuthManager
 from .models import AuthConfig, ClaudeResponse, SessionInfo, StreamUpdate
+from .mycoder import MyCoder
 
 # Version info
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "David Strejc"
 __email__ = "strejc.david@gmail.com"
 __license__ = "MIT"
 
 # Public API
 __all__ = [
-    # Main interface
+    # Main interfaces
     "ClaudeAuthManager",
+    "MyCoder",
     
     # Core components
     "AuthManager", 
     "CLIInterface",
+    
+    # Adaptive modes
+    "AdaptiveModeManager",
+    "OperationalMode",
     
     # Models
     "AuthConfig",

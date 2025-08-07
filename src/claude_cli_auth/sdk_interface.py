@@ -159,10 +159,8 @@ class SDKInterface:
         self._setup_sdk_environment()
         
         logger.info(
-            "SDK interface initialized",
-            config_dir=str(self.config.claude_config_dir),
-            timeout=self.config.timeout_seconds,
-            use_streaming=self.config.enable_streaming,
+            f"SDK interface initialized - config_dir: {str(self.config.claude_config_dir)}, "
+            f"timeout: {self.config.timeout_seconds}, use_streaming: {self.config.enable_streaming}"
         )
     
     async def execute(
@@ -202,12 +200,9 @@ class SDKInterface:
         work_dir = working_directory or self.config.working_directory
         
         logger.info(
-            "Executing Claude SDK query",
-            execution_id=execution_id,
-            working_directory=str(work_dir),
-            session_id=session_id,
-            continue_session=continue_session,
-            prompt_length=len(prompt),
+            f"Executing Claude SDK query - execution_id: {execution_id}, "
+            f"working_directory: {str(work_dir)}, session_id: {session_id}, "
+            f"continue_session: {continue_session}, prompt_length: {len(prompt)}"
         )
         
         try:
@@ -269,12 +264,9 @@ class SDKInterface:
             self._total_cost += response.cost
             
             logger.info(
-                "Claude SDK query completed",
-                execution_id=execution_id,
-                session_id=response.session_id,
-                duration_ms=response.duration_ms,
-                cost=response.cost,
-                tools_used=len(response.tools_used),
+                f"Claude SDK query completed - execution_id: {execution_id}, "
+                f"session_id: {response.session_id}, duration_ms: {response.duration_ms}, "
+                f"cost: {response.cost}, tools_used: {len(response.tools_used)}"
             )
             
             return response
@@ -284,9 +276,8 @@ class SDKInterface:
             timeout_val = timeout or self.config.timeout_seconds
             
             logger.error(
-                "Claude SDK query timed out",
-                execution_id=execution_id,
-                timeout_seconds=timeout_val,
+                f"Claude SDK query timed out - execution_id: {execution_id}, "
+                f"timeout_seconds: {timeout_val}"
             )
             
             raise ClaudeAuthError(
@@ -305,7 +296,7 @@ class SDKInterface:
             self._total_errors += 1
             self._sdk_failed_count += 1
             
-            logger.error("Claude CLI not found for SDK", error=str(e))
+            logger.error(f"Claude CLI not found for SDK - error: {str(e)}")
             
             raise ClaudeConfigError(
                 "Claude Code CLI not found for SDK integration",
@@ -323,9 +314,8 @@ class SDKInterface:
             self._sdk_failed_count += 1
             
             logger.error(
-                "Claude SDK process error",
-                error=str(e),
-                exit_code=getattr(e, "exit_code", None),
+                f"Claude SDK process error - error: {str(e)}, "
+                f"exit_code: {getattr(e, 'exit_code', None)}"
             )
             
             raise ClaudeAuthError(
@@ -343,7 +333,7 @@ class SDKInterface:
             self._total_errors += 1
             self._sdk_failed_count += 1
             
-            logger.error("Claude SDK connection error", error=str(e))
+            logger.error(f"Claude SDK connection error - error: {str(e)}")
             
             raise ClaudeAuthError(
                 f"Failed to connect to Claude via SDK: {str(e)}",
@@ -360,7 +350,7 @@ class SDKInterface:
             self._total_errors += 1
             self._sdk_failed_count += 1
             
-            logger.error("Claude SDK error", error=str(e))
+            logger.error(f"Claude SDK error - error: {str(e)}")
             
             raise ClaudeAuthError(
                 f"Claude SDK error: {str(e)}",
@@ -379,10 +369,9 @@ class SDKInterface:
             # Handle ExceptionGroup from TaskGroup operations (Python 3.11+)
             if type(e).__name__ == "ExceptionGroup" or hasattr(e, "exceptions"):
                 logger.error(
-                    "Task group error in Claude SDK",
-                    error=str(e),
-                    error_type=type(e).__name__,
-                    exception_count=len(getattr(e, "exceptions", [])),
+                    f"Task group error in Claude SDK - error: {str(e)}, "
+                    f"error_type: {type(e).__name__}, "
+                    f"exception_count: {len(getattr(e, 'exceptions', []))}"
                 )
                 
                 # Extract main exception
@@ -401,10 +390,8 @@ class SDKInterface:
                 )
             else:
                 logger.error(
-                    "Unexpected SDK error",
-                    error=str(e),
-                    error_type=type(e).__name__,
-                    execution_id=execution_id,
+                    f"Unexpected SDK error - error: {str(e)}, "
+                    f"error_type: {type(e).__name__}, execution_id: {execution_id}"
                 )
                 
                 raise ClaudeAuthError(
@@ -420,7 +407,7 @@ class SDKInterface:
     
     async def kill_all_processes(self) -> None:
         """Clean up SDK sessions (no actual processes to kill)."""
-        logger.info("Clearing SDK sessions", count=len(self.active_sessions))
+        logger.info(f"Clearing SDK sessions - count: {len(self.active_sessions)}")
         self.active_sessions.clear()
     
     def get_active_process_count(self) -> int:
@@ -463,7 +450,7 @@ class SDKInterface:
                 current_path = os.environ.get("PATH", "")
                 if claude_dir not in current_path:
                     os.environ["PATH"] = f"{claude_dir}:{current_path}"
-                    logger.debug("Updated PATH for Claude CLI", claude_dir=claude_dir)
+                    logger.debug(f"Updated PATH for Claude CLI - claude_dir: {claude_dir}")
             
             # Set additional environment variables
             for key, value in self.config.environment_vars.items():
@@ -526,19 +513,16 @@ class SDKInterface:
                             await stream_callback(update)
                     except Exception as callback_error:
                         logger.warning(
-                            "Stream callback failed",
-                            error=str(callback_error),
-                            error_type=type(callback_error).__name__,
-                            execution_id=execution_id,
+                            f"Stream callback failed - error: {str(callback_error)}, "
+                            f"error_type: {type(callback_error).__name__}, "
+                            f"execution_id: {execution_id}"
                         )
                         # Continue processing even if callback fails
                         
         except Exception as e:
             logger.error(
-                "Error in SDK streaming execution",
-                error=str(e),
-                error_type=type(e).__name__,
-                execution_id=execution_id,
+                f"Error in SDK streaming execution - error: {str(e)}, "
+                f"error_type: {type(e).__name__}, execution_id: {execution_id}"
             )
             # Re-raise to be handled by caller
             raise
@@ -597,9 +581,8 @@ class SDKInterface:
                 
         except Exception as e:
             logger.warning(
-                "Failed to create stream update from SDK message",
-                error=str(e),
-                message_type=type(message).__name__,
+                f"Failed to create stream update from SDK message - "
+                f"error: {str(e)}, message_type: {type(message).__name__}"
             )
         
         return None
@@ -675,7 +658,6 @@ class SDKInterface:
             session_data["messages"] = session_data["messages"][-max_messages:]
         
         logger.debug(
-            "Updated SDK session",
-            session_id=session_id,
-            message_count=len(messages),
+            f"Updated SDK session - session_id: {session_id}, "
+            f"message_count: {len(messages)}"
         )

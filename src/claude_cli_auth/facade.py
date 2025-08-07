@@ -153,11 +153,10 @@ class ClaudeAuthManager:
         }
         
         logger.info(
-            "ClaudeAuthManager initialized",
-            prefer_sdk=self.prefer_sdk,
-            enable_fallback=self.enable_fallback,
-            sdk_available=self.sdk_interface is not None,
-            cli_available=self.cli_interface is not None,
+            f"ClaudeAuthManager initialized - prefer_sdk: {self.prefer_sdk}, "
+            f"enable_fallback: {self.enable_fallback}, "
+            f"sdk_available: {self.sdk_interface is not None}, "
+            f"cli_available: {self.cli_interface is not None}"
         )
     
     async def query(
@@ -206,12 +205,9 @@ class ClaudeAuthManager:
             session_id = session.session_id
         
         logger.info(
-            "Starting Claude query",
-            session_id=session_id,
-            continue_session=continue_session,
-            prompt_length=len(prompt),
-            working_directory=str(work_dir),
-            user_id=user_id,
+            f"Starting Claude query - session_id: {session_id}, "
+            f"continue_session: {continue_session}, prompt_length: {len(prompt)}, "
+            f"working_directory: {str(work_dir)}, user_id: {user_id}"
         )
         
         # Determine execution method
@@ -250,9 +246,8 @@ class ClaudeAuthManager:
                 
                 # Log the error
                 logger.warning(
-                    f"{method_name} method failed ({method})",
-                    error=str(e),
-                    error_type=type(e).__name__,
+                    f"{method_name} method failed ({method}) - "
+                    f"error: {str(e)}, error_type: {type(e).__name__}"
                 )
                 
                 # Update failure counts
@@ -315,12 +310,10 @@ class ClaudeAuthManager:
         self._stats["total_duration_ms"] += execution_time
         
         logger.info(
-            "Claude query completed",
-            session_id=response.session_id,
-            cost=response.cost,
-            duration_ms=execution_time,
-            method=primary_method if response else "failed",
-            tools_used=len(response.tools_used),
+            f"Claude query completed - session_id: {response.session_id}, "
+            f"cost: {response.cost}, duration_ms: {execution_time}, "
+            f"method: {primary_method if response else 'failed'}, "
+            f"tools_used: {len(response.tools_used)}"
         )
         
         return response
@@ -484,9 +477,8 @@ class ClaudeAuthManager:
                 logger.info("SDK interface initialized successfully")
             except Exception as e:
                 logger.warning(
-                    "Failed to initialize SDK interface",
-                    error=str(e),
-                    error_type=type(e).__name__,
+                    f"Failed to initialize SDK interface - "
+                    f"error: {str(e)}, error_type: {type(e).__name__}"
                 )
                 self.sdk_interface = None
         
@@ -500,9 +492,8 @@ class ClaudeAuthManager:
                 logger.info("CLI interface initialized successfully")
             except Exception as e:
                 logger.warning(
-                    "Failed to initialize CLI interface",
-                    error=str(e),
-                    error_type=type(e).__name__,
+                    f"Failed to initialize CLI interface - "
+                    f"error: {str(e)}, error_type: {type(e).__name__}"
                 )
                 self.cli_interface = None
         

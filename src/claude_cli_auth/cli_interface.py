@@ -128,9 +128,8 @@ class CLIInterface:
             )
         
         logger.info(
-            "CLI interface initialized",
-            config_dir=str(self.config.claude_config_dir),
-            timeout=self.config.timeout_seconds,
+            f"CLI interface initialized - config_dir: {str(self.config.claude_config_dir)}, "
+            f"timeout: {self.config.timeout_seconds}"
         )
     
     async def execute(
@@ -174,12 +173,9 @@ class CLIInterface:
         )
         
         logger.info(
-            "Executing Claude CLI command",
-            process_id=process_id,
-            working_directory=str(work_dir),
-            session_id=session_id,
-            continue_session=continue_session,
-            prompt_length=len(prompt),
+            f"Executing Claude CLI command - process_id: {process_id}, "
+            f"working_directory: {str(work_dir)}, session_id: {session_id}, "
+            f"continue_session: {continue_session}, prompt_length: {len(prompt)}"
         )
         
         try:
@@ -205,12 +201,9 @@ class CLIInterface:
                 response.session_id = session_id or f"cli_{int(time.time())}_{process_id[:8]}"
             
             logger.info(
-                "Claude CLI command completed",
-                process_id=process_id,
-                session_id=response.session_id,
-                duration_ms=response.duration_ms,
-                cost=response.cost,
-                is_error=response.is_error,
+                f"Claude CLI command completed - process_id: {process_id}, "
+                f"session_id: {response.session_id}, duration_ms: {response.duration_ms}, "
+                f"cost: {response.cost}, is_error: {response.is_error}"
             )
             
             return response
@@ -223,13 +216,12 @@ class CLIInterface:
                     process.kill()
                     await process.wait()
                 except Exception as e:
-                    logger.warning("Failed to kill timed out process", error=str(e))
+                    logger.warning(f"Failed to kill timed out process - error: {str(e)}")
             
             timeout_val = timeout or self.config.timeout_seconds
             logger.error(
-                "Claude CLI command timed out",
-                process_id=process_id,
-                timeout_seconds=timeout_val,
+                f"Claude CLI command timed out - process_id: {process_id}, "
+                f"timeout_seconds: {timeout_val}"
             )
             
             raise ClaudeTimeoutError(
@@ -246,10 +238,8 @@ class CLIInterface:
             
         except Exception as e:
             logger.error(
-                "Claude CLI command failed",
-                process_id=process_id,
-                error=str(e),
-                error_type=type(e).__name__,
+                f"Claude CLI command failed - process_id: {process_id}, "
+                f"error: {str(e)}, error_type: {type(e).__name__}"
             )
             
             # Convert to appropriate exception type
@@ -277,8 +267,7 @@ class CLIInterface:
             return
             
         logger.info(
-            "Killing active Claude processes",
-            count=len(self.active_processes)
+            f"Killing active Claude processes - count: {len(self.active_processes)}"
         )
         
         for process_id, process in list(self.active_processes.items()):
@@ -287,13 +276,11 @@ class CLIInterface:
                     process.kill()
                     await process.wait()
                     
-                logger.debug("Killed process", process_id=process_id)
+                logger.debug(f"Killed process - process_id: {process_id}")
                 
             except Exception as e:
                 logger.warning(
-                    "Failed to kill process",
-                    process_id=process_id,
-                    error=str(e),
+                    f"Failed to kill process - process_id: {process_id}, error: {str(e)}"
                 )
             
             finally:
@@ -366,10 +353,8 @@ class CLIInterface:
             cmd.extend(["--allowedTools", ",".join(self.config.allowed_tools)])
         
         logger.debug(
-            "Built Claude command",
-            command_length=len(cmd),
-            has_session=bool(session_id),
-            continue_session=continue_session,
+            f"Built Claude command - command_length: {len(cmd)}, "
+            f"has_session: {bool(session_id)}, continue_session: {continue_session}"
         )
         
         return cmd
@@ -402,9 +387,7 @@ class CLIInterface:
             )
             
             logger.debug(
-                "Started Claude process",
-                pid=process.pid,
-                cwd=str(cwd),
+                f"Started Claude process - pid: {process.pid}, cwd: {str(cwd)}"
             )
             
             return process
@@ -599,7 +582,7 @@ class CLIInterface:
                     yield line.decode("utf-8", errors="replace").strip()
                     
             except Exception as e:
-                logger.warning("Stream reading error", error=str(e))
+                logger.warning(f"Stream reading error - error: {str(e)}")
                 break
         
         # Process remaining buffer
@@ -653,7 +636,7 @@ class CLIInterface:
             return self._parse_progress_message(msg)
         else:
             # Unknown message type
-            logger.debug("Unknown message type", msg_type=msg_type)
+            logger.debug(f"Unknown message type - msg_type: {msg_type}")
             return None
     
     def _parse_assistant_message(self, msg: Dict[str, Any]) -> StreamUpdate:

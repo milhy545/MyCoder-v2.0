@@ -73,11 +73,8 @@ class AuthManager:
         # Load existing sessions
         self._load_sessions()
         
-        logger.info(
-            "AuthManager initialized", 
-            config_dir=str(self.config.claude_config_dir),
-            session_count=len(self._sessions)
-        )
+        logger.info(f"AuthManager initialized - config_dir: {self.config.claude_config_dir}, "
+                   f"session_count: {len(self._sessions)}")
     
     def is_authenticated(self) -> bool:
         """Check if Claude CLI is authenticated.
@@ -111,10 +108,10 @@ class AuthManager:
                 
                 for pattern in error_patterns:
                     if pattern.lower() in output.lower():
-                        logger.warning("Authentication check failed", output=output)
+                        logger.warning(f"Authentication check failed - output: {output}")
                         return False
                 
-                logger.info("Claude authentication verified", user_info=output[:100])
+                logger.info(f"Claude authentication verified - user_info: {output[:100]}")
                 return True
             else:
                 logger.warning(
@@ -125,7 +122,7 @@ class AuthManager:
                 return False
                 
         except Exception as e:
-            logger.error("Error checking authentication", error=str(e))
+            logger.error(f"Error checking authentication - error: {str(e)}")
             return False
     
     def get_authentication_info(self) -> Dict[str, Any]:
@@ -246,10 +243,8 @@ class AuthManager:
             self._save_sessions()
             
             logger.info(
-                "Created new session",
-                session_id=session_id,
-                user_id=user_id,
-                working_directory=str(session.working_directory)
+                f"Created new session - session_id: {session_id}, user_id: {user_id}, "
+                f"working_directory: {str(session.working_directory)}"
             )
             
             return session
@@ -279,7 +274,7 @@ class AuthManager:
         if session:
             # Check if session is expired
             if session.is_expired(self.config.session_timeout_hours):
-                logger.info("Session expired", session_id=session_id)
+                logger.info(f"Session expired - session_id: {session_id}")
                 session.status = SessionStatus.EXPIRED
                 self._save_sessions()
         
@@ -307,7 +302,7 @@ class AuthManager:
         """
         session = self._sessions.get(session_id)
         if not session:
-            logger.warning("Cannot update non-existent session", session_id=session_id)
+            logger.warning(f"Cannot update non-existent session - session_id: {session_id}")
             return False
         
         # Update usage statistics
@@ -326,10 +321,8 @@ class AuthManager:
         # Check cost limits
         if session.total_cost > self.config.max_cost_per_session:
             logger.warning(
-                "Session exceeded cost limit",
-                session_id=session_id,
-                total_cost=session.total_cost,
-                limit=self.config.max_cost_per_session,
+                f"Session exceeded cost limit - session_id: {session_id}, "
+                f"total_cost: {session.total_cost}, limit: {self.config.max_cost_per_session}"
             )
             session.status = SessionStatus.FAILED
         
@@ -337,11 +330,8 @@ class AuthManager:
         self._save_sessions()
         
         logger.debug(
-            "Session updated",
-            session_id=session_id,
-            total_cost=session.total_cost,
-            total_turns=session.total_turns,
-            status=session.status.value,
+            f"Session updated - session_id: {session_id}, total_cost: {session.total_cost}, "
+            f"total_turns: {session.total_turns}, status: {session.status.value}"
         )
         
         return True
@@ -396,9 +386,8 @@ class AuthManager:
         if expired_sessions:
             self._save_sessions()
             logger.info(
-                "Cleaned up expired sessions",
-                count=len(expired_sessions),
-                session_ids=expired_sessions[:5]  # Log first 5 IDs
+                f"Cleaned up expired sessions - count: {len(expired_sessions)}, "
+                f"session_ids: {expired_sessions[:5]}"  # Log first 5 IDs
             )
         
         return len(expired_sessions)
@@ -486,11 +475,9 @@ class AuthManager:
             )
             
             logger.debug(
-                "Claude command executed",
-                cmd=cmd[:2],  # Don't log full command for security
-                returncode=result.returncode,
-                stdout_len=len(result.stdout),
-                stderr_len=len(result.stderr),
+                f"Claude command executed - cmd: {cmd[:2]}, "  # Don't log full command for security
+                f"returncode: {result.returncode}, stdout_len: {len(result.stdout)}, "
+                f"stderr_len: {len(result.stderr)}"
             )
             
             return result
@@ -571,15 +558,13 @@ class AuthManager:
                     
                 except Exception as e:
                     logger.warning(
-                        "Failed to load session",
-                        session_id=session_id,
-                        error=str(e)
+                        f"Failed to load session - session_id: {session_id}, error: {str(e)}"
                     )
                     
-            logger.info("Loaded sessions from disk", count=len(self._sessions))
+            logger.info(f"Loaded sessions from disk - count: {len(self._sessions)}")
             
         except Exception as e:
-            logger.error("Failed to load sessions", error=str(e))
+            logger.error(f"Failed to load sessions - error: {str(e)}")
     
     def _save_sessions(self) -> None:
         """Save sessions to disk."""
@@ -609,7 +594,7 @@ class AuthManager:
             
             temp_file.replace(self._session_file)
             
-            logger.debug("Saved sessions to disk", count=len(self._sessions))
+            logger.debug(f"Saved sessions to disk - count: {len(self._sessions)}")
             
         except Exception as e:
-            logger.error("Failed to save sessions", error=str(e))
+            logger.error(f"Failed to save sessions - error: {str(e)}")
