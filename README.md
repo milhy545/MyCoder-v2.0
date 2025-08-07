@@ -1,10 +1,11 @@
-# 🤖 MyCoder v2.0 - Advanced AI Development Assistant
+# 🤖 MyCoder - AI Development Assistant
 
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://docker.com)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-2.0.0-brightgreen.svg)](https://github.com/milhy545/MyCoder-v2.0)
+[![Version](https://img.shields.io/badge/version-2.0.0-brightgreen.svg)](https://github.com/milhy545/MyCoder)
 
-**MyCoder v2.0** is an advanced AI-powered development assistant that intelligently adapts to your environment, network conditions, and available resources. It provides seamless Claude AI integration without API keys and includes comprehensive MCP (Model Context Protocol) orchestration.
+**MyCoder** is an AI-powered development assistant with adaptive modes, Docker integration, and local LLM support via Ollama. Works offline with CodeLlama or online with Claude AI.
 
 ## 🌟 Key Features
 

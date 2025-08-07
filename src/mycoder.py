@@ -18,6 +18,7 @@ from claude_cli_auth import (
 )
 
 from .adaptive_modes import AdaptiveModeManager, OperationalMode
+from .ollama_integration import CodeGenerationProvider, OllamaClient
 
 # Create custom network error that inherits from ClaudeAuthError
 class ClaudeNetworkError(ClaudeAuthError):

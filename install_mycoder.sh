@@ -74,10 +74,10 @@ fi
 print_status "Poetry nalezen ✓"
 
 # Create installation directory
-INSTALL_DIR="$HOME/MyCoder-v2.0"
+INSTALL_DIR="$HOME/MyCoder"
 
 if [ -d "$INSTALL_DIR" ]; then
-    print_warning "MyCoder v2.0 již existuje v $INSTALL_DIR"
+    print_warning "MyCoder již existuje v $INSTALL_DIR"
     read -p "Chceš přeinstalovat? (y/N): " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then

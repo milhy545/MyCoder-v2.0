@@ -1,0 +1,49 @@
+# 🤖 MyCoder Docker Compose Configuration
+version: '3.8'
+
+services:
+  mycoder:
+    build: .
+    container_name: mycoder
+    ports:
+      - "8000:8000"    # MyCoder API
+      - "11434:11434"  # Ollama API
+    volumes:
+      - mycoder_data:/home/mycoder/.ollama
+      - ./workspace:/app/workspace
+      - ./logs:/app/logs
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - MYCODER_MODE=FULL
+      - MYCODER_LLM_PROVIDER=ollama
+      - MYCODER_LLM_MODEL=codellama:7b-instruct
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+    command: ["interactive"]
+
+  # Optional: Separate Ollama service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: mycoder-ollama
+    ports:
+      - "11435:11434"  # Alternative port
+    volumes:
+      - ollama_models:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    restart: unless-stopped
+    profiles:
+      - separate-ollama
+
+volumes:
+  mycoder_data:
+  ollama_models:
+
+networks:
+  default:
+    name: mycoder-network

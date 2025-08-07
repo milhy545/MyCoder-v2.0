@@ -3,9 +3,9 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "mycoder-v2"
+name = "mycoder"
 version = "2.0.0"
-description = "Advanced AI-powered development assistant with adaptive modes and MCP integration"
+description = "AI-powered development assistant with adaptive modes, Docker integration and local LLM support"
 authors = ["David Strejc <strejc.david@gmail.com>"]
 license = "MIT"
 readme = "README.md"
