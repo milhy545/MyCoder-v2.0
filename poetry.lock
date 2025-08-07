@@ -429,6 +429,27 @@ files = [
 ]
 
 [[package]]
+name = "claude-cli-auth"
+version = "1.0.0"
+description = "Pure Claude CLI authentication module - no API keys required"
+optional = false
+python-versions = "^3.8.1"
+groups = ["main"]
+files = []
+develop = false
+
+[package.dependencies]
+aiofiles = "^23.0.0"
+pydantic = "^2.0.0"
+tenacity = "^8.0.0"
+
+[package.source]
+type = "git"
+url = "https://github.com/milhy545/claude-cli-authentication.git"
+reference = "HEAD"
+resolved_reference = "81b238b891da854d32544424a678215f7bb80762"
+
+[[package]]
 name = "click"
 version = "8.1.8"
 description = "Composable command line interface toolkit"
@@ -2190,4 +2211,4 @@ http = ["httpx"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.8.1"
-content-hash = "dccd2c1c47c1c336ea6f59b5287eb837a355a95023affe03c27ad08cca112ac3"
+content-hash = "e8596ee25a8dd735d5a70ece6493d3f37609c5c59f6157497993270f2530b75f"

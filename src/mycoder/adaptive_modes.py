@@ -15,11 +15,18 @@ from typing import Any, Dict, List, Optional, Set
 
 import aiohttp
 
-from .auth_manager import AuthManager
-from .cli_interface import CLIInterface
-from .exceptions import ClaudeAuthError, ClaudeNetworkError
-from .facade import ClaudeAuthManager
-from .models import AuthConfig
+from claude_cli_auth import (
+    AuthManager,
+    CLIInterface,
+    ClaudeAuthError,
+    ClaudeAuthManager,
+    AuthConfig,
+)
+
+# Define ClaudeNetworkError locally since it's MyCoder-specific
+class ClaudeNetworkError(ClaudeAuthError):
+    """Network-related error for adaptive mode operations."""
+    pass
 
 logger = logging.getLogger(__name__)
 

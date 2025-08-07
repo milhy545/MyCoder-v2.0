@@ -13,6 +13,7 @@ homepage = "https://github.com/milhy545/MyCoder-v2.0"
 repository = "https://github.com/milhy545/MyCoder-v2.0"
 documentation = "https://github.com/milhy545/MyCoder-v2.0/blob/main/docs"
 keywords = ["ai", "development", "assistant", "claude", "adaptive", "mcp", "orchestration", "coding"]
+packages = [{include = "mycoder", from = "src"}]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -29,6 +30,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.8.1"
+claude-cli-auth = { git = "https://github.com/milhy545/claude-cli-authentication.git" }
 pydantic = "^2.0.0"
 structlog = "^23.0.0"
 aiofiles = "^23.0.0"
@@ -57,7 +59,7 @@ sphinx = "^6.0.0"
 sphinx-rtd-theme = "^1.2.0"
 
 [tool.poetry.scripts]
-mycoder = "claude_cli_auth.cli:main"
+mycoder = "mycoder.cli:main"
 mycoder-demo = "demo_mycoder:main"
 
 [tool.black]
@@ -82,7 +84,7 @@ extend-exclude = '''
 profile = "black"
 multi_line_output = 3
 line_length = 88
-known_first_party = ["claude_cli_auth"]
+known_first_party = ["mycoder"]
 
 [tool.mypy]
 python_version = "3.8"
@@ -111,7 +113,7 @@ python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--strict-config",
-    "--cov=claude_cli_auth",
+    "--cov=mycoder",
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-report=xml",

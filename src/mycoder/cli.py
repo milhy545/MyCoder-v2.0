@@ -1,6 +1,6 @@
-"""Command-line interface for claude-cli-auth module.
+"""Command-line interface for MyCoder v2.0.
 
-Provides a simple CLI for testing and basic operations with the Claude CLI Auth module.
+Provides a CLI for testing and operations with MyCoder and its adaptive modes.
 """
 
 import asyncio
@@ -11,7 +11,7 @@ from typing import Optional
 
 import click
 
-from . import ClaudeAuthManager, __version__
+from . import MyCoder, EnhancedMyCoder, AdaptiveModeManager, OperationalMode, __version__
 
 
 @click.group()

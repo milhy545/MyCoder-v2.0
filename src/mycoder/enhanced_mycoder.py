@@ -11,8 +11,9 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from .adaptive_modes import AdaptiveModeManager, OperationalMode
-from .exceptions import ClaudeAuthError, ClaudeNetworkError
+from claude_cli_auth import ClaudeAuthError
+
+from .adaptive_modes import AdaptiveModeManager, OperationalMode, ClaudeNetworkError
 from .mcp_connector import MCPConnector, MCPToolRouter
 from .mycoder import MyCoder
 
