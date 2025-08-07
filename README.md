@@ -1,156 +1,156 @@
-# Claude CLI Authentication Module
+# 🤖 MyCoder v2.0 - Advanced AI Development Assistant
 
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-2.0.0-brightgreen.svg)](https://github.com/milhy545/MyCoder-v2.0)
 
-A robust, production-ready Python module for Claude AI integration without API keys. Uses Claude CLI authentication for seamless access to Claude Code capabilities.
+**MyCoder v2.0** is an advanced AI-powered development assistant that intelligently adapts to your environment, network conditions, and available resources. It provides seamless Claude AI integration without API keys and includes comprehensive MCP (Model Context Protocol) orchestration.
 
-## 🎯 Key Features
+## 🌟 Key Features
 
+### 🎯 **Adaptive Intelligence**
+- **4 Operational Modes**: FULL, DEGRADED, AUTONOMOUS, RECOVERY
+- **Automatic Mode Switching**: Based on network conditions and resource availability
+- **Intelligent Fallbacks**: Local operations when cloud services unavailable
+- **Health Monitoring**: Continuous system health assessment and adaptation
+
+### 🔗 **MCP Integration**
+- **27 MCP Tools**: File operations, Git, Terminal, Database, Memory, Research
+- **Orchestrator Connection**: Seamless integration with MCP orchestrator (192.168.0.58:8020)
+- **Smart Tool Routing**: Mode-aware tool availability and fallback strategies
+- **Memory Persistence**: Advanced context and session management
+
+### 🔐 **Claude Authentication**
 - **No API Keys Required**: Uses Claude CLI authentication (`claude auth login`)
-- **Triple Fallback System**: SDK → CLI → Error handling
-- **Session Persistence**: Intelligent session management and recovery
-- **Production Ready**: Comprehensive error handling and logging
-- **Easy Integration**: Simple unified interface for any Python project
-- **Memory Optimized**: Efficient streaming and bounded buffers
+- **Subscription Compatible**: Works with Claude subscription instead of API access
+- **Triple Fallback System**: SDK → CLI → Local operations
+- **Session Management**: Persistent conversations across mode transitions
 
 ## 🚀 Quick Start
 
 ### Installation
 
 ```bash
-# Install Claude Code CLI
+# Install MyCoder v2.0
+pip install mycoder-v2
+
+# Install Claude CLI (required)
 npm install -g @anthropic-ai/claude-code
 
 # Authenticate with Claude
 claude auth login
-
-# Install this module
-pip install claude-cli-auth
 ```
 
 ### Basic Usage
 
 ```python
-from claude_cli_auth import ClaudeAuthManager
+from claude_cli_auth import EnhancedMyCoder
 from pathlib import Path
 
-# Initialize
-claude = ClaudeAuthManager()
+# Initialize MyCoder with automatic mode detection
+mycoder = EnhancedMyCoder(working_directory=Path("."))
+await mycoder.initialize()
 
-# Simple query
-response = await claude.query(
-    "Explain this code briefly",
-    working_directory=Path(".")
+# AI-powered code review with memory persistence
+result = await mycoder.process_request(
+    "Review this code and suggest improvements",
+    files=["app.py", "models.py"],
+    use_mcp_memory=True,
+    research_context=True
 )
 
-print(response.content)
-print(f"Cost: ${response.cost:.4f}")
+print(result['content'])
+print(f"Mode used: {result['mode']}")
+print(f"MCP tools: {result['mcp_tools_used']}")
 ```
 
-## 📚 Documentation
+### Demo Script
 
-- [English Documentation](docs/en/README.md)
-- [Česká dokumentace](docs/cs/README.md)
-- [API Reference](docs/api.md)
-- [Integration Examples](examples/)
+```bash
+# Run interactive demo
+mycoder-demo
+```
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────┐
-│           Your Application          │
-├─────────────────────────────────────┤
-│        ClaudeAuthManager            │
-│         (Unified Interface)         │
-├─────────────────────────────────────┤
-│  Primary: Python SDK + CLI Auth    │
-│  Fallback: Direct CLI Subprocess   │
-│  Emergency: Error Recovery         │
-├─────────────────────────────────────┤
-│        Claude CLI (~/.claude/)     │
-└─────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│                 Your Application                │
+├─────────────────────────────────────────────────┤
+│              EnhancedMyCoder                    │
+│          (Adaptive AI Assistant)                │
+├─────────────────────────────────────────────────┤
+│  AdaptiveModeManager    │    MCPConnector       │
+│  • Health Monitoring   │    • 27 Tools         │ 
+│  • Auto Mode Switch    │    • Smart Routing    │
+│  • 4 Modes Support     │    • Local Fallbacks  │
+├─────────────────────────────────────────────────┤
+│  Claude CLI Auth        │    MCP Orchestrator   │
+│  • Session Management  │    • File Operations   │
+│  • No API Keys         │    • Git Integration   │
+│  • Subscription Mode   │    • Memory Service    │
+└─────────────────────────────────────────────────┘
 ```
 
-## 🔧 Core Components
+## 🎮 Operational Modes
 
-- **`AuthManager`**: Session and credential management
-- **`CLIInterface`**: Direct CLI subprocess wrapper
-- **`SDKInterface`**: Python SDK with CLI authentication
-- **`Facade`**: Unified API with intelligent fallbacks
+### 🟢 **FULL Mode** (Optimal Environment)
+- **Requirements**: Stable internet, MCP orchestrator available, Claude authenticated
+- **Capabilities**: All 27 MCP tools, full AI features, research capabilities
+- **Use Case**: Home/office development with full connectivity
 
-## ⚡ Advanced Usage
+### 🟡 **DEGRADED Mode** (Limited Connectivity)
+- **Requirements**: Claude authenticated, limited network
+- **Capabilities**: Essential tools (11 selected), basic AI features
+- **Use Case**: Unstable network, traveling, limited bandwidth
 
-```python
-# Streaming with callbacks
-async def on_stream(update):
-    print(f"[{update.type}] {update.content}")
+### 🟠 **AUTONOMOUS Mode** (Offline AI)
+- **Requirements**: Local resources only
+- **Capabilities**: Local LLM (Ollama), basic file operations (5 tools)
+- **Use Case**: No internet, offline development, privacy-focused
 
-response = await claude.query(
-    "Create a Python function to parse JSON",
-    working_directory=Path("./src"),
-    stream_callback=on_stream,
-    session_id="my-session"
-)
+### 🔴 **RECOVERY Mode** (Emergency)
+- **Requirements**: Minimal system access
+- **Capabilities**: File operations only, emergency procedures
+- **Use Case**: System issues, debugging, emergency access
 
-# Session management
-session_info = await claude.get_session_info("my-session")
-sessions = await claude.list_sessions()
-```
+## 📚 Documentation
+
+- **[Adaptive Modes Guide](MYCODER_ADAPTIVE_MODES_DESIGN.md)** - Detailed mode documentation
+- **[Czech Documentation](docs/cs/README.md)** - Česká dokumentace
+- **[English Documentation](docs/en/README.md)** - Complete English guide
 
 ## 🧪 Testing
 
 ```bash
-# Run all tests
-python -m pytest
+# Test adaptive modes
+python test_adaptive_modes.py
 
-# Run with coverage
-python -m pytest --cov=claude_cli_auth
+# Test MCP integration  
+python test_enhanced_mycoder.py
 
-# Run specific test categories
-python -m pytest tests/unit/
-python -m pytest tests/integration/
+# Interactive demo
+python demo_mycoder.py
 ```
 
-## 🎨 Examples
+## 📦 Components
 
-- [Basic Integration](examples/basic_usage.py)
-- [Streaming Interface](examples/streaming.py)
-- [Session Management](examples/sessions.py)
-- [Error Handling](examples/error_handling.py)
-- [MyCoder Integration](examples/mycoder_integration.py)
+MyCoder v2.0 includes these major components:
 
-## 🚨 Error Handling
+- **`EnhancedMyCoder`**: Main AI assistant interface
+- **`AdaptiveModeManager`**: Intelligent mode switching
+- **`MCPConnector`**: MCP orchestrator integration  
+- **`MCPToolRouter`**: Smart tool routing with fallbacks
+- **`ClaudeAuthManager`**: Claude authentication without API keys
 
-The module provides comprehensive error handling for all common scenarios:
+## 🎯 Use Cases
 
-- **Authentication Issues**: Automatic re-login prompts
-- **Network Problems**: Intelligent retry with backoff
-- **Session Expiration**: Automatic session recovery
-- **Tool Validation**: Security-aware tool filtering
-- **Memory Management**: Bounded buffers and cleanup
-
-## 🔒 Security Features
-
-- **Credential Protection**: Secure token storage in `~/.claude/`
-- **Tool Validation**: Configurable allowed/blocked tools
-- **Session Isolation**: User-specific session management
-- **Rate Limiting**: Built-in request throttling
-- **Audit Logging**: Comprehensive operation tracking
-
-## 🤝 Integration
-
-Originally developed for MyCoder project and extracted as reusable module. Compatible with:
-
-- Telegram bots (tested in production)
-- Web applications
-- CLI tools
-- Jupyter notebooks
-- Docker containers
-
-## 🐛 Troubleshooting
-
-See [Troubleshooting Guide](docs/troubleshooting.md) for common issues and solutions.
+- **Solo Development**: AI pair programming with context awareness
+- **Team Projects**: Shared memory and consistent code review
+- **Remote Work**: Adaptive performance based on network conditions
+- **Offline Development**: Autonomous mode for privacy/security
+- **CI/CD Integration**: Automated code review and testing
+- **Learning**: Interactive coding tutor with persistent memory
 
 ## 📄 License
 
@@ -158,4 +158,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-**Note**: This module requires Claude Code CLI to be installed and authenticated. It does not use or require Anthropic API keys.
+**MyCoder v2.0** - Where adaptive intelligence meets development excellence! 🚀

@@ -3,16 +3,16 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "claude-cli-auth"
-version = "1.2.0"
-description = "Production-ready Claude AI integration without API keys using CLI authentication"
+name = "mycoder-v2"
+version = "2.0.0"
+description = "Advanced AI-powered development assistant with adaptive modes and MCP integration"
 authors = ["David Strejc <strejc.david@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/milhy545/claude-cli-auth-module"
-repository = "https://github.com/milhy545/claude-cli-auth-module"
-documentation = "https://github.com/milhy545/claude-cli-auth-module/blob/main/docs"
-keywords = ["claude", "ai", "authentication", "cli", "anthropic", "chatbot"]
+homepage = "https://github.com/milhy545/MyCoder-v2.0"
+repository = "https://github.com/milhy545/MyCoder-v2.0"
+documentation = "https://github.com/milhy545/MyCoder-v2.0/blob/main/docs"
+keywords = ["ai", "development", "assistant", "claude", "adaptive", "mcp", "orchestration", "coding"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -57,7 +57,8 @@ sphinx = "^6.0.0"
 sphinx-rtd-theme = "^1.2.0"
 
 [tool.poetry.scripts]
-claude-cli-auth = "claude_cli_auth.cli:main"
+mycoder = "claude_cli_auth.cli:main"
+mycoder-demo = "demo_mycoder:main"
 
 [tool.black]
 line-length = 88
