@@ -42,6 +42,7 @@ Example:
 from .adaptive_modes import AdaptiveModeManager, OperationalMode
 from .auth_manager import AuthManager
 from .cli_interface import CLIInterface, CLIResponse
+from .enhanced_mycoder import EnhancedMyCoder
 from .exceptions import (
     ClaudeAuthError,
     ClaudeAuthManagerError,
@@ -51,11 +52,12 @@ from .exceptions import (
     ClaudeTimeoutError,
 )
 from .facade import ClaudeAuthManager
+from .mcp_connector import MCPConnector, MCPToolRouter
 from .models import AuthConfig, ClaudeResponse, SessionInfo, StreamUpdate
 from .mycoder import MyCoder
 
 # Version info
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __author__ = "David Strejc"
 __email__ = "strejc.david@gmail.com"
 __license__ = "MIT"
@@ -65,6 +67,7 @@ __all__ = [
     # Main interfaces
     "ClaudeAuthManager",
     "MyCoder",
+    "EnhancedMyCoder",
     
     # Core components
     "AuthManager", 
@@ -73,6 +76,10 @@ __all__ = [
     # Adaptive modes
     "AdaptiveModeManager",
     "OperationalMode",
+    
+    # MCP Integration
+    "MCPConnector",
+    "MCPToolRouter",
     
     # Models
     "AuthConfig",
