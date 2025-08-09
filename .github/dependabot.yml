@@ -1,0 +1,18 @@
+version: 2
+updates:
+  # Povolit security a patch updaty pro Poetry závislosti
+  - package-ecosystem: "poetry"
+    directory: "/" # Adresář, kde se nachází pyproject.toml
+    schedule:
+      interval: "daily"
+    # Omezit PR na security a patch verze, aby se předešlo breaking changes
+    update-types:
+      - "version-update:semver-patch"
+      - "security:all"
+    rebase-strategy: "auto"
+
+  # Příklad pro GitHub Actions (pokud používáte)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
