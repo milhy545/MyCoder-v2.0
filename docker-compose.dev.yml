@@ -1,0 +1,112 @@
+# 🚀 MyCoder Development Docker Compose Configuration
+# Pro rychlý vývoj s live reload - žádné rebuildy!
+version: '3.8'
+
+services:
+  mycoder-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: mycoder-dev
+    ports:
+      - "8000:8000"    # MyCoder API
+      - "11434:11434"  # Ollama API
+      - "5678:5678"    # Python debugger port
+    volumes:
+      # 🔥 LIVE RELOAD - změny se projeví okamžitě!
+      - ./src:/app/src:ro                    # Zdrojový kód (read-only)
+      - ./tests:/app/tests:ro               # Testy
+      - ./examples:/app/examples:ro         # Příklady
+      - ./docs:/app/docs:ro                 # Dokumentace
+      
+      # Workspace a data (read-write)
+      - ./workspace:/app/workspace          # Pracovní soubory
+      - ./logs:/app/logs                    # Logy
+      - dev_ollama_data:/home/mycoder/.ollama  # Ollama data
+      
+      # Development extras
+      - ./.env.dev:/app/.env:ro             # Dev environment
+      - ./pyproject.toml:/app/pyproject.toml:ro  # Dependencies
+      
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - MYCODER_MODE=FULL
+      - MYCODER_LLM_PROVIDER=ollama
+      - MYCODER_LLM_MODEL=deepseek-coder:1.3b-base-q4_0
+      - PYTHONPATH=/app/src:/app
+      - PYTHONUNBUFFERED=1              # Okamžité logy
+      - MYCODER_DEV_MODE=true           # Development mode
+      - WATCHDOG_ENABLED=true           # Auto-restart při změnách
+      - LOG_LEVEL=DEBUG                 # Verbose logging
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s                     # Častější health check
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    command: ["/app/docker-entrypoint.dev.sh"]
+    stdin_open: true                    # Pro interaktivní debugging
+    tty: true                           # TTY pro lepší logy
+
+  # Samostatný Ollama pro development (volitelné)
+  ollama-dev:
+    image: ollama/ollama:latest
+    container_name: ollama-dev
+    ports:
+      - "11435:11434"  # Alternativní port
+    volumes:
+      - dev_ollama_models:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_DEBUG=1              # Debug mode pro Ollama
+    restart: unless-stopped
+    profiles:
+      - separate-ollama-dev
+
+  # Development helper - file watcher
+  file-watcher:
+    image: alpine:latest
+    container_name: mycoder-watcher
+    volumes:
+      - ./src:/watch/src:ro
+      - ./tests:/watch/tests:ro
+    command: |
+      sh -c "
+        apk add --no-cache inotify-tools
+        echo '👀 Watching for file changes...'
+        while true; do
+          inotifywait -r -e modify,create,delete /watch/
+          echo '🔄 File change detected - container will auto-restart'
+        done
+      "
+    profiles:
+      - file-watcher
+
+volumes:
+  dev_ollama_data:
+    name: mycoder-dev-data
+  dev_ollama_models:
+    name: mycoder-dev-models
+
+networks:
+  default:
+    name: mycoder-dev-network
+
+# 📋 POUŽITÍ:
+# 
+# Development:
+#   docker-compose -f docker-compose.dev.yml up
+#   → Live reload! Změny se projeví okamžitě
+#
+# S file watcherem:
+#   docker-compose -f docker-compose.dev.yml --profile file-watcher up
+#   → Navíc sledování změn souborů
+#
+# Debugging:
+#   docker-compose -f docker-compose.dev.yml exec mycoder-dev python -m debugpy --listen 0.0.0.0:5678 src/mycoder.py
+#   → Připoj debugger na localhost:5678
+#
+# Logs:
+#   docker-compose -f docker-compose.dev.yml logs -f mycoder-dev
+#   → Sleduj logy v reálném čase

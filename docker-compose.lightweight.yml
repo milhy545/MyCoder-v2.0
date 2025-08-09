@@ -1,0 +1,72 @@
+# 🪶 MyCoder ULTRA-LIGHTWEIGHT verze
+# Pro slabší hardware - minimální spotřeba zdrojů
+version: '3.8'
+
+services:
+  mycoder-light:
+    build: 
+      context: .
+      dockerfile: Dockerfile.lightweight
+    container_name: mycoder-light
+    ports:
+      - "8000:8000"    # MyCoder API
+      - "11434:11434"  # Ollama API
+    volumes:
+      - mycoder_light_data:/home/mycoder/.ollama
+      - ./workspace:/app/workspace
+      - ./logs:/app/logs
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - MYCODER_MODE=DEGRADED          # Degraded mode = méně funkcí, víc úspora
+      - MYCODER_LLM_PROVIDER=ollama
+      - MYCODER_LLM_MODEL=tinyllama:1.1b  # Nejmenší model!
+      - OLLAMA_MAX_LOADED_MODELS=1      # Jen 1 model v paměti
+      - OLLAMA_NUM_PARALLEL=1           # Jen 1 paralelní request
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'      # Max 2 CPU cores
+          memory: 4G       # Max 4GB RAM
+        reservations:
+          cpus: '1.0'      # Min 1 CPU core  
+          memory: 2G       # Min 2GB RAM
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 60s      # Méně častý health check
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    restart: unless-stopped
+    command: ["lightweight"]
+
+volumes:
+  mycoder_light_data:
+    name: mycoder-lightweight-data
+
+networks:
+  default:
+    name: mycoder-light-network
+
+# 🪶 POUŽITÍ ULTRA-LIGHTWEIGHT:
+# 
+# docker-compose -f docker-compose.lightweight.yml up
+# 
+# Nebo přes Makefile:
+# make light
+#
+# 📊 SPOTŘEBA ZDROJŮ:
+# - RAM: 2-4GB (místo 8-16GB)
+# - CPU: 1-2 cores (místo 4-8)  
+# - Model: 637MB (místo 776MB+)
+# - Disk: ~3GB celkem (místo 10GB+)
+#
+# ⚠️ TRADE-OFFY:
+# - Menší kvalita kódu (TinyLlama vs DeepSeek)
+# - Pomalejší response (degraded mode)
+# - Méně funkcí (základní generování jen)
+#
+# ✅ VÝHODY:
+# - Neresetuje počítač! 🎉
+# - Rychlý start
+# - Minimální spotřeba
+# - Stále funkční AI asistent

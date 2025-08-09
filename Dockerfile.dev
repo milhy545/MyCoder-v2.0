@@ -1,0 +1,104 @@
+# 🚀 MyCoder Development Dockerfile
+# Optimalizovaný pro rychlý vývoj s live reload
+FROM python:3.11-slim
+
+# Install system dependencies + development tools
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    build-essential \
+    inotify-tools \
+    vim \
+    less \
+    htop \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Ollama
+RUN curl -fsSL https://ollama.ai/install.sh | sh
+
+# Create app directory
+WORKDIR /app
+
+# Install Poetry
+RUN pip install poetry
+
+# Install development Python packages first (for better caching)
+RUN pip install \
+    debugpy \
+    watchdog \
+    ipdb \
+    pytest-watch \
+    black \
+    flake8 \
+    mypy
+
+# Copy dependency files
+COPY pyproject.toml poetry.lock* ./
+
+# Configure Poetry for development
+RUN poetry config virtualenvs.create false
+
+# Install all dependencies INCLUDING dev dependencies
+RUN poetry install --with dev
+
+# Copy other static files
+COPY README.md LICENSE ./
+
+# Create mycoder user (same as production)
+RUN useradd -m -u 1000 mycoder && chown -R mycoder:mycoder /app
+
+# Create directories for development
+RUN mkdir -p /app/src /app/tests /app/workspace /app/logs /app/examples /app/docs
+RUN chown -R mycoder:mycoder /app
+
+# Expose ports (including debugger)
+EXPOSE 8000 11434 5678
+
+# Health check (faster for development)
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=2 \
+    CMD curl -f http://localhost:11434/api/tags || exit 1
+
+# Copy development entrypoint
+COPY docker-entrypoint.dev.sh /app/
+RUN chmod +x /app/docker-entrypoint.dev.sh
+
+# Switch to mycoder user
+USER mycoder
+
+# Set Python path for live reload
+ENV PYTHONPATH=/app/src:/app
+ENV PYTHONUNBUFFERED=1
+
+# Development command
+CMD ["/app/docker-entrypoint.dev.sh"]
+
+# 📋 DEVELOPMENT FEATURES:
+# 
+# ✅ Live reload - source code mounted as volume
+# ✅ Debugger support - debugpy pre-installed  
+# ✅ Hot restart - watchdog for automatic restarts
+# ✅ Development tools - vim, htop, debugging tools
+# ✅ Faster health checks - 10s intervals  
+# ✅ All dependencies - including dev packages
+# ✅ File watching - inotify-tools for file changes
+# ✅ Python optimizations - PYTHONUNBUFFERED for immediate output
+#
+# 🔧 DEBUGGING:
+# 
+# Remote debugging:
+#   debugpy --listen 0.0.0.0:5678 --wait-for-client src/mycoder.py
+#   → Connect from VS Code/PyCharm to localhost:5678
+#
+# Interactive debugging:
+#   import ipdb; ipdb.set_trace()
+#   → Breakpoint in terminal
+#
+# 🚀 PERFORMANCE:
+# 
+# Image layers optimized for development:
+# 1. Base system + tools (rarely changes)
+# 2. Python packages (changes when deps change) 
+# 3. Source code (mounted as volume - no rebuild!)
+#
+# Result: Code changes = 0 seconds rebuild time! ⚡
