@@ -54,20 +54,37 @@ class SystemSettings:
 class MyCoderConfig:
     """Complete MyCoder v2.0 configuration"""
     # API Provider Settings
-    claude_anthropic: APIProviderSettings
-    claude_oauth: APIProviderSettings  
-    gemini: APIProviderSettings
-    ollama_local: APIProviderSettings
-    ollama_remote_urls: List[str]
+    claude_anthropic: APIProviderSettings = None
+    claude_oauth: APIProviderSettings = None  
+    gemini: APIProviderSettings = None
+    ollama_local: APIProviderSettings = None
+    ollama_remote_urls: List[str] = None
     
     # System Settings
-    thermal: ThermalSettings
-    system: SystemSettings
+    thermal: ThermalSettings = None
+    system: SystemSettings = None
     
     # Runtime Settings
     preferred_provider: Optional[str] = None
     fallback_enabled: bool = True
     debug_mode: bool = False
+    
+    def __post_init__(self):
+        """Initialize default values if not provided"""
+        if self.claude_anthropic is None:
+            self.claude_anthropic = APIProviderSettings(enabled=False)
+        if self.claude_oauth is None:
+            self.claude_oauth = APIProviderSettings(enabled=True)
+        if self.gemini is None:
+            self.gemini = APIProviderSettings(enabled=False)
+        if self.ollama_local is None:
+            self.ollama_local = APIProviderSettings(enabled=True, base_url="http://localhost:11434")
+        if self.ollama_remote_urls is None:
+            self.ollama_remote_urls = []
+        if self.thermal is None:
+            self.thermal = ThermalSettings()
+        if self.system is None:
+            self.system = SystemSettings()
 
 
 class ConfigManager:

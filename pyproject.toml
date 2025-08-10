@@ -113,16 +113,16 @@ python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--strict-config",
-    "--cov=mycoder",
-    "--cov-report=term-missing",
-    "--cov-report=html",
-    "--cov-report=xml",
+    "-v",
 ]
 markers = [
     "unit: Unit tests",
     "integration: Integration tests", 
+    "functional: Functional tests",
+    "stress: Stress tests",
     "slow: Slow running tests",
     "network: Tests requiring network access",
+    "thermal: Tests requiring Q9550 thermal system",
     "auth: Tests requiring Claude CLI authentication",
 ]
 

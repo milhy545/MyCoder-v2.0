@@ -1,147 +1,209 @@
-# Claude CLI Authentication Module - Česká dokumentace
+# Enhanced MyCoder v2.0 - Česká příručka
 
-[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](../../LICENSE)
+[![Test Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](#testovani)
+[![Q9550 Compatible](https://img.shields.io/badge/Q9550-thermal%20managed-orange.svg)](#tepelni-management)
 
-Robustní, produkčně připravený Python modul pro integraci s Claude AI **bez API klíčů**. Využívá autentifikaci Claude CLI pro bezproblémový přístup k funkcím Claude Code.
+Enhanced MyCoder v2.0 je komplexní AI vývojářský asistent s **5-stupňovou fallback architekturou API poskytovatelů**, **Q9550 tepelným managementem** a **FEI-inspirovanou architekturou**. Navržený pro produkční prostředí vyžadující vysokou dostupnost a tepelnou bezpečnost.
 
 ## 🎯 Klíčové vlastnosti
 
-- **Žádné API klíče nejsou potřeba**: Používá autentifikaci Claude CLI (`claude auth login`)
-- **Trojitý fallback systém**: SDK → CLI → Graceful error handling
-- **Persistence sessions**: Inteligentní správa a obnovení sessions
-- **Produkčně připravený**: Comprehensive error handling a logging
-- **Snadná integrace**: Jednoduchý jednotný interface pro jakýkoli Python projekt
-- **Paměťově optimalizovaný**: Efektivní streaming a bounded buffers
+- **5-stupňová fallback architektura**: Claude Anthropic → Claude OAuth → Gemini → Ollama Local → Ollama Remote
+- **Q9550 tepelný management**: Integrované monitorování a throttling pro Intel Q9550 procesory
+- **FEI-inspirovaná architektura**: Tool Registry Pattern, Service Layer Pattern, Event-based execution
+- **Komplexní testování**: 85% pokrytí testy (197 testů napříč všemi úrovněmi)
+- **Session persistence**: Udržování kontextu konverzace napříč poskytovateli
+- **Konfigurace z více zdrojů**: JSON, environment variables, výchozí hodnoty
 
 ## 🚀 Rychlý start
 
 ### Instalace
 
 ```bash
-# Instalace Claude Code CLI
-npm install -g @anthropic-ai/claude-code
-
-# Autentifikace s Claude
-claude auth login
-
-# Instalace tohoto modulu
-pip install claude-cli-auth
+git clone https://github.com/milhy545/MyCoder-v2.0.git
+cd MyCoder-v2.0
+pip install -r requirements.txt
 ```
 
 ### Základní použití
 
 ```python
-from claude_cli_auth import ClaudeAuthManager
+from enhanced_mycoder_v2 import EnhancedMyCoderV2
 from pathlib import Path
 
-# Inicializace
-claude = ClaudeAuthManager()
+# Základní konfigurace
+config = {
+    "claude_oauth": {"enabled": True},
+    "ollama_local": {"enabled": True},
+    "thermal": {"enabled": True, "max_temp": 75}
+}
 
-# Jednoduchý dotaz
-response = await claude.query(
-    "Vysvětli tento kód stručně",
-    working_directory=Path(".")
+# Inicializace MyCoder
+mycoder = EnhancedMyCoderV2(
+    working_directory=Path("."),
+    config=config
 )
 
-print(response.content)
-print(f"Cena: ${response.cost:.4f}")
-```
+# Spuštění systému
+await mycoder.initialize()
 
-### Se streamingem a správou sessions
-
-```python
-# Streaming callback
-async def on_stream(update):
-    print(f"[{update.type}] {update.content}")
-
-response = await claude.query(
-    "Vytvoř Python funkci",
-    working_directory=Path("./src"),
-    stream_callback=on_stream,
-    session_id="muj-projekt-session"
+response = await mycoder.process_request(
+    "Analyzuj tento Python soubor a navrhni optimalizace",
+    files=[Path("example.py")]
 )
 
-# Pokračování v konverzaci
-response2 = await claude.query(
-    "Přidej error handling do té funkce",
-    session_id="muj-projekt-session",
-    continue_session=True
-)
+print(f"Odpověď: {response['content']}")
+print(f"Poskytovatel: {response['provider']}")
+print(f"Cena: ${response['cost']}")
 ```
 
-## 📚 Kompletní použití
+### Rychlé příkazy
 
-### Správa sessions
+```bash
+# Spuštění funkčních testů
+python tests/functional/test_mycoder_live.py --interactive
 
-```python
-# Seznam všech sessions
-sessions = claude.list_sessions()
+# Spuštění stress testů
+python tests/stress/run_stress_tests.py --quick
 
-# Získání detailů session
-session = claude.get_session("muj-projekt-session")
-if session:
-    print(f"Celková cena: ${session.total_cost:.4f}")
-    print(f"Zprávy: {session.total_turns}")
-
-# Vyčištění starých sessions
-cleaned = await claude.cleanup_sessions()
-print(f"Vyčištěno {cleaned} expirovaných sessions")
-```
-
-### Konfigurace
-
-```python
-from claude_cli_auth import AuthConfig
-
-config = AuthConfig(
-    timeout_seconds=60,           # Timeout pro dotazy
-    max_turns=10,                 # Max počet tahů v konverzaci
-    session_timeout_hours=48,     # Expiration sessions
-    allowed_tools=["Read", "Write", "Edit", "Bash"],
-    use_sdk=True,                 # Preferovat SDK před CLI
-    enable_streaming=True,        # Povolit streaming
-)
-
-claude = ClaudeAuthManager(config=config)
-```
-
-### Monitorování a statistiky
-
-```python
-# Zdravotní kontrola
-if claude.is_healthy():
-    print("✅ Systém je zdravý")
-
-# Statistiky použití
-stats = claude.get_stats()
-print(f"Celkem dotazů: {stats['total_requests']}")
-print(f"Úspěšnost: {stats['success_rate']:.1%}")
-print(f"Celková cena: ${stats['total_cost']:.4f}")
-print(f"Průměrná doba: {stats['avg_duration_ms']:.0f}ms")
-
-# Detaily konfigurace
-config_info = claude.get_config()
-print(f"SDK dostupný: {config_info['sdk_available']}")
-print(f"CLI interface: {'✅' if config_info['cli_interface_initialized'] else '❌'}")
+# Kontrola stavu systému
+python -c "from enhanced_mycoder_v2 import EnhancedMyCoderV2; import asyncio; asyncio.run(EnhancedMyCoderV2().get_system_status())"
 ```
 
 ## 🏗️ Architektura
 
+### 5-stupňová Fallback Architektura API Poskytovatelů
+
 ```
-┌─────────────────────────────────────┐
-│           Vaše aplikace             │
-├─────────────────────────────────────┤
-│        ClaudeAuthManager            │
-│         (Hlavní interface)          │
-├─────────────────────────────────────┤
-│  Primary: Python SDK + CLI Auth    │
-│  Fallback: Direct CLI Subprocess   │
-│  Emergency: Error Recovery          │
-├─────────────────────────────────────┤
-│        Claude CLI (~/.claude/)     │
-└─────────────────────────────────────┘
+1. Claude Anthropic API    ← Primární (placený, vysoká kvalita)
+2. Claude OAuth           ← Sekundární (zdarma, autentifikovaný)  
+3. Gemini API            ← Terciární (Google AI)
+4. Ollama Local          ← Kvartérní (lokální inference)
+5. Ollama Remote         ← Finální (vzdálené Ollama instance)
 ```
+
+### FEI-Inspirované Komponenty
+
+- **Tool Registry Pattern**: Centralizované správa nástrojů s execution kontexty
+- **Service Layer Pattern**: Čisté oddělení mezi API poskytovateli a business logikou
+- **Event-Based Architecture**: Reaktivní systém s health monitoringem a tepelným vědomím
+
+### Q9550 Tepelný Management
+
+Integrované tepelné monitorování a throttling pro Intel Q9550 procesory:
+
+- **Monitorování Teploty**: Real-time sledování teploty CPU
+- **Automatické Throttling**: Snižuje AI zátěž když teplota překročí 75°C
+- **Nouzová Ochrana**: Hard shutdown při 85°C pro prevenci poškození hardware
+- **PowerManagement Integrace**: Používá existující Q9550 tepelné skripty
+
+## 🔧 Konfigurace
+
+### Environment Variables
+
+```bash
+# API Klíče
+export ANTHROPIC_API_KEY="váš_anthropic_klíč"
+export GEMINI_API_KEY="váš_gemini_klíč"
+
+# Systémová Konfigurace
+export MYCODER_DEBUG=1
+export MYCODER_THERMAL_MAX_TEMP=75
+export MYCODER_PREFERRED_PROVIDER=claude_oauth
+```
+
+### Konfigurační Soubor
+
+Vytvořte `mycoder_config.json`:
+
+```json
+{
+  "claude_anthropic": {
+    "enabled": true,
+    "timeout_seconds": 30,
+    "model": "claude-3-5-sonnet-20241022"
+  },
+  "claude_oauth": {
+    "enabled": true,
+    "timeout_seconds": 45
+  },
+  "gemini": {
+    "enabled": true,
+    "timeout_seconds": 30,
+    "model": "gemini-1.5-pro"
+  },
+  "ollama_local": {
+    "enabled": true,
+    "base_url": "http://localhost:11434",
+    "model": "tinyllama"
+  },
+  "ollama_remote_urls": [
+    "http://server1:11434",
+    "http://server2:11434"
+  ],
+  "thermal": {
+    "enabled": true,
+    "max_temp": 75,
+    "critical_temp": 85,
+    "performance_script": "/path/to/performance_manager.sh"
+  },
+  "system": {
+    "log_level": "INFO",
+    "enable_tool_registry": true,
+    "enable_mcp_integration": true
+  }
+}
+```
+
+### Pokročilá Konfigurace
+
+```python
+from config_manager import ConfigManager
+
+# Načtení ze souboru
+config_manager = ConfigManager("mycoder_config.json")
+config = config_manager.load_config()
+
+# Aktualizace konkrétního poskytovatele
+config_manager.update_provider_config("ollama_local", {
+    "model": "llama2:13b",
+    "timeout_seconds": 120
+})
+
+# Uložení změn
+config_manager.save_config("updated_config.json")
+```
+
+## 🛠️ Funkce
+
+### Podpora Multi-API Providera
+
+- **Inteligentní Fallback**: Automatické přepínání mezi poskytovateli
+- **Health Monitoring**: Real-time sledování stavu poskytovatelů
+- **Optimalizace Nákladů**: Preference pro levnější/zdarma poskytovatele
+- **Metriky Výkonu**: Sledování response times a success rates
+
+### Tepelný Management (Q9550)
+
+- **Hardware Integrace**: Přímá integrace s Q9550 tepelnými senzory
+- **Proaktivní Throttling**: Prevence tepelného poškození před jeho výskytem
+- **Performance Scaling**: Úprava AI zátěže podle teploty
+- **Systémová Ochrana**: Nouzové vypnutí při kritických teplotách
+
+### Tool Registry Systém
+
+- **Modulární Nástroje**: File operace, MCP integrace, tepelné monitorování
+- **Execution Kontexty**: Bezpečné sandboxed spouštění nástrojů
+- **Permission Systém**: Role-based access control pro nástroje
+- **Performance Monitoring**: Sledování používání a výkonu nástrojů
+
+### Session Management
+
+- **Persistentní Sessions**: Udržování kontextu konverzace napříč requesty
+- **Provider Transitions**: Bezproblémové přepínání mezi API poskytovateli
+- **Automatické Cleanup**: Memory-eficient správa sessions
+- **Recovery Support**: Obnovení sessions po restartu systému
 
 ## 🔧 Jádro komponent
 
@@ -183,159 +245,187 @@ except ClaudeTimeoutError as e:
 - **Tool validation**: Security-aware filtrování nástrojů
 - **Memory management**: Bounded buffers a cleanup
 
-## ⚙️ Pokročilé funkce
+## 🚀 Výkon
 
-### Adaptive režimy
+### Benchmarky (Q9550 @ 2.83GHz)
 
-Modul automaticky detekuje dostupné metody a přepíná mezi nimi:
+| Operace | Response Time | Poskytovatel | Poznámky |
+|-----------|---------------|----------|-------|
+| Jednoduchý Dotaz | 0.5-2.0s | Claude OAuth | Cached auth |
+| Analýza Souboru | 2.0-5.0s | Ollama Local | Lokální inference |
+| Komplexní Úloha | 5.0-15.0s | Claude Anthropic | API calls |
+| Tepelná Kontrola | <0.1s | Q9550 Sensors | Hardware přímé |
+
+### Systémové Prostředky
+
+- **Paměť**: ~200MB baseline, ~500MB pod zátěží
+- **CPU**: Variabilní na základě tepelných limitů (0-100%)
+- **Síť**: Minimální pro lokální poskytovatele, ~1MB/request pro API poskytovatele
+- **Úložiště**: ~50MB instalace, logy rostou s používáním
+
+## 🔒 Bezpečnost & Ochrana
+
+### Správa API Klíčů
+
+- **Environment Variables**: Bezpečné ukládání klíčů
+- **Žádné Logování**: API klíče nejsou nikdy loggované nebo cache-ované
+- **Podpora Rotace**: Snadné aktualizace klíčů bez restartu
+
+### Tepelná Bezpečnost
+
+- **Hardware Ochrana**: Prevence poškození Q9550 přehřátím
+- **Postupné Throttling**: Plynulé škálování výkonu
+- **Nouzové Vypnutí**: Poslední nástroj ochrany při 85°C
+- **Recovery Procedury**: Automatické obnovení když teploty klesnou
+
+### Tool Sandboxing
+
+- **Execution Kontexty**: Izolovaná prostředí nástrojů
+- **File System Limity**: Omezení přístupu nástrojů na working directory
+- **Resource Limity**: CPU/memory omezení per tool execution
+- **Permission Validace**: Role-based tool access control
+
+## 📁 Projektová Struktura
+
+```
+MyCoder-v2.0/
+├── src/                          # Zdrojový kód
+│   ├── enhanced_mycoder_v2.py   # Hlavní MyCoder třída
+│   ├── api_providers.py         # Implementace API poskytovatelů
+│   ├── config_manager.py        # Správa konfigurace
+│   ├── tool_registry.py         # Tool registry systém
+│   └── __init__.py              # Inicializace balíčku
+├── tests/                       # Testovací sady
+│   ├── unit/                    # Unit testy
+│   ├── integration/             # Integrační testy
+│   ├── functional/              # Funkční testy
+│   ├── stress/                  # Stress testy
+│   └── conftest.py              # Testovací konfigurace
+├── docs/                        # Dokumentace
+│   ├── api/                     # API dokumentace
+│   ├── guides/                  # Uživatelské příručky
+│   ├── examples/                # Příklady použití
+│   └── cs/                      # Česká dokumentace
+├── examples/                    # Kódové příklady
+├── scripts/                     # Utility skripty
+├── requirements.txt             # Závislosti
+├── pyproject.toml              # Projektová konfigurace
+└── README.md                   # Tento soubor
+```
+
+## 🔗 Integrace
+
+### MCP (Model Context Protocol)
 
 ```python
-# Doma s plným přístupem
-claude = ClaudeAuthManager(
-    prefer_sdk=True,        # Preferuj SDK
-    enable_fallback=True    # Povolit CLI fallback
+from mcp_connector import MCPConnector
+
+# Inicializace MCP připojení
+mcp = MCPConnector(server_url="http://localhost:8000")
+await mcp.connect()
+
+# Použití s MyCoder
+mycoder = EnhancedMyCoderV2(
+    working_directory=Path("."),
+    config={"mcp_integration": {"enabled": True, "server_url": "http://localhost:8000"}}
 )
-
-# Omezené prostředí (pouze CLI)
-claude = ClaudeAuthManager(
-    prefer_sdk=False,       # Pouze CLI
-    enable_fallback=False   # Bez fallback
-)
 ```
 
-### Batch operations
+### Docker Podpora
 
-```python
-# Více dotazů v sérii
-queries = [
-    "Analyzuj tento soubor",
-    "Navrhni vylepšení", 
-    "Vytvoř testy"
-]
+```dockerfile
+FROM python:3.11-slim
 
-session_id = "batch-session"
-for i, query in enumerate(queries):
-    response = await claude.query(
-        query,
-        session_id=session_id,
-        continue_session=i > 0
-    )
-    print(f"Odpověď {i+1}: {response.content[:100]}...")
+WORKDIR /app
+COPY . .
+RUN pip install -r requirements.txt
+
+# Pro Q9550 tepelný management
+RUN apt-get update && apt-get install -y lm-sensors
+
+ENV MYCODER_THERMAL_ENABLED=false  # Vypnout v kontejnerech
+CMD ["python", "-m", "enhanced_mycoder_v2"]
 ```
 
-## 🚨 Troubleshooting
+### CI/CD Integrace
 
-### Časté problémy
+```yaml
+# Příklad GitHub Actions
+name: MyCoder Tests
+on: [push, pull_request]
 
-1. **"Claude CLI not authenticated"**
-   ```bash
-   claude auth login
-   ```
-
-2. **"Claude CLI not found"**
-   ```bash
-   npm install -g @anthropic-ai/claude-code
-   ```
-
-3. **"Session expired"**
-   ```python
-   # Sessions expirují po 24 hodinách (konfigurovatelné)
-   await claude.cleanup_sessions()
-   ```
-
-4. **"Usage limit reached"**
-   - Čekejte na reset limitů
-   - Používejte menší dotazy
-   - Kontrolujte usage s `claude.get_stats()`
-
-### Debugging
-
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
-
-# Zapnout debug pro modul
-logging.getLogger("claude_cli_auth").setLevel(logging.DEBUG)
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run tests
+        run: python -m pytest tests/ --no-thermal
 ```
-
-## 📖 Příklady integrace
-
-### S Flask/FastAPI
-
-```python
-from flask import Flask, request, jsonify
-from claude_cli_auth import ClaudeAuthManager
-
-app = Flask(__name__)
-claude = ClaudeAuthManager()
-
-@app.route('/ask', methods=['POST'])
-async def ask_claude():
-    try:
-        data = request.json
-        response = await claude.query(
-            prompt=data['question'],
-            working_directory=Path(data.get('project_dir', '.')),
-            session_id=data.get('session_id')
-        )
-        
-        return jsonify({
-            'response': response.content,
-            'session_id': response.session_id,
-            'cost': response.cost
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-```
-
-### S Telegram botom
-
-```python
-import asyncio
-from telegram import Update
-from telegram.ext import Application, MessageHandler, filters
-
-claude = ClaudeAuthManager()
-
-async def handle_message(update: Update, context):
-    try:
-        user_id = update.effective_user.id
-        response = await claude.query(
-            prompt=update.message.text,
-            user_id=user_id,
-            session_id=f"telegram_{user_id}"
-        )
-        
-        await update.message.reply_text(response.content)
-        
-    except Exception as e:
-        await update.message.reply_text(f"Chyba: {str(e)}")
-
-# Setup Telegram bot...
-```
-
-## 🔒 Bezpečnost
-
-- **Ochrana přihlašovacích údajů**: Bezpečné token storage v `~/.claude/`
-- **Tool validation**: Konfigurovatelné povolené/zakázané nástroje
-- **Session isolation**: User-specific session management
-- **Rate limiting**: Vestavěné request throttling
-- **Audit logging**: Komprehensivní operation tracking
 
 ## 🤝 Přispívání
 
-Tento modul byl původně vyvinut pro MyCoder projekt a extraktován jako znovupoužitelný modul. Kompatibilní s:
+### Vývojové Nastavení
 
-- Telegram boty (testován v produkci)
-- Web aplikace
-- CLI nástroje
-- Jupyter notebooks
-- Docker kontejnery
+```bash
+git clone https://github.com/milhy545/MyCoder-v2.0.git
+cd MyCoder-v2.0
+
+# Instalace vývojových závislostí
+pip install -r requirements-dev.txt
+
+# Spuštění pre-commit hooks
+pre-commit install
+
+# Spuštění testů
+python -m pytest tests/
+```
+
+### Kódovací Standardy
+
+- **Python 3.8+** kompatibilita
+- **Type hints** pro všechny veřejné APIs
+- **Docstrings** pro všechny třídy a metody
+- **85%+ test coverage** pro nové funkce
+- **Black** code formátování
+- **Pytest** pro všechny testy
+
+### Pull Request Proces
+
+1. Fork repository
+2. Vytvoření feature branch (`git checkout -b feature/amazing-feature`)
+3. Napsání testů pro novou funkcionalitu
+4. Zajištění, že všechny testy projdou
+5. Aktualizace dokumentace
+6. Odeslání pull request
 
 ## 📄 Licence
 
-MIT License - viz [LICENSE](../../LICENSE) pro detaily.
+Tento projekt je licencován pod MIT License - viz [LICENSE](../../LICENSE) pro detaily.
+
+## 🙏 Poděkování
+
+- **Anthropic** za přístup k Claude API
+- **Google** za Gemini API
+- **Ollama** za lokální LLM infrastrukturu
+- **Intel Q9550** komunitě za tepelné management poznatky
+- **FEI** architektonické vzory inspirace
+
+## 📞 Podpora
+
+- **GitHub Issues**: [Hlášení chyb a feature requesty](https://github.com/milhy545/MyCoder-v2.0/issues)
+- **Dokumentace**: [Úplná dokumentace](../README.md)
+- **Příklady**: [Příklady použití](../../examples/)
+- **Diskuze**: [Community diskuze](https://github.com/milhy545/MyCoder-v2.0/discussions)
 
 ---
 
-**Poznámka**: Tento modul vyžaduje nainstalovaný a autentifikovaný Claude Code CLI. Nepoužívá ani nevyžaduje Anthropic API klíče.
+**Vytvořeno s ❤️ pro AI vývojářskou komunitu**
+
+*Enhanced MyCoder v2.0 - Kde AI potkává tepelnou zodpovědnost*

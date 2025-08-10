@@ -469,6 +469,38 @@ class ToolRegistry:
         # Emit registration event
         self._emit_event("tool_registered", {"tool": tool})
     
+    def get_available_tools(self) -> List[str]:
+        """Get list of all available tool names"""
+        return list(self.tools.keys())
+    
+    def list_tools_by_category(self, category: ToolCategory) -> List[str]:
+        """Get tools in a specific category"""
+        return self.categories.get(category, [])
+    
+    def get_tool_info(self, tool_name: str) -> Dict[str, Any]:
+        """Get information about a specific tool"""
+        if tool_name not in self.tools:
+            return {}
+        
+        tool = self.tools[tool_name]
+        return {
+            "name": tool.name,
+            "category": tool.category.value,
+            "description": tool.description,
+            "capabilities": {
+                "requires_thermal_safe": tool.capabilities.requires_thermal_safe,
+                "resource_intensive": tool.capabilities.resource_intensive,
+                "max_execution_time": tool.capabilities.max_execution_time,
+                "requires_network": tool.capabilities.requires_network
+            },
+            "stats": {
+                "execution_count": tool.execution_count,
+                "error_count": tool.error_count,
+                "total_execution_time": tool.total_execution_time,
+                "last_execution": tool.last_execution
+            }
+        }
+    
     def unregister_tool(self, tool_name: str):
         """Unregister a tool from the registry"""
         if tool_name not in self.tools:

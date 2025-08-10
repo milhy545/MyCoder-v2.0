@@ -1,64 +1,92 @@
-"""MyCoder v2.0 - Advanced AI Development Assistant.
+"""Enhanced MyCoder v2.0 - Multi-API AI Development Assistant.
 
-An advanced AI-powered development assistant with adaptive modes and MCP integration.
-Built on top of claude-cli-auth for seamless Claude AI access without API keys.
+A comprehensive AI-powered development assistant with multi-provider fallback,
+Q9550 thermal management, and FEI-inspired architecture.
 
 Key Features:
-- Adaptive operational modes (FULL, DEGRADED, AUTONOMOUS, RECOVERY)
-- MCP orchestrator integration with intelligent tool routing
-- Enhanced AI capabilities with memory persistence
-- Network detection and automatic fallback handling
-- Production-ready error recovery
+- 5-tier API provider fallback (Claude Anthropic, Claude OAuth, Gemini, Ollama Local, Ollama Remote)
+- Q9550 thermal management integration
+- FEI-inspired architecture with tool registry
+- Comprehensive testing framework
+- Configuration management with multiple sources
+- Session persistence and recovery
 
 Example:
     Basic usage:
     
     ```python
-    from claude_cli_auth import MyCoder
+    from enhanced_mycoder_v2 import EnhancedMyCoderV2
     from pathlib import Path
     
-    mycoder = MyCoder()
+    config = {
+        "claude_oauth": {"enabled": True},
+        "ollama_local": {"enabled": True},
+        "thermal": {"enabled": True, "max_temp": 75}
+    }
+    
+    mycoder = EnhancedMyCoderV2(
+        working_directory=Path("."),
+        config=config
+    )
+    
+    await mycoder.initialize()
+    
     response = await mycoder.process_request(
-        "Create a Python function that processes files",
+        "Analyze this code and suggest improvements",
         files=[Path("example.py")]
     )
+    
     print(response["content"])
     ```
 
-    With adaptive modes:
+    With advanced configuration:
     
     ```python
-    from claude_cli_auth import AdaptiveModeManager, OperationalMode
+    from config_manager import ConfigManager
+    from api_providers import APIProviderRouter
     
-    manager = AdaptiveModeManager()
-    await manager.set_mode(OperationalMode.FULL)
-    current_mode = manager.get_current_mode()
+    # Load configuration from file
+    config_manager = ConfigManager("mycoder_config.json")
+    config = config_manager.load_config()
+    
+    # Create with advanced settings
+    mycoder = EnhancedMyCoderV2(
+        working_directory=Path("."),
+        config=config.dict(),
+        preferred_provider="claude_oauth"
+    )
     ```
 """
 
-# Import core authentication from external package
-from claude_cli_auth import (
-    AuthManager,
-    CLIInterface,
-    CLIResponse,
-    ClaudeAuthManager,
-    ClaudeAuthError,
-    ClaudeAuthManagerError,
-    ClaudeCLIError,
-    ClaudeConfigError,
-    ClaudeSessionError,
-    ClaudeTimeoutError,
-    AuthConfig,
-    ClaudeResponse,
-    SessionInfo,
-    StreamUpdate,
+# Core components
+from .enhanced_mycoder_v2 import EnhancedMyCoderV2
+from .api_providers import (
+    APIProviderRouter,
+    APIProviderType,
+    APIProviderConfig,
+    APIResponse,
+    APIProviderStatus,
+    ClaudeAnthropicProvider,
+    ClaudeOAuthProvider,
+    GeminiProvider,
+    OllamaProvider,
 )
-
-# Import MyCoder-specific components locally  
-from .adaptive_modes import AdaptiveModeManager, OperationalMode
-from .enhanced_mycoder import EnhancedMyCoder
-from .mcp_connector import MCPConnector, MCPToolRouter
-from .mycoder import MyCoder
+from .config_manager import (
+    ConfigManager,
+    MyCoderConfig,
+    APIProviderSettings,
+    ThermalSettings,
+    SystemSettings,
+    load_config,
+    get_config_manager,
+)
+from .tool_registry import (
+    get_tool_registry,
+    ToolRegistry,
+    ToolExecutionContext,
+    ToolResult,
+    ToolExecutionMode,
+)
 
 # Version info
 __version__ = "2.0.0"
@@ -68,42 +96,40 @@ __license__ = "MIT"
 
 # Public API
 __all__ = [
-    # MyCoder interfaces
-    "MyCoder",
-    "EnhancedMyCoder",
+    # Core interface
+    "EnhancedMyCoderV2",
     
-    # Adaptive modes
-    "AdaptiveModeManager",
-    "OperationalMode",
+    # API Providers
+    "APIProviderRouter",
+    "APIProviderType",
+    "APIProviderConfig", 
+    "APIResponse",
+    "APIProviderStatus",
+    "ClaudeAnthropicProvider",
+    "ClaudeOAuthProvider",
+    "GeminiProvider",
+    "OllamaProvider",
     
-    # MCP Integration
-    "MCPConnector",
-    "MCPToolRouter",
+    # Configuration Management
+    "ConfigManager",
+    "MyCoderConfig",
+    "APIProviderSettings",
+    "ThermalSettings", 
+    "SystemSettings",
+    "load_config",
+    "get_config_manager",
     
-    # Core components (re-exported from claude-cli-auth)
-    "ClaudeAuthManager",
-    "AuthManager", 
-    "CLIInterface",
-    
-    # Models (re-exported from claude-cli-auth)
-    "AuthConfig",
-    "ClaudeResponse",
-    "CLIResponse", 
-    "SessionInfo",
-    "StreamUpdate",
-    
-    # Exceptions (re-exported from claude-cli-auth)
-    "ClaudeAuthError",
-    "ClaudeAuthManagerError", 
-    "ClaudeCLIError",
-    "ClaudeConfigError",
-    "ClaudeSessionError",
-    "ClaudeTimeoutError",
+    # Tool Registry
+    "get_tool_registry",
+    "ToolRegistry",
+    "ToolExecutionContext",
+    "ToolResult",
+    "ToolExecutionMode",
     
     # Metadata
     "__version__",
-    "__author__", 
-    "__email__",
+    "__author__",
+    "__email__", 
     "__license__",
 ]
 
@@ -114,10 +140,10 @@ import os
 # Set up default logging if not configured
 if not logging.getLogger(__name__).handlers:
     logging.basicConfig(
-        level=logging.INFO if os.getenv("CLAUDE_DEBUG") else logging.WARNING,
+        level=logging.INFO if os.getenv("MYCODER_DEBUG") else logging.WARNING,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
 # Disable debug logging for dependencies by default
-for logger_name in ["httpx", "asyncio", "urllib3"]:
+for logger_name in ["httpx", "aiohttp", "asyncio", "urllib3"]:
     logging.getLogger(logger_name).setLevel(logging.WARNING)

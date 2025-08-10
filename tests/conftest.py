@@ -1,4 +1,4 @@
-"""Pytest configuration and fixtures for claude-cli-auth tests.
+"""Pytest configuration and fixtures for Enhanced MyCoder v2.0 tests.
 
 Provides common fixtures and configuration for all test modules.
 """
@@ -6,12 +6,15 @@ Provides common fixtures and configuration for all test modules.
 import asyncio
 import os
 import tempfile
+import sys
 from pathlib import Path
 from typing import AsyncGenerator, Generator
 from unittest.mock import MagicMock, patch
 
 import pytest
-from claude_cli_auth import AuthConfig, AuthManager, ClaudeAuthManager
+
+# Add src directory to Python path
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 
 @pytest.fixture(scope="session")
@@ -30,230 +33,190 @@ def temp_dir() -> Generator[Path, None, None]:
 
 
 @pytest.fixture
-def mock_claude_config_dir(temp_dir: Path) -> Path:
-    """Create a mock Claude config directory with credentials."""
-    config_dir = temp_dir / ".claude"
-    config_dir.mkdir()
-    
-    # Create mock credentials file
-    credentials_file = config_dir / ".credentials.json"
-    credentials_file.write_text('{"access_token": "mock_token"}')
-    
-    return config_dir
+def test_config(temp_dir: Path) -> dict:
+    """Create a test configuration for MyCoder v2.0."""
+    return {
+        "claude_anthropic": {
+            "enabled": False,  # Disable by default for tests
+            "timeout_seconds": 30
+        },
+        "claude_oauth": {
+            "enabled": True,
+            "timeout_seconds": 45
+        },
+        "gemini": {
+            "enabled": False,  # Disable by default for tests  
+            "timeout_seconds": 30
+        },
+        "ollama_local": {
+            "enabled": True,
+            "base_url": "http://localhost:11434",
+            "model": "tinyllama",
+            "timeout_seconds": 60
+        },
+        "thermal": {
+            "enabled": False,  # Disable by default for tests
+            "max_temp": 75
+        },
+        "system": {
+            "log_level": "WARNING",  # Reduce noise in tests
+            "enable_tool_registry": True
+        },
+        "debug_mode": False
+    }
 
 
 @pytest.fixture
-def test_config(mock_claude_config_dir: Path, temp_dir: Path) -> AuthConfig:
-    """Create a test configuration."""
-    return AuthConfig(
-        claude_config_dir=mock_claude_config_dir,
+def enhanced_mycoder(temp_dir: Path, test_config: dict):
+    """Create an Enhanced MyCoder v2.0 instance for testing."""
+    from enhanced_mycoder_v2 import EnhancedMyCoderV2
+    
+    return EnhancedMyCoderV2(
         working_directory=temp_dir,
-        timeout_seconds=30,
-        max_turns=5,
-        use_sdk=False,  # Disable SDK by default to avoid dependency issues
-        allowed_tools=["Read", "Write", "Edit", "Bash"],
+        config=test_config
     )
 
 
 @pytest.fixture
-def mock_auth_manager(test_config: AuthConfig) -> Generator[AuthManager, None, None]:
-    """Create a mock AuthManager for testing."""
-    with patch('claude_cli_auth.auth_manager.AuthManager._run_claude_command') as mock_cmd:
-        # Mock successful authentication
-        mock_result = MagicMock()
-        mock_result.returncode = 0
-        mock_result.stdout = "test@example.com"
-        mock_result.stderr = ""
-        mock_cmd.return_value = mock_result
-        
-        # Mock finding Claude CLI
-        with patch('claude_cli_auth.auth_manager.AuthManager._find_claude_cli') as mock_find:
-            mock_find.return_value = "/usr/local/bin/claude"
-            
-            auth_manager = AuthManager(test_config)
-            yield auth_manager
+async def initialized_mycoder(enhanced_mycoder):
+    """Create and initialize Enhanced MyCoder v2.0 instance."""
+    await enhanced_mycoder.initialize()
+    yield enhanced_mycoder
+    await enhanced_mycoder.shutdown()
 
 
 @pytest.fixture
-def claude_manager(test_config: AuthConfig) -> Generator[ClaudeAuthManager, None, None]:
-    """Create a ClaudeAuthManager for testing."""
-    with patch('claude_cli_auth.auth_manager.AuthManager._run_claude_command') as mock_cmd:
-        # Mock successful authentication
-        mock_result = MagicMock()
-        mock_result.returncode = 0
-        mock_result.stdout = "test@example.com"
-        mock_result.stderr = ""
-        mock_cmd.return_value = mock_result
-        
-        # Mock finding Claude CLI
-        with patch('claude_cli_auth.auth_manager.AuthManager._find_claude_cli') as mock_find:
-            mock_find.return_value = "/usr/local/bin/claude"
-            
-            # Disable SDK to avoid import issues in tests
-            manager = ClaudeAuthManager(
-                config=test_config,
-                prefer_sdk=False,
-                enable_fallback=False,
-            )
-            yield manager
-
-
-@pytest.fixture
-async def claude_manager_async(claude_manager: ClaudeAuthManager) -> AsyncGenerator[ClaudeAuthManager, None]:
-    """Async version of claude_manager fixture."""
-    yield claude_manager
-    await claude_manager.shutdown()
-
-
-@pytest.fixture
-def mock_claude_cli_success():
-    """Mock successful Claude CLI execution."""
-    mock_result = MagicMock()
-    mock_result.returncode = 0
-    mock_result.stdout = '{"type": "result", "result": "Hello! This is a test response.", "session_id": "test-session", "cost_usd": 0.05, "duration_ms": 1000, "num_turns": 1}'
-    mock_result.stderr = ""
+def mock_api_response():
+    """Mock successful API response."""
+    from api_providers import APIResponse, APIProviderType
     
-    return mock_result
+    return APIResponse(
+        success=True,
+        content="Mock API response for testing",
+        provider=APIProviderType.OLLAMA_LOCAL,
+        cost=0.0,
+        duration_ms=500
+    )
 
 
 @pytest.fixture
-def mock_claude_cli_failure():
-    """Mock failed Claude CLI execution."""
-    mock_result = MagicMock()
-    mock_result.returncode = 1
-    mock_result.stdout = ""
-    mock_result.stderr = "Authentication failed"
+def mock_failed_response():
+    """Mock failed API response."""
+    from api_providers import APIResponse, APIProviderType
     
-    return mock_result
+    return APIResponse(
+        success=False,
+        content="",
+        provider=APIProviderType.CLAUDE_OAUTH,
+        error="Mock API failure for testing"
+    )
 
 
 @pytest.fixture
-def mock_claude_process():
-    """Mock Claude CLI subprocess for async testing."""
-    class MockProcess:
-        def __init__(self, returncode=0, stdout_data="", stderr_data=""):
-            self.returncode = returncode
-            self.stdout = MockStream(stdout_data)
-            self.stderr = MockStream(stderr_data)
-            self.pid = 12345
-            
-        async def wait(self):
-            return self.returncode
-            
-        def kill(self):
-            pass
+def sample_test_files(temp_dir: Path) -> list[Path]:
+    """Create sample test files."""
+    files = []
     
-    class MockStream:
-        def __init__(self, data: str):
-            self.data = data.encode()
-            self.position = 0
-            
-        async def read(self, size=-1):
-            if self.position >= len(self.data):
-                return b""
-            
-            if size == -1:
-                result = self.data[self.position:]
-                self.position = len(self.data)
-            else:
-                result = self.data[self.position:self.position + size]
-                self.position += len(result)
-                
-            return result
-        
-        async def readline(self):
-            if self.position >= len(self.data):
-                return b""
-            
-            # Find next newline
-            newline_pos = self.data.find(b'\n', self.position)
-            if newline_pos == -1:
-                result = self.data[self.position:]
-                self.position = len(self.data)
-            else:
-                result = self.data[self.position:newline_pos + 1]
-                self.position = newline_pos + 1
-                
-            return result
+    # Python file
+    py_file = temp_dir / "test_script.py"
+    py_file.write_text('''def hello_world():
+    """A simple test function."""
+    return "Hello, World!"
+
+if __name__ == "__main__":
+    print(hello_world())
+''')
+    files.append(py_file)
     
-    return MockProcess
+    # Text file
+    txt_file = temp_dir / "test_doc.txt"
+    txt_file.write_text("This is a test document for MyCoder v2.0 testing.")
+    files.append(txt_file)
+    
+    # JSON file
+    json_file = temp_dir / "test_config.json"
+    json_file.write_text('{"test": true, "version": "2.0", "items": [1, 2, 3]}')
+    files.append(json_file)
+    
+    return files
 
 
 @pytest.fixture
-def sample_claude_responses():
-    """Sample Claude CLI responses for testing."""
-    return [
-        '{"type": "system", "subtype": "init", "tools": ["Read", "Write"], "model": "claude-3-5-sonnet"}',
-        '{"type": "assistant", "message": {"content": [{"type": "text", "text": "Hello! I can help you with that."}]}}',
-        '{"type": "tool_result", "tool_use_id": "123", "result": {"content": "File read successfully"}}',
-        '{"type": "result", "result": "Task completed successfully", "session_id": "test-session-123", "cost_usd": 0.025, "duration_ms": 1500, "num_turns": 2}'
-    ]
+def mock_thermal_status():
+    """Mock thermal status for Q9550 testing."""
+    return {
+        "cpu_temp": 70.0,
+        "status": "normal",
+        "safe_operation": True,
+        "timestamp": "2024-01-15T10:30:00Z"
+    }
 
 
-@pytest.fixture
-def mock_environment():
-    """Mock environment variables for testing."""
-    with patch.dict(os.environ, {
-        "CLAUDE_DEBUG": "1",
-        "CLAUDE_CLI_PATH": "/usr/local/bin/claude",
-    }):
-        yield
+@pytest.fixture  
+def mock_tool_execution_context(temp_dir: Path):
+    """Mock tool execution context."""
+    from tool_registry import ToolExecutionContext
+    
+    return ToolExecutionContext(
+        mode="FULL",
+        working_directory=temp_dir,
+        session_id="test_session"
+    )
 
 
 # Test markers for different types of tests
 def pytest_configure(config):
     """Configure pytest with custom markers."""
-    config.addinivalue_line(
-        "markers", "unit: mark test as a unit test"
-    )
-    config.addinivalue_line(
-        "markers", "integration: mark test as an integration test"
-    )
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow running"
-    )
-    config.addinivalue_line(
-        "markers", "network: mark test as requiring network access"
-    )
-    config.addinivalue_line(
-        "markers", "auth: mark test as requiring Claude CLI authentication"
-    )
+    config.addinivalue_line("markers", "unit: mark test as a unit test")
+    config.addinivalue_line("markers", "integration: mark test as an integration test") 
+    config.addinivalue_line("markers", "functional: mark test as a functional test")
+    config.addinivalue_line("markers", "stress: mark test as a stress test")
+    config.addinivalue_line("markers", "slow: mark test as slow running")
+    config.addinivalue_line("markers", "network: mark test as requiring network access")
+    config.addinivalue_line("markers", "thermal: mark test as requiring Q9550 thermal system")
+    config.addinivalue_line("markers", "auth: mark test as requiring authentication")
 
 
-# Skip tests that require authentication if not available
 def pytest_runtest_setup(item):
     """Setup function that runs before each test."""
-    # Skip auth tests if Claude CLI is not authenticated
-    if item.get_closest_marker("auth"):
-        try:
-            import subprocess
-            result = subprocess.run(
-                ["claude", "auth", "whoami"],
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
-            if result.returncode != 0:
-                pytest.skip("Claude CLI not authenticated - run 'claude auth login'")
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            pytest.skip("Claude CLI not available or not authenticated")
+    # Skip thermal tests if Q9550 system not available
+    if item.get_closest_marker("thermal"):
+        thermal_script = Path("/home/milhy777/Develop/Production/PowerManagement/scripts/performance_manager.sh")
+        if not thermal_script.exists():
+            pytest.skip("Q9550 thermal system not available")
     
     # Skip network tests if requested
-    if item.get_closest_marker("network") and item.config.getoption("--skip-network"):
+    if item.get_closest_marker("network") and item.config.getoption("--skip-network", default=False):
         pytest.skip("Network tests skipped")
+    
+    # Skip auth tests if not enabled
+    if item.get_closest_marker("auth") and not item.config.getoption("--run-auth", default=False):
+        pytest.skip("Authentication tests skipped (use --run-auth to enable)")
 
 
 def pytest_addoption(parser):
     """Add command-line options for pytest."""
     parser.addoption(
         "--skip-network",
-        action="store_true", 
-        default=False,
+        action="store_true",
+        default=False, 
         help="Skip tests that require network access"
     )
     parser.addoption(
         "--run-auth",
         action="store_true",
         default=False,
-        help="Run tests that require Claude CLI authentication"
+        help="Run tests that require authentication"
+    )
+    parser.addoption(
+        "--skip-thermal",
+        action="store_true",
+        default=False,
+        help="Skip Q9550 thermal management tests"
+    )
+    parser.addoption(
+        "--skip-slow",
+        action="store_true",
+        default=False,
+        help="Skip slow running tests"
     )
