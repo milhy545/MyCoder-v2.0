@@ -65,6 +65,7 @@ RUN chmod +x /app/docker-entrypoint.dev.sh
 
 # Switch to mycoder user
 USER mycoder
+ENV PATH="/home/mycoder/.local/bin:$PATH"
 
 # Set Python path for live reload
 ENV PYTHONPATH=/app/src:/app
