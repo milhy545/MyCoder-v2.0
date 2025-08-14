@@ -20,28 +20,27 @@ for i in {1..30}; do
     sleep 2
 done
 
-# Pull Codestral model first (preferred for coding)
-echo "🔍 Checking for Codestral model..."
-if ! ollama list | grep -q "codestral"; then
-    echo "📥 Pulling Codestral model (this may take a while - 13GB)..."
-    ollama pull codestral:22b-v0.1-q4_0
-    echo "✅ Codestral model ready!"
+# Pull DeepSeek Coder model first (optimized for Q9550 hardware)
+echo "🔍 Checking for DeepSeek model..."
+if ! ollama list | grep -q "deepseek-coder"; then
+    echo "📥 Pulling DeepSeek Coder model (optimized, lightweight - 750MB)..."
+    ollama pull deepseek-coder:1.3b-base-q4_0
+    echo "✅ DeepSeek Coder model ready!"
 else
-    echo "✅ Codestral model already available"
+    echo "✅ DeepSeek Coder model already available"
 fi
 
-# Fallback: Pull CodeLlama if Codestral fails
-if ! ollama list | grep -q "codestral\|codellama"; then
+# Fallback: Pull CodeLlama if DeepSeek fails
+if ! ollama list | grep -q "deepseek-coder\|codellama"; then
     echo "📥 Pulling CodeLlama as fallback..."
-    ollama pull codellama:7b-instruct
+    ollama pull codellama:7b-instruct-q4_0
 fi
 
-# Optional: Pull other useful models
+# Optional: Pull other useful models (in fallback order)
 echo "🔍 Setting up additional models..."
 models_to_pull=(
-    "mistral:7b-instruct-v0.3-q4_0" # General Mistral
     "llama3.2:3b-instruct-q4_0"     # Fast, small model
-    "deepseek-coder:1.3b-base-q4_0" # Code-specialized
+    "codellama:7b-instruct-q4_0"    # Meta's code model (fallback)
 )
 
 for model in "${models_to_pull[@]}"; do

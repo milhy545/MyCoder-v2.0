@@ -16,7 +16,7 @@ services:
       - OLLAMA_HOST=0.0.0.0
       - MYCODER_MODE=FULL
       - MYCODER_LLM_PROVIDER=ollama
-      - MYCODER_LLM_MODEL=codellama:7b-instruct
+      - MYCODER_LLM_MODEL=deepseek-coder:1.3b-base-q4_0
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
       interval: 30s

@@ -119,13 +119,13 @@ class CodeGenerationProvider:
     
     def __init__(self, ollama_client: OllamaClient):
         self.ollama = ollama_client
-        # Prioritize Codestral as primary model
-        self.model_name = "codestral:22b-v0.1-q4_0"
+        # Prioritize DeepSeek as primary model (optimized for Q9550 system)
+        self.model_name = "deepseek-coder:1.3b-base-q4_0"
         self.fallback_models = [
-            "codestral:22b-v0.1-q4_0",     # Mistral AI's code model
-            "codellama:7b-instruct",        # Meta's code model  
-            "codellama:7b-instruct-q4_0",
-            "deepseek-coder:1.3b-base-q4_0",
+            "deepseek-coder:1.3b-base-q4_0",  # DeepSeek Coder (lightweight, fast)
+            "codellama:7b-instruct-q4_0",     # Meta's code model  
+            "codellama:7b-instruct",          # Meta's code model
+            "codestral:22b-v0.1-q4_0",       # Mistral AI's code model (fallback only)
             "llama3.2:3b-instruct-q4_0"
         ]
     
@@ -160,7 +160,22 @@ class CodeGenerationProvider:
     def _get_model_specific_prompt(self, model: str, prompt: str, language: str) -> str:
         """Get model-specific prompt optimization."""
         
-        if "codestral" in model.lower():
+        if "deepseek" in model.lower():
+            # DeepSeek Coder specific prompting (optimized for code generation)
+            return f"""You are DeepSeek Coder, an AI assistant specialized in {language} programming.
+
+Task: {prompt}
+
+Please provide clean, efficient {language} code that:
+- Follows {language} best practices and conventions
+- Is well-structured and readable
+- Includes appropriate error handling
+- Has concise but helpful comments where needed
+- Is optimized for performance
+
+Generate only the requested {language} code:"""
+        
+        elif "codestral" in model.lower():
             # Codestral specific prompting
             return f"""<s>[INST] You are Codestral, a helpful coding assistant specialized in {language}.
 
@@ -223,8 +238,15 @@ Requirements:
         optimized_prompt = self._get_model_specific_prompt(model, enhanced_prompt, language)
         
         # Adjust generation parameters based on model
-        temperature = 0.1 if "codestral" in model.lower() else 0.3  # Codestral works better with lower temp
-        max_tokens = 4000 if "codestral" in model.lower() else 2000  # Codestral can handle longer outputs
+        if "deepseek" in model.lower():
+            temperature = 0.2  # DeepSeek Coder works well with slightly higher temp than Codestral
+            max_tokens = 2000  # Reasonable limit for 1.3B model
+        elif "codestral" in model.lower():
+            temperature = 0.1  # Codestral works better with lower temp
+            max_tokens = 4000  # Codestral can handle longer outputs
+        else:
+            temperature = 0.3
+            max_tokens = 2000
         
         result = await self.ollama.generate(
             model=model,

@@ -4,6 +4,7 @@
 
 | Scénář | Velikost | RAM min/rec | CPU min | GPU | Použití |
 |--------|----------|-------------|---------|-----|---------|
+| **🚀 DeepSeek** | 750 MB | 4GB/8GB | 2 cores | Ne | **Q9550 optimized** |
 | **🧪 Minimum** | 1.2 GB | 4GB/8GB | 2 cores | Ne | Testing |
 | **⚡ Lightweight** | 2.6 GB | 8GB/16GB | 4 cores | Volitelné | Rychlé kódování |
 | **🎯 Balanced** | 4.6 GB | 16GB/32GB | 6 cores | Doporučeno | Běžný vývoj |
@@ -23,6 +24,15 @@
 | codestral-q8 | 23 GB | 24GB | RTX 6000 | ⭐⭐⭐⭐⭐ |
 
 ## 🚀 Hardware Recommendations
+
+### 🚀 **DeepSeek Optimized (4-8GB RAM) - Intel Q9550**
+```
+Scénář: DeepSeek (750 MB)
+Model: deepseek-coder:1.3b-base-q4_0
+GPU: CPU only (optimalizováno)
+Výkon: Rychlé pro starší hardware
+Výhody: Nejnižší RAM požadavky, vysoká kvalita kódu
+```
 
 ### 💻 **Laptop Developer (8-16GB RAM)**
 ```
@@ -100,6 +110,17 @@ docker exec -it mycoder ollama pull codestral:22b-v0.1-q4_0
 - **Desktop Development:** codellama-7b (3.8GB)
 - **Professional Coding:** **Codestral-22b (13GB)** ← **BEST**
 - **Research/Production:** All models (55GB)
+
+## 🚀 Why DeepSeek?
+
+✅ **Ultra-lightweight** - only 750MB vs 13GB Codestral  
+✅ **Fast inference** - optimized for older hardware like Q9550  
+✅ **Excellent** code quality despite small size  
+✅ **Low RAM** requirements - works with 4GB RAM  
+✅ **Quick startup** - seconds vs minutes for larger models  
+✅ **Specialized** for code generation and completion  
+
+**DeepSeek = Perfect for resource-constrained environments! 🚀**
 
 ## 🏆 Why Codestral?
 

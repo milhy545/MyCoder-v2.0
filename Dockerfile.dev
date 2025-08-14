@@ -35,21 +35,23 @@ RUN pip install \
 
 # Copy dependency files
 COPY pyproject.toml poetry.lock* ./
+COPY README.md ./
 
 # Configure Poetry for development
 RUN poetry config virtualenvs.create false
 
-# Install all dependencies INCLUDING dev dependencies
-RUN poetry install --with dev
+# Install all dependencies INCLUDING dev dependencies  
+RUN poetry lock
+RUN poetry install --with dev --no-root
 
-# Copy other static files
-COPY README.md LICENSE ./
+# Other static files already copied above
 
 # Create mycoder user (same as production)
 RUN useradd -m -u 1000 mycoder && chown -R mycoder:mycoder /app
 
 # Create directories for development
 RUN mkdir -p /app/src /app/tests /app/workspace /app/logs /app/examples /app/docs
+RUN mkdir -p /home/mycoder/.ollama && chown -R mycoder:mycoder /home/mycoder/.ollama
 RUN chown -R mycoder:mycoder /app
 
 # Expose ports (including debugger)

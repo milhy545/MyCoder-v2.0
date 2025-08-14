@@ -15,13 +15,31 @@ from typing import Any, Dict, List, Optional, Set
 
 import aiohttp
 
-from claude_cli_auth import (
-    AuthManager,
-    CLIInterface,
-    ClaudeAuthError,
-    ClaudeAuthManager,
-    AuthConfig,
-)
+# from claude_cli_auth import (
+#     AuthManager,
+#     CLIInterface,
+#     ClaudeAuthError,
+#     ClaudeAuthManager,
+#     AuthConfig,
+# )  # Temporarily disabled for Docker development
+
+# Temporary local definitions for Docker development
+class ClaudeAuthError(Exception):
+    """Base auth error for temporary use."""
+    pass
+
+class AuthConfig:
+    """Temporary auth config class."""
+    def __init__(self, **kwargs):
+        pass
+
+class ClaudeAuthManager:
+    """Temporary auth manager class."""
+    def __init__(self, config):
+        self.config = config
+    
+    async def authenticate(self):
+        return True
 
 # Define ClaudeNetworkError locally since it's MyCoder-specific
 class ClaudeNetworkError(ClaudeAuthError):

@@ -30,7 +30,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.8.1"
-claude-cli-auth = { git = "https://github.com/milhy545/claude-cli-authentication.git" }
+# claude-cli-auth = { git = "https://github.com/milhy545/claude-cli-authentication.git" }  # Temporarily disabled for Docker build
 pydantic = "^2.0.0"
 structlog = "^23.0.0"
 aiofiles = "^23.0.0"
