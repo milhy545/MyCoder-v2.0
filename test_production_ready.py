@@ -201,7 +201,8 @@ async def test_file_operations():
     
     try:
         # Test basic file operations
-        test_file = Path(tempfile.mktemp(suffix='.py'))
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as tmp:
+            test_file = Path(tmp.name)
         test_content = '''def hello_world():
     """Simple test function"""
     return "Hello, World!"
