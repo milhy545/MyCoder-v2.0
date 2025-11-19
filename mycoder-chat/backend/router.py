@@ -21,7 +21,7 @@ class MiniOrchestrator:
         ],
         'research': [
             r'\b(find|search|what is|explain|research|zjisti|najdi)\b',
-            r'\b(latest|news|update|novinky).*(on|about|o|v)\b',
+            r'\b(latest|news|update|novinky)\b',  # Flexibilnější - matchuje i "latest news in..."
             r'\b(how to|jak|proč|why)\b'
         ],
         'transcribe': [
