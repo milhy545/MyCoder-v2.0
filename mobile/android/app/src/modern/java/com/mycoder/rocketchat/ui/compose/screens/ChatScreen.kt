@@ -16,6 +16,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mycoder.rocketchat.data.model.Message
+import com.mycoder.rocketchat.ui.compose.components.TextToSpeechButton
+import com.mycoder.rocketchat.ui.compose.components.VoiceInputButton
 import com.mycoder.rocketchat.ui.viewmodel.ChatViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -199,7 +201,9 @@ fun MessageItem(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    Row {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         if (message.aiCost != null) {
                             Text(
                                 text = "$${String.format("%.4f", message.aiCost)}",
@@ -207,6 +211,14 @@ fun MessageItem(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(modifier = Modifier.width(4.dp))
+                        }
+
+                        // Text-to-Speech button for AI messages
+                        if (message.isAiGenerated) {
+                            TextToSpeechButton(
+                                text = message.message,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
 
                         IconButton(onClick = onStarClick, modifier = Modifier.size(20.dp)) {
@@ -242,8 +254,15 @@ fun MessageInput(
                 .padding(8.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
+            // Voice input button
+            VoiceInputButton(
+                onTextRecognized = onTextChange,
+                enabled = !isSending
+            )
+
+            // AI Query button
             IconButton(onClick = onAiClick) {
                 Icon(
                     Icons.Default.SmartToy,
@@ -252,15 +271,17 @@ fun MessageInput(
                 )
             }
 
+            // Text input
             OutlinedTextField(
                 value = text,
                 onValueChange = onTextChange,
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("Message...") },
+                placeholder = { Text("Message or speak...") },
                 maxLines = 4,
                 enabled = !isSending
             )
 
+            // Send button
             IconButton(
                 onClick = onSend,
                 enabled = text.isNotBlank() && !isSending

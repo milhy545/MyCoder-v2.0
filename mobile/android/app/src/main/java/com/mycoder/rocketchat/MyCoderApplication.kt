@@ -9,6 +9,8 @@ import com.mycoder.rocketchat.data.local.MyCoderDatabase
 import com.mycoder.rocketchat.data.repository.ChatRepository
 import com.mycoder.rocketchat.network.MyCoderApiClient
 import com.mycoder.rocketchat.network.RocketChatWebSocket
+import com.mycoder.rocketchat.service.SpeechRecognitionService
+import com.mycoder.rocketchat.service.TextToSpeechService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -48,6 +50,15 @@ class MyCoderApplication : Application(), Configuration.Provider {
 
     val chatRepository: ChatRepository by lazy {
         ChatRepository.getInstance(database, apiClient, webSocket)
+    }
+
+    // Voice services
+    val speechRecognition: SpeechRecognitionService by lazy {
+        SpeechRecognitionService.getInstance(this)
+    }
+
+    val textToSpeech: TextToSpeechService by lazy {
+        TextToSpeechService.getInstance(this)
     }
 
     override fun attachBaseContext(base: Context) {

@@ -79,6 +79,19 @@
             app:layout_constraintTop_toTopOf="@id/message_time" />
 
         <ImageButton
+            android:id="@+id/speak_button"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_lock_silent_mode_off"
+            android:contentDescription="Play audio"
+            android:visibility="gone"
+            app:layout_constraintStart_toEndOf="@id/ai_cost"
+            app:layout_constraintTop_toTopOf="@id/message_time"
+            app:layout_constraintBottom_toBottomOf="@id/message_time" />
+
+        <ImageButton
             android:id="@+id/star_button"
             android:layout_width="20dp"
             android:layout_height="20dp"
@@ -86,7 +99,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/btn_star_big_off"
             android:contentDescription="@string/star"
-            app:layout_constraintStart_toEndOf="@id/ai_cost"
+            app:layout_constraintStart_toEndOf="@id/speak_button"
             app:layout_constraintTop_toTopOf="@id/message_time"
             app:layout_constraintBottom_toBottomOf="@id/message_time" />
 
