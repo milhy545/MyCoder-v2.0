@@ -16,19 +16,27 @@ echo -e "${BLUE}  WezTerm Wizard Tester${NC}"
 echo -e "${BLUE}════════════════════════════════════════════════${NC}"
 echo ""
 
-# Detect if running in WezTerm
-if [ -z "$WEZTERM_PANE" ]; then
-    echo -e "${YELLOW}⚠️  Nejste ve WezTerm session!${NC}"
-    echo ""
-    echo "Tento script funguje pouze když:"
-    echo "  1. Máte WezTerm nainstalovaný (flatpak nebo nativní)"
-    echo "  2. Spustíte ho z WezTerm terminálu"
-    echo ""
-    echo "Pokračuji pomocí flatpak příkazu..."
-    WEZTERM_CMD="flatpak run --command=wezterm org.wezfurlong.wezterm cli"
-else
-    echo -e "${GREEN}✅ WezTerm session detekována (pane: $WEZTERM_PANE)${NC}"
+# Detect WezTerm CLI command (flatpak vs native)
+if command -v wezterm &> /dev/null; then
+    # Native WezTerm installation
     WEZTERM_CMD="wezterm cli"
+    echo -e "${GREEN}✅ Nativní WezTerm detekován${NC}"
+elif flatpak list 2>/dev/null | grep -q wezterm; then
+    # Flatpak WezTerm installation
+    WEZTERM_CMD="flatpak run --command=wezterm org.wezfurlong.wezterm cli"
+    echo -e "${GREEN}✅ WezTerm flatpak detekován${NC}"
+else
+    echo -e "${RED}❌ WezTerm není nainstalován!${NC}"
+    echo ""
+    echo "Nainstalujte WezTerm:"
+    echo "  Flatpak: flatpak install flathub org.wezfurlong.wezterm"
+    echo "  Nativní: https://wezfurlong.org/wezterm/install/linux.html"
+    exit 1
+fi
+
+# Check if running in WezTerm session
+if [ -n "$WEZTERM_PANE" ]; then
+    echo -e "${BLUE}📍 Aktuální pane: $WEZTERM_PANE${NC}"
 fi
 
 echo ""

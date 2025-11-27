@@ -8,6 +8,8 @@ Interactive wizard that tests and configures the dictation application.
 import logging
 import sys
 import time
+import subprocess
+import re
 from typing import Optional, Tuple
 from pathlib import Path
 
@@ -31,7 +33,67 @@ class SetupWizard:
         self.config = DictationConfig()
         self.config_manager = ConfigManager()
         self.selected_device = None
+        self.selected_device_name = None
         self.optimal_threshold = 0.01
+
+    def _get_pulseaudio_source_name(self) -> Optional[str]:
+        """Get PulseAudio/PipeWire source name for selected device."""
+        try:
+            # List all sources
+            result = subprocess.run(
+                ["pactl", "list", "sources", "short"],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+
+            # Try to match device name (alsa_input usually)
+            for line in result.stdout.splitlines():
+                if "alsa_input" in line and "analog-stereo" in line:
+                    return line.split()[1]  # Source name
+
+            return None
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return None
+
+    def _get_mic_volume(self) -> Optional[int]:
+        """Get current microphone volume (0-100%)."""
+        source = self._get_pulseaudio_source_name()
+        if not source:
+            return None
+
+        try:
+            result = subprocess.run(
+                ["pactl", "get-source-volume", source],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+
+            # Parse: "Volume: front-left: 78643 / 120% / 4.75 dB"
+            match = re.search(r'(\d+)%', result.stdout)
+            if match:
+                return int(match.group(1))
+
+            return None
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return None
+
+    def _set_mic_volume(self, percent: int) -> bool:
+        """Set microphone volume (0-150%)."""
+        source = self._get_pulseaudio_source_name()
+        if not source:
+            return False
+
+        try:
+            subprocess.run(
+                ["pactl", "set-source-volume", source, f"{percent}%"],
+                check=True,
+                capture_output=True
+            )
+            return True
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return False
 
     def print_header(self, text: str, char: str = "═") -> None:
         """Print formatted header."""
@@ -136,21 +198,36 @@ class SetupWizard:
             return False
 
     def test_microphone_level(self) -> Tuple[bool, float]:
-        """Test microphone recording level with live VU meter."""
-        self.print_step(2, "Test hlasitosti mikrofonu")
+        """Test microphone recording level with automatic calibration."""
+        self.print_step(2, "Automatická kalibrace mikrofonu")
 
-        while True:  # Loop until user is satisfied
-            print("Za chvíli začne test nahrávání.")
-            print("Budete vidět živý VU metr úrovně zvuku.")
-            print("")
-            print("🎯 CÍLE:")
-            print("  • Mluvte normální hlasitostí (jako při běžném hovoru)")
-            print("  • Optimální úroveň: 30-70% (zelená zóna)")
-            print("  • Příliš nízké = špatné rozpoznávání")
-            print("  • Příliš vysoké = těžké rozpoznání ticha")
+        # Check if we can control mic volume
+        current_volume = self._get_mic_volume()
+        can_auto_adjust = current_volume is not None
+
+        if can_auto_adjust:
+            print(f"📊 Aktuální hlasitost mikrofonu: {current_volume}%")
             print("")
 
-            input("Připravte se a stiskněte Enter...")
+        print("🎯 CÍL: Najít optimální hlasitost pro rozpoznávání řeči")
+        print("")
+        print("📝 Proces:")
+        print("  1. Nahraji 5 sekund vašeho hlasu")
+        print("  2. Analyzuji úroveň zvuku")
+        print("  3. Automaticky upravím hlasitost pokud je potřeba")
+        print("  4. Opakuji dokud není optimální (30-70%)")
+        print("")
+
+        input("Připravte se mluvit a stiskněte Enter...")
+
+        attempt = 0
+        max_attempts = 5  # Prevent infinite loop
+
+        while attempt < max_attempts:
+            attempt += 1
+
+            if attempt > 1:
+                print(f"\n🔄 Pokus {attempt}/{max_attempts}")
 
             print("\n🎤 NAHRÁVÁM 5 SEKUND - MLUVTE NYNÍ!\n")
 
@@ -207,46 +284,94 @@ class SetupWizard:
                 max_percent = min(100, (max_level / 0.5) * 100)
                 avg_percent = min(100, (avg_level / 0.5) * 100)
 
-                # Analysis
+                # Show analysis
                 print(f"\n📊 Analýza:")
                 print(f"  Maximální úroveň: {max_percent:.1f}%")
                 print(f"  Průměrná úroveň:  {avg_percent:.1f}%")
+
+                # Calculate optimal threshold (as percentage for user)
+                threshold_percent = (avg_level * 1.5 / 0.5) * 100
+                print(f"  Práh ticha: {threshold_percent:.1f}%")
                 print("")
 
-                # Determine status and recommendation
-                if max_percent < 20:
-                    print("❌ MIKROFON JE PŘÍLIŠ TICHÝ!")
-                    print("   → Zvyšte hlasitost mikrofonu v systémových nastaveních")
-                    print("   → Nebo mluvte blíž k mikrofonu")
+                # Determine if in optimal range (30-70%)
+                if 30 <= max_percent <= 70:
+                    # OPTIMAL!
+                    print("🎉 ✅ PERFEKTNÍ! Hlasitost je v optimální zóně!")
                     print("")
-                    retry = input("Chcete zkusit test znovu? (a/n): ").strip().lower()
-                    if retry != 'a':
-                        self.optimal_threshold = 0.005
-                        return False, self.optimal_threshold
-                    continue  # Repeat test
+                    self.optimal_threshold = avg_level * 1.5
 
-                elif max_percent > 85:
-                    print("⚠️  MIKROFON JE HODNĚ HLASITÝ!")
-                    print("   → Doporučuji snížit hlasitost na 70-80%")
-                    print("")
-                    retry = input("Chcete zkusit test znovu po úpravě? (a/n): ").strip().lower()
-                    if retry != 'a':
-                        self.optimal_threshold = max_level * 0.1  # 10% of max
-                        return True, self.optimal_threshold
-                    continue  # Repeat test
+                    if can_auto_adjust:
+                        final_volume = self._get_mic_volume()
+                        print(f"💾 Optimální hlasitost mikrofonu: {final_volume}%")
 
-                else:
-                    # Optimal range (20-85%)
-                    print("✅ Hlasitost mikrofonu je v pořádku!")
-                    print("")
-                    self.optimal_threshold = avg_level * 1.5  # 1.5x průměr jako práh
-                    print(f"💡 Doporučený práh ticha: {self.optimal_threshold:.3f}")
                     print("")
                     return True, self.optimal_threshold
+
+                elif max_percent < 30:
+                    # TOO QUIET
+                    print(f"🔴 Příliš tiché ({max_percent:.1f}% < 30%)")
+
+                    if can_auto_adjust:
+                        current_vol = self._get_mic_volume()
+                        # Calculate needed increase (aim for 50%)
+                        needed_vol = int(current_vol * (50 / max_percent)) if max_percent > 0 else current_vol + 20
+                        needed_vol = min(150, needed_vol)  # Cap at 150%
+
+                        print(f"🔧 Automaticky zvyšuji z {current_vol}% na {needed_vol}%...")
+                        if self._set_mic_volume(needed_vol):
+                            print("✅ Hlasitost upravena, zkusím znovu...")
+                            time.sleep(1)
+                            continue
+                        else:
+                            print("⚠️  Nepodařilo se upravit automaticky")
+
+                    print("   → Zvyšte hlasitost mikrofonu v systému")
+                    print("   → Nebo mluvte blíž k mikrofonu")
+                    print("")
+
+                    if input("Zkusit znovu? (a/n): ").strip().lower() == 'a':
+                        continue
+                    else:
+                        self.optimal_threshold = 0.005
+                        return False, self.optimal_threshold
+
+                else:
+                    # TOO LOUD (>70%)
+                    print(f"🟠 Příliš hlasité ({max_percent:.1f}% > 70%)")
+
+                    if can_auto_adjust:
+                        current_vol = self._get_mic_volume()
+                        # Calculate needed decrease (aim for 50%)
+                        needed_vol = int(current_vol * (50 / max_percent))
+                        needed_vol = max(20, needed_vol)  # Min 20%
+
+                        print(f"🔧 Automaticky snižuji z {current_vol}% na {needed_vol}%...")
+                        if self._set_mic_volume(needed_vol):
+                            print("✅ Hlasitost upravena, zkusím znovu...")
+                            time.sleep(1)
+                            continue
+                        else:
+                            print("⚠️  Nepodařilo se upravit automaticky")
+
+                    print("   → Snižte hlasitost mikrofonu na 50-70%")
+                    print("")
+
+                    if input("Zkusit znovu? (a/n): ").strip().lower() == 'a':
+                        continue
+                    else:
+                        self.optimal_threshold = max_level * 0.1
+                        return True, self.optimal_threshold
 
             except Exception as e:
                 print(f"\n❌ Chyba při testu nahrávání: {e}")
                 return False, 0.01
+
+        # Max attempts reached
+        print(f"\n⚠️  Dosaženo maximálního počtu pokusů ({max_attempts})")
+        print("Pokračuji s aktuálním nastavením...")
+        self.optimal_threshold = avg_level * 1.5 if avg_level > 0 else 0.01
+        return True, self.optimal_threshold
 
     def test_speech_recognition(self) -> bool:
         """Test speech recognition with tiny model."""
@@ -309,12 +434,51 @@ class SetupWizard:
 
                 correct = input("Je text správně rozpoznán? (a/n): ").strip().lower()
                 if correct == 'a':
-                    print("✅ Skvělé! Rozpoznávání funguje!")
+                    print("✅ Skvělé! Tiny model funguje dobře!")
                     return True
                 else:
                     print("⚠️  Text nebyl rozpoznán správně.")
-                    print("💡 Tip: Zkuste model 'base' nebo 'small' pro lepší přesnost")
-                    return True  # Still success, just not perfect
+                    print("")
+                    print("🔄 Zkusím automaticky s lepším modelem 'base'...")
+                    print("   (Je větší, ale přesnější)")
+                    print("")
+
+                    # Try with base model
+                    try:
+                        print("🔄 Načítám Whisper model (base)...")
+                        transcriber_base = WhisperTranscriber(
+                            provider=WhisperProvider.LOCAL,
+                            local_model="base",
+                            language="cs",
+                        )
+
+                        print("✅ Model načten!")
+                        print("🔄 Přepisuji znovu s base modelem...")
+
+                        text_base = transcriber_base.transcribe(audio_data)
+
+                        if text_base:
+                            print(f"\n✅ NOVÝ ROZPOZNANÝ TEXT (base model):")
+                            print(f"\n  📝 \"{text_base}\"\n")
+
+                            correct_base = input("Je tento text správně? (a/n): ").strip().lower()
+                            if correct_base == 'a':
+                                print("✅ Skvělé! Base model funguje lépe!")
+                                print("💡 Doporučuji použít model 'base' místo 'tiny'")
+                                return True
+                            else:
+                                print("⚠️  Ani base model není dokonalý.")
+                                print("💡 Tip: Můžete zkusit model 'small', ale je pomalejší")
+                                return True
+                        else:
+                            print("❌ Ani base model nerozpoznal text")
+                            return True
+
+                    except Exception as e:
+                        print(f"⚠️  Nepodařilo se načíst base model: {e}")
+                        print("💡 Tip: Zkuste model 'base' nebo 'small' při spuštění aplikace")
+                        return True
+
             else:
                 print("❌ Nepodařilo se rozpoznat žádný text")
                 return False
@@ -397,8 +561,11 @@ class SetupWizard:
         print()
 
         model_choice = input("Vyberte model (1-3) [2]: ").strip()
+        if model_choice == "" or model_choice not in ["1", "2", "3"]:
+            model_choice = "2"  # Default to base
+
         model_map = {"1": "tiny", "2": "base", "3": "small"}
-        self.config.whisper.local_model = model_map.get(model_choice, "base")
+        self.config.whisper.local_model = model_map[model_choice]
 
         print(f"  ✅ Vybrán model: {self.config.whisper.local_model}")
         print()
@@ -408,17 +575,44 @@ class SetupWizard:
         print("  [1] Ctrl+Alt+Space (DOPORUČENO)")
         print("  [2] Ctrl+Shift+D")
         print("  [3] Ctrl+Alt+D")
+        print("  [4] Vlastní zkratka")
         print()
 
-        hotkey_choice = input("Vyberte zkratku (1-3) [1]: ").strip()
+        hotkey_choice = input("Vyberte zkratku (1-4) [1]: ").strip()
+        if hotkey_choice == "" or hotkey_choice not in ["1", "2", "3", "4"]:
+            hotkey_choice = "1"  # Default
+
         hotkey_map = {
             "1": ["ctrl", "alt", "space"],
             "2": ["ctrl", "shift", "d"],
             "3": ["ctrl", "alt", "d"],
         }
-        self.config.hotkey.combination = hotkey_map.get(hotkey_choice, ["ctrl", "alt", "space"])
 
-        print(f"  ✅ Vybrána zkratka: {'+'.join(self.config.hotkey.combination)}")
+        if hotkey_choice == "4":
+            # Custom hotkey
+            print("")
+            print("📝 Zadejte vlastní klávesovou zkratku:")
+            print("   Format: ctrl+alt+key nebo ctrl+shift+key")
+            print("   Příklad: ctrl+alt+h")
+            print("")
+            custom_hotkey = input("Vlastní zkratka: ").strip().lower()
+
+            if custom_hotkey:
+                # Parse custom hotkey
+                keys = custom_hotkey.replace(" ", "").split("+")
+                if len(keys) >= 2:
+                    self.config.hotkey.combination = keys
+                    print(f"  ✅ Vybrána vlastní zkratka: {'+'.join(keys)}")
+                else:
+                    print("  ⚠️  Neplatný formát, použiji výchozí (ctrl+alt+space)")
+                    self.config.hotkey.combination = ["ctrl", "alt", "space"]
+            else:
+                print("  ⚠️  Prázdný vstup, použiji výchozí (ctrl+alt+space)")
+                self.config.hotkey.combination = ["ctrl", "alt", "space"]
+        else:
+            self.config.hotkey.combination = hotkey_map[hotkey_choice]
+            print(f"  ✅ Vybrána zkratka: {'+'.join(self.config.hotkey.combination)}")
+
         print()
 
     def save_configuration(self) -> bool:
