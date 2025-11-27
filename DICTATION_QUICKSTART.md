@@ -4,7 +4,21 @@
 
 ## ⚡ Rychlá instalace (5 minut)
 
-### 1. Systémové závislosti
+### Nejjednodušší cesta - Instalační skript:
+
+```bash
+./install_dictation.sh
+```
+
+Skript automaticky:
+- ✅ Detekuje vaši Linux distribuci
+- ✅ Nainstaluje systémové závislosti (xdotool, portaudio, PyQt5, ffmpeg)
+- ✅ Nainstaluje Poetry a Python balíčky
+- ✅ Nabídne spuštění průvodce nastavením
+
+### Nebo manuálně:
+
+#### 1. Systémové závislosti
 
 ```bash
 # Ubuntu/Debian
@@ -18,7 +32,7 @@ sudo dnf install -y xdotool portaudio-devel python3-qt5 ffmpeg
 sudo pacman -S xdotool portaudio python-pyqt5 ffmpeg
 ```
 
-### 2. Python závislosti
+#### 2. Python závislosti
 
 ```bash
 # V MyCoder-v2.0 adresáři
@@ -28,11 +42,25 @@ poetry install --extras speech
 pip install sounddevice numpy PyQt5 openai-whisper pynput python-xlib pyperclip
 ```
 
-### 3. Spustit!
+#### 3. Průvodce nastavením (🆕 DOPORUČENO!)
 
 ```bash
-# Použít předpřipravenou konfiguraci pro lokální režim
-poetry run dictation run --config dictation_config_local.json
+poetry run dictation setup
+```
+
+Interaktivní wizard vás provede:
+1. **🎙️ Test mikrofonu** - Detekce audio zařízení
+2. **📊 Test hlasitosti** - Živý VU metr + optimální práh ticha
+3. **🗣️ Test rozpoznávání** - Zkouška Whisper s češtinou
+4. **⌨️ Test vkládání** - Ověření text injection
+5. **⚙️ Konfigurace** - Výběr modelu a klávesové zkratky
+6. **💾 Automatické uložení** - Optimální config
+
+#### 4. Nebo spustit bez wizardu:
+
+```bash
+# Použít předpřipravenou konfiguraci
+poetry run dictation run --config dictation_config_tuned.json
 
 # Nebo jednoduše
 poetry run dictation run --provider local --model base
@@ -42,9 +70,11 @@ poetry run dictation run --provider local --model base
 
 ## 🎯 První použití
 
-1. **Klikněte na 🎤** nebo stiskněte **Ctrl+Shift+Space**
+1. **Klikněte na 🎤** nebo stiskněte **Ctrl+Alt+Space** (nebo vaši zvolenou zkratku)
 2. Tlačítko zčervená 🔴 - **mluvte česky**
-3. Po ~1.5s ticha se **text automaticky vloží**
+3. Po ~2s ticha se **text automaticky vloží**
+
+> **💡 Tip**: Pokud jste použili průvodce nastavením, optimální parametry už jsou nastaveny!
 
 ### Test ve 3 krocích:
 
@@ -129,24 +159,30 @@ poetry run dictation run --provider local --model tiny
 
 ### Výchozí konfigurace
 
-Už je připravená v `dictation_config_local.json`:
+Po spuštění průvodce se uloží do: `~/.config/mycoder/dictation_config.json`
+
+Nebo použijte připravenou: `dictation_config_tuned.json`:
 
 ```json
 {
   "whisper": {
     "provider": "local",
-    "local_model": "base",
+    "local_model": "tiny",
     "language": "cs"
   },
   "hotkey": {
-    "combination": ["ctrl", "shift", "space"]
+    "combination": ["ctrl", "alt", "space"]
+  },
+  "audio": {
+    "silence_threshold": 0.03,
+    "silence_duration": 2.0
   }
 }
 ```
 
 ### Změna klávesové zkratky
 
-Upravte `dictation_config_local.json`:
+Upravte config soubor:
 
 ```json
 {
@@ -156,11 +192,10 @@ Upravte `dictation_config_local.json`:
 }
 ```
 
-Nebo přes CLI:
+Nebo spusťte průvodce znovu:
 
 ```bash
-# Bohužel CLI nepodporuje custom hotkey zatím
-# Musíte upravit config soubor
+poetry run dictation setup
 ```
 
 ### Změna jazyka

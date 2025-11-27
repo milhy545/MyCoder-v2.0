@@ -329,5 +329,33 @@ def inject(text: str):
         return 1
 
 
+@cli.command()
+def setup():
+    """Run interactive setup wizard for first-time configuration."""
+    try:
+        from .setup_wizard import SetupWizard
+
+        wizard = SetupWizard()
+        should_launch = wizard.run()
+
+        if should_launch:
+            # User wants to launch after setup
+            click.echo("\n🚀 Spouštím aplikaci...")
+            import subprocess
+            subprocess.Popen(
+                ["poetry", "run", "dictation", "run"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            click.echo("✅ Aplikace spuštěna na pozadí")
+            click.echo("   Měli byste vidět zelené tlačítko 🎤")
+
+        return 0
+
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        return 1
+
+
 if __name__ == '__main__':
     sys.exit(main())

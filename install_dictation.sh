@@ -69,37 +69,48 @@ echo ""
 echo "✅ Python balíčky nainstalovány"
 echo ""
 
-# Test instalace
-echo "🧪 Testování instalace..."
-echo ""
-
-if poetry run dictation test; then
-    echo ""
-    echo "✅ Všechny testy prošly!"
-else
-    echo ""
-    echo "⚠️  Některé testy selhaly, ale aplikace může stále fungovat"
-fi
-
-echo ""
+# Spustit setup wizard
 echo "╔════════════════════════════════════════════════╗"
-echo "║              ✅ INSTALACE DOKONČENA            ║"
+echo "║         🧙 PRŮVODCE NASTAVENÍM                 ║"
 echo "╚════════════════════════════════════════════════╝"
 echo ""
-echo "🚀 Spuštění aplikace:"
+echo "Nyní vás provedu interaktivním nastavením, kde:"
+echo "  • Otestujeme mikrofon a hlasitost"
+echo "  • Vyzkoušíme rozpoznávání řeči"
+echo "  • Nastavíme optimální konfiguraci"
 echo ""
-echo "   poetry run dictation run --provider local --model base"
-echo ""
-echo "📖 Více informací:"
-echo "   - Quick Start: cat DICTATION_QUICKSTART.md"
-echo "   - Kompletní dokumentace: cat docs/DICTATION_APP.md"
-echo ""
-echo "🎤 První použití:"
-echo "   1. Spusťte aplikaci"
-echo "   2. Klikněte na 🎤 tlačítko nebo stiskněte Ctrl+Shift+Space"
-echo "   3. Mluvte"
-echo "   4. Po ~1.5s ticha se text vloží automaticky"
-echo ""
-echo "💡 Tip: První spuštění stáhne Whisper model (~74MB)"
+
+read -p "Spustit průvodce nastavením? (a/n) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Aa]$ ]]; then
+    echo ""
+    export PATH="$HOME/.local/bin:$PATH"
+    poetry run dictation setup
+
+    echo ""
+    echo "╔════════════════════════════════════════════════╗"
+    echo "║              ✅ INSTALACE DOKONČENA            ║"
+    echo "╚════════════════════════════════════════════════╝"
+else
+    echo ""
+    echo "⏭️  Průvodce přeskočen"
+    echo ""
+    echo "Můžete ho spustit později příkazem:"
+    echo "   poetry run dictation setup"
+    echo ""
+    echo "╔════════════════════════════════════════════════╗"
+    echo "║              ✅ INSTALACE DOKONČENA            ║"
+    echo "╚════════════════════════════════════════════════╝"
+    echo ""
+    echo "🚀 Spuštění aplikace:"
+    echo "   poetry run dictation run --provider local --model base"
+    echo ""
+    echo "📖 Více informací:"
+    echo "   - Quick Start: cat DICTATION_QUICKSTART.md"
+    echo "   - Kompletní dokumentace: cat docs/DICTATION_APP.md"
+    echo ""
+    echo "💡 Tip: První spuštění stáhne Whisper model (~74MB)"
+fi
+
 echo ""
 echo "Enjoy! 🎉"
