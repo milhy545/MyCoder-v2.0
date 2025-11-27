@@ -74,10 +74,21 @@ class SetupWizard:
 
         try:
             devices = sd.query_devices()
-            input_devices = [
-                (idx, dev) for idx, dev in enumerate(devices)
-                if dev['max_input_channels'] > 0
-            ]
+
+            # Filter only real hardware devices (hw:X,Y) and system default
+            input_devices = []
+            for idx, dev in enumerate(devices):
+                if dev['max_input_channels'] > 0:
+                    name = dev['name']
+                    # Include: hardware devices (hw:), pulse, pipewire, or default
+                    # Exclude: virtual ALSA plugins (sysdefault, lavrate, samplerate, etc.)
+                    if any([
+                        'hw:' in name,
+                        name == 'default',
+                        name == 'pulse',
+                        name == 'pipewire',
+                    ]):
+                        input_devices.append((idx, dev))
 
             if not input_devices:
                 print("❌ Nebylo nalezeno žádné vstupní audio zařízení!")
@@ -128,82 +139,114 @@ class SetupWizard:
         """Test microphone recording level with live VU meter."""
         self.print_step(2, "Test hlasitosti mikrofonu")
 
-        print("Za chvíli začne test nahrávání.")
-        print("Budete vidět živý VU metr úrovně zvuku.")
-        print("")
-        print("✅ Mluvte normální hlasitostí")
-        print("✅ Sledujte, jestli se ukazatel pohybuje")
-        print("✅ Optimální je když dosahuje 30-70%")
-        print("")
-
-        input("Připravte se a stiskněte Enter...")
-
-        print("\n🎤 NAHRÁVÁM 5 SEKUND - MLUVTE NYNÍ!\n")
-
-        # Recording parameters
-        duration = 5
-        sample_rate = 16000
-        max_level = 0.0
-        avg_level = 0.0
-        samples_count = 0
-
-        def callback(indata, frames, time_info, status):
-            nonlocal max_level, avg_level, samples_count
-
-            # Calculate RMS level
-            rms = np.sqrt(np.mean(indata**2))
-            max_level = max(max_level, rms)
-            avg_level += rms
-            samples_count += 1
-
-            # VU meter
-            bar_length = 50
-            level_percent = min(100, rms * 1000)  # Scale for display
-            filled = int(bar_length * level_percent / 100)
-            bar = '█' * filled + '░' * (bar_length - filled)
-
-            print(f"\r[{bar}] {level_percent:5.1f}%", end='', flush=True)
-
-        try:
-            with sd.InputStream(
-                device=self.selected_device,
-                channels=1,
-                samplerate=sample_rate,
-                callback=callback,
-            ):
-                time.sleep(duration)
-
-            print("\n")  # New line after VU meter
-
-            avg_level = avg_level / samples_count if samples_count > 0 else 0
-
-            # Analysis
-            print(f"\n📊 Analýza:")
-            print(f"  Maximální úroveň: {max_level * 1000:.1f}%")
-            print(f"  Průměrná úroveň:  {avg_level * 1000:.1f}%")
+        while True:  # Loop until user is satisfied
+            print("Za chvíli začne test nahrávání.")
+            print("Budete vidět živý VU metr úrovně zvuku.")
+            print("")
+            print("🎯 CÍLE:")
+            print("  • Mluvte normální hlasitostí (jako při běžném hovoru)")
+            print("  • Optimální úroveň: 30-70% (zelená zóna)")
+            print("  • Příliš nízké = špatné rozpoznávání")
+            print("  • Příliš vysoké = těžké rozpoznání ticha")
             print("")
 
-            if max_level < 0.01:
-                print("❌ MIKROFON JE PŘÍLIŠ TICHÝ!")
-                print("   → Zvyšte hlasitost mikrofonu v systémových nastaveních")
-                print("   → Nebo mluvte blíž k mikrofonu")
-                self.optimal_threshold = 0.005
-                return False, self.optimal_threshold
-            elif max_level > 0.5:
-                print("⚠️  Mikrofon je hodně hlasitý")
-                print("   → Můžete snížit hlasitost pro lepší rozpoznávání ticha")
-                self.optimal_threshold = 0.05
-            else:
-                print("✅ Hlasitost mikrofonu je v pořádku!")
-                self.optimal_threshold = avg_level * 1.5  # 1.5x průměr jako práh
+            input("Připravte se a stiskněte Enter...")
 
-            print(f"\n💡 Doporučený práh ticha: {self.optimal_threshold:.3f}")
+            print("\n🎤 NAHRÁVÁM 5 SEKUND - MLUVTE NYNÍ!\n")
 
-            return True, self.optimal_threshold
+            # Recording parameters
+            duration = 5
+            sample_rate = 16000
+            max_level = 0.0
+            avg_level = 0.0
+            samples_count = 0
 
-        except Exception as e:
-            print(f"\n❌ Chyba při testu nahrávání: {e}")
-            return False, 0.01
+            def callback(indata, frames, time_info, status):
+                nonlocal max_level, avg_level, samples_count
+
+                # Calculate RMS level (0.0 to 1.0)
+                rms = np.sqrt(np.mean(indata**2))
+                max_level = max(max_level, rms)
+                avg_level += rms
+                samples_count += 1
+
+                # VU meter - convert to percentage (0-100%)
+                # Typical speaking voice is around 0.01-0.5 RMS
+                # We'll scale so 0.5 RMS = 100%
+                bar_length = 50
+                level_percent = min(100, (rms / 0.5) * 100)
+                filled = int(bar_length * level_percent / 100)
+                bar = '█' * filled + '░' * (bar_length - filled)
+
+                # Color coding based on level
+                if level_percent < 20:
+                    status_icon = "🔴"  # Too quiet
+                elif level_percent < 30:
+                    status_icon = "🟡"  # Acceptable but low
+                elif level_percent <= 70:
+                    status_icon = "🟢"  # Optimal
+                else:
+                    status_icon = "🟠"  # Too loud
+
+                print(f"\r{status_icon} [{bar}] {level_percent:5.1f}%", end='', flush=True)
+
+            try:
+                with sd.InputStream(
+                    device=self.selected_device,
+                    channels=1,
+                    samplerate=sample_rate,
+                    callback=callback,
+                ):
+                    time.sleep(duration)
+
+                print("\n")  # New line after VU meter
+
+                avg_level = avg_level / samples_count if samples_count > 0 else 0
+
+                # Convert to percentage (0-100%)
+                max_percent = min(100, (max_level / 0.5) * 100)
+                avg_percent = min(100, (avg_level / 0.5) * 100)
+
+                # Analysis
+                print(f"\n📊 Analýza:")
+                print(f"  Maximální úroveň: {max_percent:.1f}%")
+                print(f"  Průměrná úroveň:  {avg_percent:.1f}%")
+                print("")
+
+                # Determine status and recommendation
+                if max_percent < 20:
+                    print("❌ MIKROFON JE PŘÍLIŠ TICHÝ!")
+                    print("   → Zvyšte hlasitost mikrofonu v systémových nastaveních")
+                    print("   → Nebo mluvte blíž k mikrofonu")
+                    print("")
+                    retry = input("Chcete zkusit test znovu? (a/n): ").strip().lower()
+                    if retry != 'a':
+                        self.optimal_threshold = 0.005
+                        return False, self.optimal_threshold
+                    continue  # Repeat test
+
+                elif max_percent > 85:
+                    print("⚠️  MIKROFON JE HODNĚ HLASITÝ!")
+                    print("   → Doporučuji snížit hlasitost na 70-80%")
+                    print("")
+                    retry = input("Chcete zkusit test znovu po úpravě? (a/n): ").strip().lower()
+                    if retry != 'a':
+                        self.optimal_threshold = max_level * 0.1  # 10% of max
+                        return True, self.optimal_threshold
+                    continue  # Repeat test
+
+                else:
+                    # Optimal range (20-85%)
+                    print("✅ Hlasitost mikrofonu je v pořádku!")
+                    print("")
+                    self.optimal_threshold = avg_level * 1.5  # 1.5x průměr jako práh
+                    print(f"💡 Doporučený práh ticha: {self.optimal_threshold:.3f}")
+                    print("")
+                    return True, self.optimal_threshold
+
+            except Exception as e:
+                print(f"\n❌ Chyba při testu nahrávání: {e}")
+                return False, 0.01
 
     def test_speech_recognition(self) -> bool:
         """Test speech recognition with tiny model."""
