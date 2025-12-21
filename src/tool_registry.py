@@ -20,6 +20,14 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Callable, Set
 from pathlib import Path
 
+try:
+    from .mcp_connector import MCPConnector
+except ImportError:
+    try:
+        from mcp_connector import MCPConnector  # type: ignore
+    except ImportError:
+        MCPConnector = None  # type: ignore
+
 logger = logging.getLogger(__name__)
 
 
@@ -311,8 +319,8 @@ class MCPTool(BaseTool):
         self.execution_count += 1
 
         try:
-            # Import MCP connector
-            from .mcp_connector import MCPConnector
+            if MCPConnector is None:
+                raise Exception("MCP connector not available")
 
             mcp_connector = MCPConnector()
 

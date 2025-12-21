@@ -19,6 +19,25 @@ sys.path.insert(0, str(repo_root))
 sys.path.insert(0, str(repo_root / "src"))
 
 
+def _alias_module(module_name: str) -> None:
+    """Ensure src.* module aliases resolve to the same module."""
+    try:
+        module = __import__(module_name)
+    except Exception:
+        return
+    sys.modules.setdefault(f"src.{module_name}", module)
+
+
+for _module_name in [
+    "api_providers",
+    "config_manager",
+    "tool_registry",
+    "enhanced_mycoder_v2",
+    "mcp_connector",
+]:
+    _alias_module(_module_name)
+
+
 @pytest.fixture(scope="session")
 def event_loop():
     """Create an instance of the default event loop for the test session."""

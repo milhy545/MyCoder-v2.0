@@ -26,7 +26,7 @@ COPY README.md LICENSE ./
 RUN poetry config virtualenvs.create false
 
 # Install dependencies
-RUN poetry install --no-dev
+RUN poetry install --only main
 
 # Create mycoder user
 RUN useradd -m -u 1000 mycoder && chown -R mycoder:mycoder /app

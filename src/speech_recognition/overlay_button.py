@@ -40,6 +40,7 @@ except ImportError:
     QCursor = None
 
 logger = logging.getLogger(__name__)
+BaseWidget = QWidget if PYQT_AVAILABLE else object
 
 
 class ButtonState(Enum):
@@ -51,7 +52,7 @@ class ButtonState(Enum):
     ERROR = "error"
 
 
-class OverlayButton(QWidget):
+class OverlayButton(BaseWidget):
     """
     Floating overlay button for speech recognition control.
 
