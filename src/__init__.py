@@ -85,7 +85,6 @@ from .tool_registry import (
     ToolRegistry,
     ToolExecutionContext,
     ToolResult,
-    ToolExecutionMode,
 )
 
 # Version info
@@ -124,7 +123,6 @@ __all__ = [
     "ToolRegistry",
     "ToolExecutionContext",
     "ToolResult",
-    "ToolExecutionMode",
     
     # Metadata
     "__version__",
