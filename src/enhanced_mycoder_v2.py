@@ -20,6 +20,7 @@ import os
 import socket
 import time
 import urllib.parse
+from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -88,7 +89,10 @@ class EnhancedMyCoderV2:
             config: Configuration dictionary for API providers and settings
         """
         self.working_directory = working_directory or Path.cwd()
-        self.config = config or {}
+        if config and is_dataclass(config):
+            self.config = asdict(config)
+        else:
+            self.config = config or {}
         self.session_store: Dict[str, Dict] = {}
         self.thermal_monitor = None
         self._initialized = False
@@ -140,60 +144,113 @@ class EnhancedMyCoderV2:
         """Initialize the multi-API provider system"""
         provider_configs = []
 
+        claude_config = self._get_section("claude_anthropic")
+        claude_enabled = claude_config.get(
+            "enabled", self.config.get("claude_anthropic_enabled", True)
+        )
+        claude_timeout = claude_config.get(
+            "timeout_seconds", self.config.get("claude_timeout_seconds", 30)
+        )
+        claude_max_retries = claude_config.get("max_retries", 3)
+        claude_model = claude_config.get(
+            "model", self.config.get("claude_model", "claude-3-5-sonnet-20241022")
+        )
+        claude_base_url = claude_config.get("base_url")
+        claude_api_key = claude_config.get("api_key") or os.getenv("ANTHROPIC_API_KEY")
+
         # Claude Anthropic API (Priority 1)
-        if self.config.get("claude_anthropic_enabled", True):
-            claude_config = APIProviderConfig(
+        if bool(claude_enabled):
+            claude_provider_config = APIProviderConfig(
                 provider_type=APIProviderType.CLAUDE_ANTHROPIC,
-                enabled=bool(os.getenv("ANTHROPIC_API_KEY")),
-                timeout_seconds=30,
+                enabled=True,
+                timeout_seconds=claude_timeout,
+                max_retries=claude_max_retries,
                 config={
-                    "api_key": os.getenv("ANTHROPIC_API_KEY"),
-                    "model": self.config.get(
-                        "claude_model", "claude-3-5-sonnet-20241022"
-                    ),
+                    "api_key": claude_api_key,
+                    "model": claude_model,
+                    "base_url": claude_base_url,
                 },
             )
-            provider_configs.append(claude_config)
+            provider_configs.append(claude_provider_config)
 
         # Claude OAuth (Priority 2)
-        if self.config.get("claude_oauth_enabled", True):
+        claude_oauth_config = self._get_section("claude_oauth")
+        claude_oauth_enabled = claude_oauth_config.get(
+            "enabled", self.config.get("claude_oauth_enabled", True)
+        )
+        claude_oauth_timeout = claude_oauth_config.get(
+            "timeout_seconds", self.config.get("claude_oauth_timeout_seconds", 45)
+        )
+        claude_oauth_max_retries = claude_oauth_config.get("max_retries", 3)
+        if bool(claude_oauth_enabled):
             oauth_config = APIProviderConfig(
                 provider_type=APIProviderType.CLAUDE_OAUTH,
                 enabled=True,  # Always try OAuth as fallback
-                timeout_seconds=45,
+                timeout_seconds=claude_oauth_timeout,
+                max_retries=claude_oauth_max_retries,
                 config={},
             )
             provider_configs.append(oauth_config)
 
         # Gemini API (Priority 3)
-        if self.config.get("gemini_enabled", True):
-            gemini_config = APIProviderConfig(
+        gemini_config = self._get_section("gemini")
+        gemini_enabled = gemini_config.get(
+            "enabled", self.config.get("gemini_enabled", True)
+        )
+        gemini_timeout = gemini_config.get(
+            "timeout_seconds", self.config.get("gemini_timeout_seconds", 30)
+        )
+        gemini_max_retries = gemini_config.get("max_retries", 3)
+        gemini_model = gemini_config.get(
+            "model", self.config.get("gemini_model", "gemini-1.5-pro")
+        )
+        gemini_api_key = gemini_config.get("api_key") or os.getenv("GEMINI_API_KEY")
+        if bool(gemini_enabled):
+            gemini_provider_config = APIProviderConfig(
                 provider_type=APIProviderType.GEMINI,
-                enabled=bool(os.getenv("GEMINI_API_KEY")),
-                timeout_seconds=30,
+                enabled=True,
+                timeout_seconds=gemini_timeout,
+                max_retries=gemini_max_retries,
                 config={
-                    "api_key": os.getenv("GEMINI_API_KEY"),
-                    "model": self.config.get("gemini_model", "gemini-1.5-pro"),
+                    "api_key": gemini_api_key,
+                    "model": gemini_model,
                 },
             )
-            provider_configs.append(gemini_config)
+            provider_configs.append(gemini_provider_config)
 
         # Ollama Local (Priority 4)
-        if self.config.get("ollama_local_enabled", True):
+        ollama_local_config = self._get_section("ollama_local")
+        ollama_local_enabled = ollama_local_config.get(
+            "enabled", self.config.get("ollama_local_enabled", True)
+        )
+        ollama_local_timeout = ollama_local_config.get(
+            "timeout_seconds", self.config.get("ollama_local_timeout_seconds", 60)
+        )
+        ollama_local_max_retries = ollama_local_config.get("max_retries", 2)
+        ollama_local_url = (
+            ollama_local_config.get("base_url")
+            or self.config.get("ollama_local_base_url")
+            or self.config.get("ollama_local_url", "http://localhost:11434")
+        )
+        ollama_local_model = ollama_local_config.get(
+            "model", self.config.get("ollama_local_model", "tinyllama")
+        )
+        if bool(ollama_local_enabled):
             local_ollama_config = APIProviderConfig(
                 provider_type=APIProviderType.OLLAMA_LOCAL,
                 enabled=True,
-                timeout_seconds=60,  # Longer timeout for local processing
+                timeout_seconds=ollama_local_timeout,  # Longer timeout for local processing
+                max_retries=ollama_local_max_retries,
                 config={
-                    "base_url": self.config.get("ollama_local_base_url")
-                    or self.config.get("ollama_local_url", "http://localhost:11434"),
-                    "model": self.config.get("ollama_local_model", "tinyllama"),
+                    "base_url": ollama_local_url,
+                    "model": ollama_local_model,
                 },
             )
             provider_configs.append(local_ollama_config)
 
         # Ollama Remote (Priority 5)
         remote_urls = self.config.get("ollama_remote_urls", [])
+        remote_model = self.config.get("ollama_remote_model", "tinyllama")
         for i, url in enumerate(remote_urls):
             remote_config = APIProviderConfig(
                 provider_type=APIProviderType.OLLAMA_REMOTE,
@@ -201,7 +258,7 @@ class EnhancedMyCoderV2:
                 timeout_seconds=45,
                 config={
                     "base_url": url,
-                    "model": self.config.get("ollama_remote_model", "tinyllama"),
+                    "model": remote_model,
                 },
             )
             provider_configs.append(remote_config)
@@ -213,13 +270,48 @@ class EnhancedMyCoderV2:
 
     async def _initialize_thermal_monitoring(self):
         """Initialize thermal monitoring for Q9550 systems"""
+        thermal_config = self._get_section("thermal")
+        thermal_enabled = thermal_config.get(
+            "enabled", self.config.get("thermal_enabled", True)
+        )
+        thermal_script = thermal_config.get(
+            "performance_script",
+            "/home/milhy777/Develop/Production/PowerManagement/scripts/performance_manager.sh",
+        )
+        thermal_settings = {
+            "enabled": bool(thermal_enabled),
+            "max_temp": thermal_config.get(
+                "max_temp", self.config.get("thermal_max_temp", 80)
+            ),
+            "critical_temp": thermal_config.get(
+                "critical_temp", self.config.get("thermal_critical_temp", 85)
+            ),
+            "check_interval": thermal_config.get(
+                "check_interval", self.config.get("thermal_check_interval", 30)
+            ),
+        }
+
+        if not thermal_settings["enabled"]:
+            self.thermal_monitor = {"enabled": False}
+            return
+
         try:
+            self.thermal_monitor = {
+                "enabled": True,
+                "script_path": thermal_script,
+            }
+
+            if self.provider_router:
+                await self.provider_router.configure_thermal_integration(
+                    thermal_settings
+                )
+
             # Check if PowerManagement system is available
             import subprocess
 
             result = subprocess.run(
                 [
-                    "/home/milhy777/Develop/Production/PowerManagement/scripts/performance_manager.sh",
+                    thermal_script,
                     "status",
                 ],
                 capture_output=True,
@@ -228,26 +320,13 @@ class EnhancedMyCoderV2:
             )
 
             if result.returncode == 0:
-                self.thermal_monitor = {
-                    "enabled": True,
-                    "script_path": "/home/milhy777/Develop/Production/PowerManagement/scripts/performance_manager.sh",
-                }
                 logger.info("Thermal monitoring enabled for Q9550 system")
-
-                # Configure thermal integration in providers
-                thermal_config = {
-                    "enabled": True,
-                    "max_temp": 80,
-                    "critical_temp": 85,
-                    "check_interval": 30,
-                }
-                await self.provider_router.configure_thermal_integration(thermal_config)
             else:
                 logger.info("Thermal monitoring not available")
 
         except Exception as e:
             logger.warning(f"Failed to initialize thermal monitoring: {e}")
-            self.thermal_monitor = {"enabled": False}
+            self.thermal_monitor = {"enabled": True, "script_path": thermal_script}
 
     async def _register_enhanced_tools(self):
         """Register enhanced tools for v2.0 functionality"""
@@ -342,11 +421,12 @@ class EnhancedMyCoderV2:
             # Prepare final response
             duration = time.time() - start_time
 
+            response_session_id = api_response.session_id or session_id
             response = {
                 "success": api_response.success,
                 "content": api_response.content,
                 "provider": api_response.provider.value,
-                "session_id": api_response.session_id,
+                "session_id": response_session_id,
                 "cost": api_response.cost,
                 "duration_seconds": duration,
                 "duration_ms": api_response.duration_ms,
@@ -357,6 +437,7 @@ class EnhancedMyCoderV2:
 
             if not api_response.success:
                 response["error"] = api_response.error
+                response["recovery_suggestions"] = self._get_recovery_suggestions()
 
             logger.info(
                 f"Request completed in {duration:.1f}s using {api_response.provider.value}"
@@ -474,9 +555,15 @@ class EnhancedMyCoderV2:
             except (TypeError, ValueError):
                 return override_host, 11434
 
-        if self.config.get("ollama_local_enabled", True):
-            local_url = self.config.get("ollama_local_base_url") or self.config.get(
-                "ollama_local_url", "http://localhost:11434"
+        local_config = self._get_section("ollama_local")
+        local_enabled = local_config.get(
+            "enabled", self.config.get("ollama_local_enabled", True)
+        )
+        if local_enabled:
+            local_url = (
+                local_config.get("base_url")
+                or self.config.get("ollama_local_base_url")
+                or self.config.get("ollama_local_url", "http://localhost:11434")
             )
             try:
                 parsed = urllib.parse.urlparse(local_url)
@@ -497,6 +584,13 @@ class EnhancedMyCoderV2:
                 pass
 
         return "1.1.1.1", 53
+
+    def _get_section(self, section_key: str) -> Dict[str, Any]:
+        """Return a configuration section as a dict."""
+        section = self.config.get(section_key, {})
+        if isinstance(section, dict):
+            return section
+        return {}
 
     def _check_network_status(
         self, host: Optional[str] = None, port: Optional[int] = None

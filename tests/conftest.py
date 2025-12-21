@@ -13,8 +13,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Add src directory to Python path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+# Add repository root and src directory to Python path
+repo_root = Path(__file__).parent.parent
+sys.path.insert(0, str(repo_root))
+sys.path.insert(0, str(repo_root / "src"))
 
 
 @pytest.fixture(scope="session")
@@ -163,6 +165,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "functional: mark test as a functional test")
     config.addinivalue_line("markers", "stress: mark test as a stress test")
     config.addinivalue_line("markers", "slow: mark test as slow running")
+    config.addinivalue_line("markers", "performance: mark test as performance test")
     config.addinivalue_line("markers", "network: mark test as requiring network access")
     config.addinivalue_line(
         "markers", "thermal: mark test as requiring Q9550 thermal system"
@@ -192,6 +195,11 @@ def pytest_runtest_setup(item):
     ):
         pytest.skip("Authentication tests skipped (use --run-auth to enable)")
 
+    if item.get_closest_marker("performance") and not item.config.getoption(
+        "--run-performance", default=False
+    ):
+        pytest.skip("Performance tests skipped (use --run-performance to enable)")
+
 
 def pytest_addoption(parser):
     """Add command-line options for pytest."""
@@ -218,4 +226,10 @@ def pytest_addoption(parser):
         action="store_true",
         default=False,
         help="Skip slow running tests",
+    )
+    parser.addoption(
+        "--run-performance",
+        action="store_true",
+        default=False,
+        help="Run performance tests",
     )

@@ -14,7 +14,7 @@ Features:
 import asyncio
 import logging
 import time
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Callable, Set
@@ -132,15 +132,13 @@ class BaseTool(ABC):
         self.total_execution_time = 0
         self.last_execution = 0
 
-    @abstractmethod
     async def execute(self, context: ToolExecutionContext, **kwargs) -> ToolResult:
         """Execute the tool with given context"""
-        pass
+        raise NotImplementedError("Tool execution not implemented")
 
-    @abstractmethod
     async def validate_context(self, context: ToolExecutionContext) -> bool:
         """Validate if tool can execute in given context"""
-        pass
+        raise NotImplementedError("Context validation not implemented")
 
     def can_execute_in_mode(self, mode: str) -> bool:
         """Check if tool can execute in given operational mode"""
@@ -221,6 +219,9 @@ class FileOperationTool(BaseTool):
         self.execution_count += 1
 
         try:
+            if operation not in {"read", "write", "list", "exists"}:
+                raise ValueError(f"Unsupported operation: {operation}")
+
             if not path:
                 raise ValueError("File path is required")
 
@@ -250,9 +251,6 @@ class FileOperationTool(BaseTool):
 
             elif operation == "exists":
                 result_data = file_path.exists()
-
-            else:
-                raise ValueError(f"Unsupported operation: {operation}")
 
             duration_ms = int((time.time() - start_time) * 1000)
             self.total_execution_time += duration_ms
@@ -639,7 +637,7 @@ class ToolRegistry:
             "name": tool.name,
             "category": tool.category.value,
             "availability": tool.availability.value,
-            "priority": tool.priority.value,
+            "priority": tool.priority.name.lower(),
             "capabilities": {
                 "requires_network": tool.capabilities.requires_network,
                 "requires_filesystem": tool.capabilities.requires_filesystem,

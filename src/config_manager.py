@@ -120,12 +120,14 @@ class ConfigManager:
         # Overlay file-based configuration
         file_config = self._load_file_config()
         if file_config:
-            config_dict.update(file_config)
+            expanded_file_config = self._expand_env_config(file_config)
+            config_dict = self._merge_deep(config_dict, expanded_file_config)
 
         # Overlay environment variables
         env_config = self._load_env_config()
         if env_config:
-            config_dict = self._merge_deep(config_dict, env_config)
+            expanded_env_config = self._expand_env_config(env_config)
+            config_dict = self._merge_deep(config_dict, expanded_env_config)
 
         # Create configuration object
         self.config = self._dict_to_config(config_dict)
@@ -249,11 +251,90 @@ class ConfigManager:
         for key, value in api_keys.items():
             if value:
                 provider_name = key.split("_")[0]
-                if provider_name not in config:
-                    config[provider_name] = {}
-                config[provider_name]["api_key"] = value
+                provider_config = config.get(provider_name)
+                if not isinstance(provider_config, dict):
+                    provider_config = {}
+                provider_config["api_key"] = value
+                config[provider_name] = provider_config
 
         return config
+
+    def _expand_env_config(self, env_config: Dict[str, Any]) -> Dict[str, Any]:
+        """Expand flat env-style config keys into nested config structure."""
+        expanded: Dict[str, Any] = {}
+        top_level_keys = {
+            "preferred_provider",
+            "fallback_enabled",
+            "debug_mode",
+            "ollama_remote_urls",
+            "network_check_host",
+            "network_check_port",
+        }
+        section_keys = {
+            "claude_anthropic",
+            "claude_oauth",
+            "gemini",
+            "ollama_local",
+            "thermal",
+            "system",
+        }
+        provider_prefixes = [
+            "claude_anthropic",
+            "claude_oauth",
+            "gemini",
+            "ollama_local",
+        ]
+
+        for key, value in env_config.items():
+            if key in top_level_keys:
+                expanded[key] = value
+                continue
+
+            if key in section_keys and isinstance(value, dict):
+                expanded[key] = value
+                continue
+
+            if key in ("anthropic", "gemini") and isinstance(value, dict):
+                provider_key = "claude_anthropic" if key == "anthropic" else "gemini"
+                expanded.setdefault(provider_key, {}).update(value)
+                continue
+
+            matched_provider = None
+            for prefix in provider_prefixes:
+                prefix_token = f"{prefix}_"
+                if key.startswith(prefix_token):
+                    matched_provider = prefix
+                    suffix = key[len(prefix_token) :]
+                    expanded.setdefault(matched_provider, {})[suffix] = value
+                    break
+
+            if matched_provider:
+                continue
+
+            if key.startswith("thermal_"):
+                expanded.setdefault("thermal", {})[key[len("thermal_") :]] = value
+                continue
+
+            if key.startswith("system_"):
+                expanded.setdefault("system", {})[key[len("system_") :]] = value
+                continue
+
+            legacy_map = {
+                "claude_model": ("claude_anthropic", "model"),
+                "claude_timeout_seconds": ("claude_anthropic", "timeout_seconds"),
+                "gemini_model": ("gemini", "model"),
+                "ollama_local_model": ("ollama_local", "model"),
+                "ollama_local_url": ("ollama_local", "base_url"),
+                "ollama_local_base_url": ("ollama_local", "base_url"),
+            }
+            if key in legacy_map:
+                provider_key, field_name = legacy_map[key]
+                expanded.setdefault(provider_key, {})[field_name] = value
+                continue
+
+            expanded[key] = value
+
+        return expanded
 
     def _parse_env_value(self, value: str) -> Union[str, int, float, bool, List[str]]:
         """Parse environment variable value to appropriate type"""
@@ -298,6 +379,8 @@ class ConfigManager:
     def _dict_to_config(self, config_dict: Dict[str, Any]) -> MyCoderConfig:
         """Convert configuration dictionary to MyCoderConfig object"""
         try:
+            if not config_dict:
+                raise ValueError("Configuration dictionary is empty")
             # Create individual settings objects
             claude_anthropic = APIProviderSettings(
                 **config_dict.get("claude_anthropic", {})
@@ -471,7 +554,9 @@ _global_config_manager: Optional[ConfigManager] = None
 def get_config_manager(config_path: Optional[Path] = None) -> ConfigManager:
     """Get the global configuration manager instance"""
     global _global_config_manager
-    if _global_config_manager is None:
+    if _global_config_manager is None or (
+        config_path and _global_config_manager.config_path != config_path
+    ):
         _global_config_manager = ConfigManager(config_path)
     return _global_config_manager
 

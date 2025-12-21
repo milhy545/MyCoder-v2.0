@@ -4,6 +4,8 @@ Audio recording module for capturing microphone input.
 Supports real-time audio capture with automatic silence detection.
 """
 
+from __future__ import annotations
+
 import io
 import logging
 import threading

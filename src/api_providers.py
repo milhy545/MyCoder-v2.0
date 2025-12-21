@@ -112,7 +112,10 @@ class BaseAPIProvider(ABC):
 
         # Perform health check if needed
         now = time.time()
-        if (now - self.last_health_check) > self.config.health_check_interval:
+        if self.status == APIProviderStatus.UNKNOWN or (
+            self.last_health_check
+            and (now - self.last_health_check) > self.config.health_check_interval
+        ):
             self.status = await self.health_check()
             self.last_health_check = now
 
@@ -763,15 +766,21 @@ class APIProviderRouter:
         """Perform health check on all providers"""
         results = {}
 
-        for provider in self.providers:
+        for index, provider in enumerate(self.providers):
+            provider_key = provider.config.provider_type.value
+            if provider.config.provider_type == APIProviderType.OLLAMA_REMOTE:
+                base_url = provider.config.config.get("base_url") or getattr(
+                    provider, "base_url", None
+                )
+                provider_key = f"{provider_key}:{base_url or index}"
             try:
                 status = await provider.health_check()
-                results[provider.config.provider_type.value] = {
+                results[provider_key] = {
                     "status": status.value,
                     "metrics": provider.get_metrics(),
                 }
             except Exception as e:
-                results[provider.config.provider_type.value] = {
+                results[provider_key] = {
                     "status": "error",
                     "error": str(e),
                 }
