@@ -1,5 +1,5 @@
 # 🤖 MyCoder - Dockerfile with Ollama integration
-FROM python:3.11-slim-bookworm
+FROM python:3.14-slim-bookworm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
