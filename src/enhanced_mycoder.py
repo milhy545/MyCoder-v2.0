@@ -13,9 +13,18 @@ from typing import Any, Dict, List, Optional, Union
 
 from claude_cli_auth import ClaudeAuthError
 
-from .adaptive_modes import AdaptiveModeManager, OperationalMode, ClaudeNetworkError
-from .mcp_connector import MCPConnector, MCPToolRouter
-from .mycoder import MyCoder
+try:
+    from .adaptive_modes import AdaptiveModeManager, OperationalMode, ClaudeNetworkError
+    from .mcp_connector import MCPConnector, MCPToolRouter
+    from .mycoder import MyCoder
+except ImportError:
+    from adaptive_modes import (  # type: ignore
+        AdaptiveModeManager,
+        OperationalMode,
+        ClaudeNetworkError,
+    )
+    from mcp_connector import MCPConnector, MCPToolRouter  # type: ignore
+    from mycoder import MyCoder  # type: ignore
 
 logger = logging.getLogger(__name__)
 

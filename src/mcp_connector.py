@@ -11,7 +11,10 @@ from typing import Any, Dict, List, Optional
 
 import aiohttp
 
-from .adaptive_modes import OperationalMode, ClaudeNetworkError
+try:
+    from .adaptive_modes import OperationalMode, ClaudeNetworkError
+except ImportError:
+    from adaptive_modes import OperationalMode, ClaudeNetworkError  # type: ignore
 
 logger = logging.getLogger(__name__)
 
