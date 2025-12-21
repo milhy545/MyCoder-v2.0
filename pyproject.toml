@@ -132,6 +132,7 @@ markers = [
     "integration: Integration tests", 
     "functional: Functional tests",
     "stress: Stress tests",
+    "performance: Performance tests",
     "slow: Slow running tests",
     "network: Tests requiring network access",
     "thermal: Tests requiring Q9550 thermal system",

@@ -9,6 +9,8 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+pytest.importorskip("claude_cli_auth")
 from claude_cli_auth import (
     AuthManager,
     ClaudeAuthError,
