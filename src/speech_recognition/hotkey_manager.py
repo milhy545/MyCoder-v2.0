@@ -4,6 +4,8 @@ Global hotkey management module.
 Provides system-wide keyboard shortcuts for triggering speech recognition.
 """
 
+from __future__ import annotations
+
 import logging
 import threading
 from typing import Optional, Callable, Dict, Set

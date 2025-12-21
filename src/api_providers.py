@@ -26,6 +26,17 @@ import json
 
 logger = logging.getLogger(__name__)
 
+try:
+    from claude_cli_auth import ClaudeAuthManager  # type: ignore
+except Exception:
+    try:
+        from .adaptive_modes import ClaudeAuthManager  # type: ignore
+    except Exception:
+        try:
+            from adaptive_modes import ClaudeAuthManager  # type: ignore
+        except Exception:
+            ClaudeAuthManager = None  # type: ignore
+
 
 class APIProviderType(Enum):
     """API provider types in priority order"""
@@ -276,12 +287,9 @@ class ClaudeOAuthProvider(BaseAPIProvider):
     async def _get_auth_manager(self):
         """Lazy load claude-cli-auth to avoid circular imports"""
         if self._auth_manager is None:
-            try:
-                from claude_cli_auth import ClaudeAuthManager
-
-                self._auth_manager = ClaudeAuthManager()
-            except ImportError as e:
-                raise ImportError("claude-cli-auth not available") from e
+            if ClaudeAuthManager is None:
+                raise ImportError("claude-cli-auth not available")
+            self._auth_manager = ClaudeAuthManager()
         return self._auth_manager
 
     async def query(
