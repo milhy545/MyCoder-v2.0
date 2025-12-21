@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- MyCoder brand colors -->
+    <color name="mycoder_blue">#1976D2</color>
+    <color name="mycoder_blue_light">#63A4FF</color>
+    <color name="mycoder_blue_dark">#004BA0</color>
+
+    <color name="mycoder_orange">#FF6F00</color>
+    <color name="mycoder_orange_light">#FFA040</color>
+    <color name="mycoder_orange_dark">#C43E00</color>
+
+    <!-- Standard colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="gray">#757575</color>
+    <color name="light_gray">#E0E0E0</color>
+</resources>

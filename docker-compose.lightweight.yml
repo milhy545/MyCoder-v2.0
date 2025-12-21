@@ -1,6 +1,5 @@
 # 🪶 MyCoder ULTRA-LIGHTWEIGHT verze
 # Pro slabší hardware - minimální spotřeba zdrojů
-version: '3.8'
 
 services:
   mycoder-light:
