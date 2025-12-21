@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MyCoder RocketChat</string>
+
+    <!-- Navigation -->
+    <string name="nav_chats">Chats</string>
+    <string name="nav_favorites">Favorites</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Rooms -->
+    <string name="search_rooms">Search rooms...</string>
+    <string name="no_rooms">No rooms found</string>
+    <string name="no_favorite_rooms">No favorite rooms yet</string>
+    <string name="room_icon">Room icon</string>
+    <string name="favorite">Favorite</string>
+
+    <!-- Chat -->
+    <string name="message_hint">Message...</string>
+    <string name="send">Send</string>
+    <string name="ai_query">AI Query</string>
+    <string name="star">Star message</string>
+
+    <!-- Settings -->
+    <string name="settings">Settings</string>
+    <string name="server_url">Server URL</string>
+    <string name="api_provider">API Provider</string>
+    <string name="thermal_monitoring">Thermal Monitoring</string>
+
+    <!-- AI Providers -->
+    <string name="provider_claude_anthropic">Claude (Anthropic API)</string>
+    <string name="provider_claude_oauth">Claude (OAuth)</string>
+    <string name="provider_gemini">Gemini</string>
+    <string name="provider_ollama_local">Ollama (Local)</string>
+    <string name="provider_ollama_remote">Ollama (Remote)</string>
+    <string name="provider_auto">Auto-select</string>
+
+    <!-- Errors -->
+    <string name="error_network">Network error</string>
+    <string name="error_authentication">Authentication failed</string>
+    <string name="error_generic">An error occurred</string>
+
+    <!-- Build variant info -->
+    <string name="build_modern">Modern (Android 10+)</string>
+    <string name="build_legacy">Legacy (Android 4.4+)</string>
+</resources>
