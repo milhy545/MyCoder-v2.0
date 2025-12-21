@@ -1,6 +1,6 @@
 # 🚀 MyCoder Development Dockerfile
 # Optimalizovaný pro rychlý vývoj s live reload
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
 # Install system dependencies + development tools
 RUN apt-get update && apt-get install -y \

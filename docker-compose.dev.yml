@@ -1,6 +1,5 @@
 # 🚀 MyCoder Development Docker Compose Configuration
 # Pro rychlý vývoj s live reload - žádné rebuildy!
-version: '3.8'
 
 services:
   mycoder-dev:
