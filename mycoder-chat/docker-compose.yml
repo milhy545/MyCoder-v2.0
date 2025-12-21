@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  mycoder-chat:
+    build: ./backend
+    container_name: mycoder-chat
+    ports:
+      - "8080:8000"
+    environment:
+      - HAS_URL=http://192.168.0.58:8020  # <-- ZMĚŇ NA SVOU HAS IP!
+      - LLM_SERVER_URL=http://llm-server:8000
+    volumes:
+      - ./backend:/app/backend
+      - ./frontend:/app/frontend
+    restart: unless-stopped
+    networks:
+      - mycoder-network
+
+networks:
+  mycoder-network:
+    driver: bridge
