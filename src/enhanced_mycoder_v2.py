@@ -18,6 +18,8 @@ import asyncio
 import logging
 import os
 import time
+import socket
+import urllib.parse
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -346,10 +348,8 @@ class EnhancedMyCoderV2:
             context["continue_session"] = kwargs.get("continue_session", False)
         
         # Add network status
-        context["network_status"] = {
-            "connected": True,  # TODO: Implement actual network check
-            "quality": "good"   # TODO: Implement network quality check
-        }
+        target_host, target_port = self._get_network_target()
+        context["network_status"] = self._check_network_status(target_host, target_port)
         
         # Add resource limits based on mode
         if self.mode_manager.current_mode == OperationalMode.AUTONOMOUS:
@@ -506,6 +506,78 @@ class EnhancedMyCoderV2:
             "Use RECOVERY mode for basic file operations only"
         ]
     
+    def _get_network_target(self) -> tuple[str, int]:
+        """
+        Determine the primary network target for connectivity checks.
+        Prioritizes configured LLM providers (Ollama) as per 'offline/tethering' use-case.
+        """
+        # 1. Check Ollama Local (Primary use case: USB tethering to Android/Llama server)
+        if self.config.get("ollama_local_enabled", True):
+            url = self.config.get("ollama_local_url", "http://localhost:11434")
+            try:
+                parsed = urllib.parse.urlparse(url)
+                if parsed.hostname:
+                    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+                    return parsed.hostname, port
+            except Exception:
+                pass
+
+        # 2. Check Ollama Remote
+        remote_urls = self.config.get("ollama_remote_urls", [])
+        if remote_urls:
+            try:
+                parsed = urllib.parse.urlparse(remote_urls[0])
+                if parsed.hostname:
+                    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+                    return parsed.hostname, port
+            except Exception:
+                pass
+
+        # 3. Fallback: Public DNS (1.1.1.1)
+        # We use 1.1.1.1 (Cloudflare) on port 53 (DNS) or 80 (HTTP) as a general connectivity check
+        return "1.1.1.1", 53
+
+    def _check_network_status(self, host: str, port: int) -> Dict[str, Any]:
+        """
+        Check network connectivity and quality to target host using TCP.
+
+        Quality categories:
+        - excellent: < 20 ms (USB/Local WiFi)
+        - good: < 100 ms
+        - poor: > 100 ms
+        - offline: Host unreachable
+        """
+        try:
+            start_time = time.time()
+            # Use TCP connection for reliability (ICMP might be blocked)
+            sock = socket.create_connection((host, port), timeout=2.0)
+            sock.close()
+
+            latency_ms = (time.time() - start_time) * 1000
+
+            quality = "poor"
+            if latency_ms < 20:
+                quality = "excellent"
+            elif latency_ms < 100:
+                quality = "good"
+
+            return {
+                "connected": True,
+                "quality": quality,
+                "latency_ms": round(latency_ms, 2),
+                "target": f"{host}:{port}"
+            }
+
+        except (socket.timeout, socket.error, Exception) as e:
+            # Connection failed
+            return {
+                "connected": False,
+                "quality": "offline",
+                "latency_ms": 0,
+                "target": f"{host}:{port}",
+                "error": str(e)
+            }
+
     async def get_system_status(self) -> Dict[str, Any]:
         """Get comprehensive system status"""
         if not self._initialized:
