@@ -1,0 +1,34 @@
+{
+  "audio": {
+    "sample_rate": 16000,
+    "channels": 1,
+    "silence_threshold": 0.01,
+    "silence_duration": 1.5,
+    "max_duration": 60.0
+  },
+  "whisper": {
+    "provider": "local",
+    "api_key": null,
+    "model": "whisper-1",
+    "local_model": "base",
+    "language": "cs",
+    "temperature": 0.0
+  },
+  "injection": {
+    "method": "auto",
+    "typing_delay": 12,
+    "use_clipboard_backup": true
+  },
+  "gui": {
+    "enabled": true,
+    "button_size": 80,
+    "position_x": null,
+    "position_y": null
+  },
+  "hotkey": {
+    "enabled": true,
+    "combination": ["ctrl", "shift", "space"]
+  },
+  "log_level": "INFO",
+  "log_file": null
+}

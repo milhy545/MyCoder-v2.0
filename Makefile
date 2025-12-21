@@ -1,5 +1,5 @@
 # 🚀 MyCoder Makefile - Snadné příkazy pro development a production
-.PHONY: help dev prod build test clean logs shell debug stop restart status
+.PHONY: help dev prod build test clean logs shell debug stop restart status test-local lint-local format-local venv
 
 # Výchozí target
 .DEFAULT_GOAL := help
@@ -12,6 +12,12 @@ BLUE := \033[34m
 MAGENTA := \033[35m
 CYAN := \033[36m
 RESET := \033[0m
+
+# Docker Compose wrapper (plugin nebo standalone)
+DOCKER_COMPOSE ?= docker compose
+PYTHON ?= python3
+VENV ?= .venv
+VENV_BIN := $(VENV)/bin
 
 ##@ 🚀 MyCoder Development Commands
 
@@ -26,20 +32,20 @@ help: ## 📋 Zobraz tento help
 dev: ## 🚀 Spustí development server s live reload
 	@echo "$(GREEN)🚀 Starting MyCoder Development Environment...$(RESET)"
 	@echo "$(YELLOW)📂 Source code bude live-reloadován!$(RESET)"
-	docker-compose -f docker-compose.dev.yml up --build
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml up --build
 
 dev-detached: ## 🌙 Spustí dev server na pozadí
 	@echo "$(GREEN)🚀 Starting MyCoder Development (detached)...$(RESET)"
-	docker-compose -f docker-compose.dev.yml up --build -d
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml up --build -d
 	@echo "$(CYAN)💡 Use 'make logs' to see output$(RESET)"
 
 dev-shell: ## 🐚 Otevři shell v development kontejneru
 	@echo "$(GREEN)🐚 Opening development shell...$(RESET)"
-	docker-compose -f docker-compose.dev.yml exec mycoder-dev bash
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml exec mycoder-dev bash
 
 dev-python: ## 🐍 Spustí Python shell v dev prostředí
 	@echo "$(GREEN)🐍 Starting Python development shell...$(RESET)"
-	docker-compose -f docker-compose.dev.yml exec mycoder-dev python -c "\
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml exec mycoder-dev python -c "\
 		import sys; sys.path.insert(0, '/app/src'); \
 		print('🎯 MyCoder Python Shell'); \
 		print('Import: from src.mycoder import MyCoder'); \
@@ -48,17 +54,17 @@ dev-python: ## 🐍 Spustí Python shell v dev prostředí
 debug: ## 🐛 Spustí s debugger portem (5678)
 	@echo "$(GREEN)🐛 Starting with debugger support...$(RESET)"
 	@echo "$(YELLOW)📡 Connect your IDE debugger to localhost:5678$(RESET)"
-	docker-compose -f docker-compose.dev.yml up --build mycoder-dev
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml up --build mycoder-dev
 
 ##@ 🏭 Production
 
 prod: ## 🏭 Spustí production server
 	@echo "$(GREEN)🏭 Starting MyCoder Production Environment...$(RESET)"
-	docker-compose up --build
+	$(DOCKER_COMPOSE) up --build
 
 prod-detached: ## 🌙 Spustí production na pozadí
 	@echo "$(GREEN)🏭 Starting MyCoder Production (detached)...$(RESET)"
-	docker-compose up --build -d
+	$(DOCKER_COMPOSE) up --build -d
 	@echo "$(CYAN)💡 Use 'make logs-prod' to see output$(RESET)"
 
 ##@ 🪶 Lightweight (pro slabší hardware)
@@ -66,22 +72,22 @@ prod-detached: ## 🌙 Spustí production na pozadí
 light: ## 🪶 Ultra-lightweight verze (2-4GB RAM, TinyLlama)
 	@echo "$(GREEN)🪶 Starting MyCoder Ultra-Lightweight...$(RESET)"
 	@echo "$(YELLOW)📊 Optimized: 2-4GB RAM, 1-2 CPU, 637MB model$(RESET)"
-	docker-compose -f docker-compose.lightweight.yml up --build
+	$(DOCKER_COMPOSE) -f docker-compose.lightweight.yml up --build
 
 light-detached: ## 🌙 Lightweight na pozadí  
 	@echo "$(GREEN)🪶 Starting Lightweight (detached)...$(RESET)"
-	docker-compose -f docker-compose.lightweight.yml up --build -d
+	$(DOCKER_COMPOSE) -f docker-compose.lightweight.yml up --build -d
 	@echo "$(CYAN)💡 Use 'make logs-light' to see output$(RESET)"
 
 ##@ 🔨 Build & Maintenance
 
 build-dev: ## 🔨 Rebuild development image
 	@echo "$(GREEN)🔨 Building development image...$(RESET)"
-	docker-compose -f docker-compose.dev.yml build --no-cache
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml build --no-cache
 
 build-prod: ## 🔨 Rebuild production image
 	@echo "$(GREEN)🔨 Building production image...$(RESET)"
-	docker-compose build --no-cache
+	$(DOCKER_COMPOSE) build --no-cache
 
 rebuild: ## 🔄 Rebuild všechny images
 	@echo "$(GREEN)🔄 Rebuilding all images...$(RESET)"
@@ -109,15 +115,19 @@ deep-clean: ## 🧹💥 Kompletní cleanup včetně images
 
 test: ## 🧪 Spustí testy v development prostředí
 	@echo "$(GREEN)🧪 Running tests...$(RESET)"
-	docker-compose -f docker-compose.dev.yml exec -T mycoder-dev python -m pytest tests/ -v
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml exec -T mycoder-dev python -m pytest tests/ -v
+
+test-local: ## 🧪 Spustí testy lokálně (PYTHON)
+	@echo "$(GREEN)🧪 Running local tests...$(RESET)"
+	$(PYTHON) -m pytest tests/ -v
 
 test-integration: ## 🧪 Spustí integration testy
 	@echo "$(GREEN)🧪 Running integration tests...$(RESET)"
-	docker-compose -f docker-compose.dev.yml exec -T mycoder-dev python quick_deepseek_test.py
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml exec -T mycoder-dev python quick_deepseek_test.py
 
 test-quick: ## ⚡ Rychlé testy (jen základní)
 	@echo "$(GREEN)⚡ Quick tests...$(RESET)"
-	docker-compose -f docker-compose.dev.yml exec -T mycoder-dev python -c "\
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml exec -T mycoder-dev python -c "\
 		import sys; sys.path.insert(0, '/app/src'); \
 		from src.ollama_integration import OllamaClient; \
 		import asyncio; \
@@ -125,39 +135,55 @@ test-quick: ## ⚡ Rychlé testy (jen základní)
 
 lint: ## 📋 Code linting
 	@echo "$(GREEN)📋 Running linting...$(RESET)"
-	docker-compose -f docker-compose.dev.yml exec -T mycoder-dev python -m flake8 src/ tests/
-	docker-compose -f docker-compose.dev.yml exec -T mycoder-dev python -m black --check src/ tests/
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml exec -T mycoder-dev python -m flake8 src/ tests/
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml exec -T mycoder-dev python -m black --check src/ tests/
+
+lint-local: ## 📋 Lint lokálně (PYTHON)
+	@echo "$(GREEN)📋 Running local linting...$(RESET)"
+	$(PYTHON) -m flake8 src/ tests/
+	$(PYTHON) -m black --check src/ tests/
 
 format: ## 🎨 Format kódu
 	@echo "$(GREEN)🎨 Formatting code...$(RESET)"
-	docker-compose -f docker-compose.dev.yml exec -T mycoder-dev python -m black src/ tests/
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml exec -T mycoder-dev python -m black src/ tests/
+
+format-local: ## 🎨 Formátuj lokálně (PYTHON)
+	@echo "$(GREEN)🎨 Formatting local code...$(RESET)"
+	$(PYTHON) -m black src/ tests/
+
+venv: ## 🐍 Vytvoří lokální venv a nainstaluje závislosti (Poetry)
+	@echo "$(GREEN)🐍 Creating local venv...$(RESET)"
+	$(PYTHON) -m venv $(VENV)
+	$(VENV_BIN)/pip install --upgrade pip
+	$(VENV_BIN)/pip install poetry
+	POETRY_VIRTUALENVS_CREATE=false $(VENV_BIN)/poetry install --no-interaction --no-root
 
 ##@ 📊 Monitoring & Logs
 
 logs: ## 📋 Zobraz logy development serveru
 	@echo "$(GREEN)📋 Showing development logs...$(RESET)"
-	docker-compose -f docker-compose.dev.yml logs -f mycoder-dev
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml logs -f mycoder-dev
 
 logs-prod: ## 📋 Zobraz logy production serveru
 	@echo "$(GREEN)📋 Showing production logs...$(RESET)"
-	docker-compose logs -f mycoder
+	$(DOCKER_COMPOSE) logs -f mycoder
 
 logs-light: ## 🪶 Zobraz logy lightweight serveru
 	@echo "$(GREEN)🪶 Showing lightweight logs...$(RESET)"
-	docker-compose -f docker-compose.lightweight.yml logs -f mycoder-light
+	$(DOCKER_COMPOSE) -f docker-compose.lightweight.yml logs -f mycoder-light
 
 logs-ollama: ## 🤖 Zobraz logy Ollama
 	@echo "$(GREEN)🤖 Showing Ollama logs...$(RESET)"
-	docker-compose -f docker-compose.dev.yml logs -f mycoder-dev | grep -i ollama
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml logs -f mycoder-dev | grep -i ollama
 
 status: ## 📊 Stav všech služeb
 	@echo "$(GREEN)📊 MyCoder Services Status:$(RESET)"
 	@echo ""
 	@echo "$(CYAN)Development:$(RESET)"
-	@docker-compose -f docker-compose.dev.yml ps 2>/dev/null || echo "  Not running"
+	@$(DOCKER_COMPOSE) -f docker-compose.dev.yml ps 2>/dev/null || echo "  Not running"
 	@echo ""
 	@echo "$(CYAN)Production:$(RESET)"  
-	@docker-compose ps 2>/dev/null || echo "  Not running"
+	@$(DOCKER_COMPOSE) ps 2>/dev/null || echo "  Not running"
 	@echo ""
 	@echo "$(CYAN)Docker Images:$(RESET)"
 	@docker images | grep mycoder || echo "  No MyCoder images found"
@@ -173,8 +199,8 @@ health: ## 💓 Health check všech služeb
 
 stop: ## 🛑 Zastaví všechny služby
 	@echo "$(RED)🛑 Stopping all services...$(RESET)"
-	docker-compose -f docker-compose.dev.yml down 2>/dev/null || true
-	docker-compose down 2>/dev/null || true
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml down 2>/dev/null || true
+	$(DOCKER_COMPOSE) down 2>/dev/null || true
 
 restart: ## 🔄 Restart development serveru
 	@echo "$(GREEN)🔄 Restarting development server...$(RESET)"
@@ -183,7 +209,7 @@ restart: ## 🔄 Restart development serveru
 
 restart-prod: ## 🔄 Restart production serveru
 	@echo "$(GREEN)🔄 Restarting production server...$(RESET)"
-	docker-compose restart
+	$(DOCKER_COMPOSE) restart
 
 ##@ 📚 Rychlé příkazy
 
@@ -207,7 +233,7 @@ quick-start: ## ⚡ Rychlý start pro nové uživatele
 
 demo: ## 🎬 Demo MyCoder funkcionality
 	@echo "$(GREEN)🎬 MyCoder Demo...$(RESET)"
-	docker-compose -f docker-compose.dev.yml exec -T mycoder-dev python -c "\
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml exec -T mycoder-dev python -c "\
 		import sys; sys.path.insert(0, '/app/src'); \
 		print('🎯 MyCoder Demo'); \
 		print('Testing DeepSeek integration...'); \
@@ -263,21 +289,21 @@ ports: ## 🔌 Zobraz používané porty
 
 dev-rebuild-quick: ## ⚡ Rychlý rebuild dev (jen kód, ne modely)
 	@echo "$(GREEN)⚡ Quick development rebuild...$(RESET)"
-	docker-compose -f docker-compose.dev.yml build mycoder-dev
-	docker-compose -f docker-compose.dev.yml up -d mycoder-dev
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml build mycoder-dev
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml up -d mycoder-dev
 
 dev-logs-tail: ## 📋 Tail posledních 100 řádků logů
 	@echo "$(GREEN)📋 Last 100 log lines...$(RESET)"
-	docker-compose -f docker-compose.dev.yml logs --tail=100 mycoder-dev
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml logs --tail=100 mycoder-dev
 
 dev-models: ## 🤖 Zobraz dostupné modely v dev prostředí
 	@echo "$(GREEN)🤖 Available models in development:$(RESET)"
-	docker-compose -f docker-compose.dev.yml exec mycoder-dev ollama list
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml exec mycoder-dev ollama list
 
 pull-models: ## 📥 Stáhni nejnovější modely
 	@echo "$(GREEN)📥 Pulling latest models...$(RESET)"
-	docker-compose -f docker-compose.dev.yml exec mycoder-dev ollama pull deepseek-coder:1.3b-base-q4_0
-	docker-compose -f docker-compose.dev.yml exec mycoder-dev ollama pull deepseek-coder:6.7b-instruct-q4_0
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml exec mycoder-dev ollama pull deepseek-coder:1.3b-base-q4_0
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml exec mycoder-dev ollama pull deepseek-coder:6.7b-instruct-q4_0
 
 ##@ ❓ Help
 
@@ -309,7 +335,7 @@ troubleshoot: ## 🔧 Troubleshooting guide
 	@echo ""
 	@echo "$(RED)Problem:$(RESET) Live reload nefunguje"
 	@echo "$(GREEN)Solution:$(RESET) Zkontroluj že máš správně mounted volumes:"
-	@echo "  docker-compose -f docker-compose.dev.yml config | grep -A5 volumes"
+	@echo "  $(DOCKER_COMPOSE) -f docker-compose.dev.yml config | grep -A5 volumes"
 	@echo ""
 	@echo "$(RED)Problem:$(RESET) Ollama se nespustí"  
 	@echo "$(GREEN)Solution:$(RESET) Zkontroluj porty a restartuj:"

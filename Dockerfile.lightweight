@@ -1,6 +1,6 @@
 # 🪶 MyCoder Ultra-Lightweight Dockerfile
 # Minimální spotřeba zdrojů pro slabší hardware
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
 # Install jen nejnutnější system dependencies
 RUN apt-get update && apt-get install -y \
