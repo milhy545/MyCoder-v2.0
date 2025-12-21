@@ -12,6 +12,7 @@ from typing import Optional
 
 try:
     import click
+
     CLICK_AVAILABLE = True
 except ImportError:
     CLICK_AVAILABLE = False
@@ -48,54 +49,54 @@ def cli():
 
 @cli.command()
 @click.option(
-    '--config',
-    '-c',
+    "--config",
+    "-c",
     type=click.Path(path_type=Path),
-    help='Path to configuration file',
+    help="Path to configuration file",
 )
 @click.option(
-    '--provider',
-    type=click.Choice(['api', 'local'], case_sensitive=False),
-    help='Whisper provider (api or local)',
+    "--provider",
+    type=click.Choice(["api", "local"], case_sensitive=False),
+    help="Whisper provider (api or local)",
 )
 @click.option(
-    '--model',
-    '-m',
-    help='Whisper model name',
+    "--model",
+    "-m",
+    help="Whisper model name",
 )
 @click.option(
-    '--language',
-    '-l',
-    default='cs',
-    help='Language code (default: cs for Czech)',
+    "--language",
+    "-l",
+    default="cs",
+    help="Language code (default: cs for Czech)",
 )
 @click.option(
-    '--no-gui',
+    "--no-gui",
     is_flag=True,
-    help='Run without GUI (hotkey only mode)',
+    help="Run without GUI (hotkey only mode)",
 )
 @click.option(
-    '--no-hotkeys',
+    "--no-hotkeys",
     is_flag=True,
-    help='Run without global hotkeys',
+    help="Run without global hotkeys",
 )
 @click.option(
-    '--hotkey',
+    "--hotkey",
     help='Hotkey combination (e.g., "ctrl+shift+space")',
 )
 @click.option(
-    '--api-key',
-    help='OpenAI API key for Whisper API',
+    "--api-key",
+    help="OpenAI API key for Whisper API",
 )
 @click.option(
-    '--injection-method',
-    type=click.Choice(['xdotool_type', 'xdotool_paste', 'clipboard_only', 'auto']),
-    help='Text injection method',
+    "--injection-method",
+    type=click.Choice(["xdotool_type", "xdotool_paste", "clipboard_only", "auto"]),
+    help="Text injection method",
 )
 @click.option(
-    '--debug',
+    "--debug",
     is_flag=True,
-    help='Enable debug logging',
+    help="Enable debug logging",
 )
 def run(
     config: Optional[Path],
@@ -131,7 +132,7 @@ def run(
     if no_hotkeys:
         app_config.hotkey.enabled = False
     if hotkey:
-        app_config.hotkey.combination = hotkey.split('+')
+        app_config.hotkey.combination = hotkey.split("+")
     if injection_method:
         app_config.injection.method = injection_method
     if debug:
@@ -168,7 +169,9 @@ def run(
             injection_method=InjectionMethod(app_config.injection.method),
             enable_gui=app_config.gui.enabled,
             enable_hotkeys=app_config.hotkey.enabled,
-            hotkey_combo=app_config.hotkey.combination if app_config.hotkey.enabled else None,
+            hotkey_combo=(
+                app_config.hotkey.combination if app_config.hotkey.enabled else None
+            ),
         )
 
         return app.run()
@@ -180,10 +183,10 @@ def run(
 
 @cli.command()
 @click.option(
-    '--config',
-    '-c',
+    "--config",
+    "-c",
     type=click.Path(path_type=Path),
-    help='Path to configuration file',
+    help="Path to configuration file",
 )
 def test(config: Optional[Path]):
     """Test application components."""
@@ -232,10 +235,10 @@ def test(config: Optional[Path]):
 
 @cli.command()
 @click.option(
-    '--config',
-    '-c',
+    "--config",
+    "-c",
     type=click.Path(path_type=Path),
-    help='Path to configuration file',
+    help="Path to configuration file",
 )
 def config_show(config: Optional[Path]):
     """Show current configuration."""
@@ -247,10 +250,10 @@ def config_show(config: Optional[Path]):
 
 @cli.command()
 @click.option(
-    '--config',
-    '-c',
+    "--config",
+    "-c",
     type=click.Path(path_type=Path),
-    help='Path to configuration file',
+    help="Path to configuration file",
 )
 def config_create(config: Optional[Path]):
     """Create default configuration file."""
@@ -264,7 +267,9 @@ def config_create(config: Optional[Path]):
 
     if config_manager.create_default_config():
         click.echo(f"✓ Created configuration file: {config_manager.config_path}")
-        click.echo("\nEdit the file to customize settings, or use environment variables:")
+        click.echo(
+            "\nEdit the file to customize settings, or use environment variables:"
+        )
         click.echo("  OPENAI_API_KEY - OpenAI API key for Whisper API")
         click.echo("  DICTATION_WHISPER_PROVIDER - 'api' or 'local'")
         click.echo("  DICTATION_LANGUAGE - Language code (e.g., 'cs', 'en')")
@@ -302,7 +307,7 @@ def devices():
 
 
 @cli.command()
-@click.argument('text')
+@click.argument("text")
 def inject(text: str):
     """Test text injection with given text."""
     try:
@@ -312,6 +317,7 @@ def inject(text: str):
         click.echo("Switch to target window in 3 seconds...")
 
         import time
+
         time.sleep(3)
 
         injector = TextInjector()
@@ -342,6 +348,7 @@ def setup():
             # User wants to launch after setup
             click.echo("\n🚀 Spouštím aplikaci...")
             import subprocess
+
             subprocess.Popen(
                 ["poetry", "run", "dictation", "run"],
                 stdout=subprocess.DEVNULL,
@@ -357,5 +364,5 @@ def setup():
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

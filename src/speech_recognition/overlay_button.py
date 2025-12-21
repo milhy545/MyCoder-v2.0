@@ -19,6 +19,7 @@ try:
     )
     from PyQt5.QtCore import Qt, QTimer, QPoint, QPropertyAnimation, QEasingCurve
     from PyQt5.QtGui import QFont, QColor, QPalette, QCursor
+
     PYQT_AVAILABLE = True
 except ImportError:
     PYQT_AVAILABLE = False
@@ -43,6 +44,7 @@ logger = logging.getLogger(__name__)
 
 class ButtonState(Enum):
     """States of the overlay button."""
+
     IDLE = "idle"
     RECORDING = "recording"
     PROCESSING = "processing"
@@ -109,11 +111,7 @@ class OverlayButton(QWidget):
     def _setup_ui(self) -> None:
         """Setup the UI components."""
         # Window flags for floating overlay
-        self.setWindowFlags(
-            Qt.WindowStaysOnTopHint |
-            Qt.FramelessWindowHint |
-            Qt.Tool
-        )
+        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.Tool)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
         # Set window size
@@ -149,14 +147,16 @@ class OverlayButton(QWidget):
 
         # Status label style
         self.status_label.setFont(QFont("Arial", 10))
-        self.status_label.setStyleSheet("""
+        self.status_label.setStyleSheet(
+            """
             QLabel {
                 color: white;
                 background-color: rgba(0, 0, 0, 150);
                 border-radius: 10px;
                 padding: 5px;
             }
-        """)
+        """
+        )
 
     def _update_button_style(self) -> None:
         """Update button style based on current state."""

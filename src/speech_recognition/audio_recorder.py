@@ -14,6 +14,7 @@ import wave
 try:
     import sounddevice as sd
     import numpy as np
+
     AUDIO_AVAILABLE = True
 except ImportError:
     AUDIO_AVAILABLE = False
@@ -161,7 +162,7 @@ class AudioRecorder:
 
         # Create WAV file in memory
         wav_buffer = io.BytesIO()
-        with wave.open(wav_buffer, 'wb') as wav_file:
+        with wave.open(wav_buffer, "wb") as wav_file:
             wav_file.setnchannels(self.channels)
             wav_file.setsampwidth(2)  # 16-bit
             wav_file.setframerate(self.sample_rate)
@@ -195,12 +196,14 @@ class AudioRecorder:
 
         devices = []
         for idx, device in enumerate(sd.query_devices()):
-            if device['max_input_channels'] > 0:
-                devices.append({
-                    'index': idx,
-                    'name': device['name'],
-                    'channels': device['max_input_channels'],
-                    'sample_rate': device['default_samplerate'],
-                })
+            if device["max_input_channels"] > 0:
+                devices.append(
+                    {
+                        "index": idx,
+                        "name": device["name"],
+                        "channels": device["max_input_channels"],
+                        "sample_rate": device["default_samplerate"],
+                    }
+                )
 
         return devices

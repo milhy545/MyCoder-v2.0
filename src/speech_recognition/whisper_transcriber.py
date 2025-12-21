@@ -13,6 +13,7 @@ import tempfile
 
 try:
     import openai
+
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
@@ -20,6 +21,7 @@ except ImportError:
 
 try:
     import whisper
+
     WHISPER_LOCAL_AVAILABLE = True
 except ImportError:
     WHISPER_LOCAL_AVAILABLE = False
@@ -30,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 class WhisperProvider(Enum):
     """Available Whisper transcription providers."""
+
     API = "api"
     LOCAL = "local"
 
@@ -154,7 +157,9 @@ class WhisperTranscriber:
 
             try:
                 # Transcribe with local model
-                logger.info(f"Transcribing audio locally (model: {self.local_model_name})")
+                logger.info(
+                    f"Transcribing audio locally (model: {self.local_model_name})"
+                )
                 result = self.local_model.transcribe(
                     tmp_path,
                     language=self.language,
@@ -205,7 +210,9 @@ class WhisperTranscriber:
                 else WhisperProvider.API
             )
 
-        logger.info(f"Primary transcription failed, trying fallback: {fallback_provider}")
+        logger.info(
+            f"Primary transcription failed, trying fallback: {fallback_provider}"
+        )
 
         # Create temporary transcriber for fallback
         try:

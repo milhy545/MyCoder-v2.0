@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class AppState(Enum):
     """Application states."""
+
     IDLE = "idle"
     RECORDING = "recording"
     TRANSCRIBING = "transcribing"

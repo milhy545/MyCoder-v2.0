@@ -10,6 +10,7 @@ from typing import Optional, Callable, Dict, Set
 
 try:
     from pynput import keyboard
+
     PYNPUT_AVAILABLE = True
 except ImportError:
     PYNPUT_AVAILABLE = False
@@ -289,14 +290,14 @@ class HotkeyManager:
                 # Convert keys back to string representation
                 key_names = []
                 for key in key_set:
-                    if hasattr(key, 'name'):
+                    if hasattr(key, "name"):
                         key_names.append(key.name)
-                    elif hasattr(key, 'char'):
+                    elif hasattr(key, "char"):
                         key_names.append(key.char)
                     else:
                         key_names.append(str(key))
 
-                hotkeys.append('+'.join(sorted(key_names)))
+                hotkeys.append("+".join(sorted(key_names)))
 
             return hotkeys
 

@@ -1,4 +1,3 @@
-
 import asyncio
 import http.server
 import json
@@ -30,6 +29,7 @@ BASE_CONFIG = {
     "gemini_enabled": False,
 }
 
+
 class MockLLMHandler(http.server.BaseHTTPRequestHandler):
     """Mock handler for Ollama API"""
 
@@ -37,9 +37,9 @@ class MockLLMHandler(http.server.BaseHTTPRequestHandler):
 
     def do_POST(self):
         """Handle POST requests to generate endpoint"""
-        content_length = int(self.headers.get('Content-Length', 0))
+        content_length = int(self.headers.get("Content-Length", 0))
         post_data = self.rfile.read(content_length)
-        request_json = json.loads(post_data.decode('utf-8'))
+        request_json = json.loads(post_data.decode("utf-8"))
 
         logger.info(f"Mock Server received POST: {request_json}")
 
@@ -50,13 +50,13 @@ class MockLLMHandler(http.server.BaseHTTPRequestHandler):
         response_data = {
             "response": response_text,
             "eval_count": 10,
-            "eval_duration": 1000000
+            "eval_duration": 1000000,
         }
 
         self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
+        self.send_header("Content-Type", "application/json")
         self.end_headers()
-        self.wfile.write(json.dumps(response_data).encode('utf-8'))
+        self.wfile.write(json.dumps(response_data).encode("utf-8"))
 
     def do_GET(self):
         """Handle GET requests for version check"""
@@ -68,12 +68,15 @@ class MockLLMHandler(http.server.BaseHTTPRequestHandler):
         """Silence server logging"""
         pass
 
+
 class MockServerThread(threading.Thread):
     """Thread wrapper for Mock Server"""
 
     def __init__(self):
         super().__init__()
-        self.server = http.server.HTTPServer((MOCK_SERVER_HOST, MOCK_SERVER_PORT), MockLLMHandler)
+        self.server = http.server.HTTPServer(
+            (MOCK_SERVER_HOST, MOCK_SERVER_PORT), MockLLMHandler
+        )
         self.daemon = True
 
     def run(self):
@@ -83,6 +86,7 @@ class MockServerThread(threading.Thread):
     def shutdown(self):
         self.server.shutdown()
         self.server.server_close()
+
 
 @pytest.fixture(scope="module")
 def mock_server():
@@ -101,6 +105,7 @@ def mock_server():
     # Teardown
     server_thread.shutdown()
 
+
 @pytest_asyncio.fixture
 async def initialized_coder(mock_server):
     config = dict(BASE_CONFIG)
@@ -110,6 +115,7 @@ async def initialized_coder(mock_server):
         yield coder
     finally:
         await coder.shutdown()
+
 
 @pytest.mark.asyncio
 async def test_network_connectivity(initialized_coder):
@@ -137,15 +143,18 @@ async def test_network_connectivity(initialized_coder):
     logger.info(f"Network Status Verified: {status}")
 
     assert status["connected"] is True
-    assert status["quality"] == "excellent" # Localhost should be < 20ms
+    assert status["quality"] == "excellent"  # Localhost should be < 20ms
     assert status["target"] == f"{MOCK_SERVER_HOST}:{MOCK_SERVER_PORT}"
+
 
 @pytest.mark.asyncio
 async def test_update_dependencies_simulation(initialized_coder):
     """Test 2: Verify routing logic for 'Update dependencies'"""
 
     # SIMULATION: LLM decides to run a command
-    MockLLMHandler.response_content = "I will run command: poetry update to refresh dependencies."
+    MockLLMHandler.response_content = (
+        "I will run command: poetry update to refresh dependencies."
+    )
 
     # Execute request
     result = await initialized_coder.process_request("Update dependencies")

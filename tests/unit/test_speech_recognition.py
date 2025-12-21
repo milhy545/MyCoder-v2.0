@@ -66,7 +66,7 @@ class TestWhisperTranscriber:
         try:
             from speech_recognition import WhisperTranscriber, WhisperProvider
 
-            with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'}):
+            with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}):
                 transcriber = WhisperTranscriber(
                     provider=WhisperProvider.API,
                     model="whisper-1",
@@ -87,7 +87,7 @@ class TestWhisperTranscriber:
         try:
             from speech_recognition import WhisperTranscriber, WhisperProvider
 
-            with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'}):
+            with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}):
                 # API models
                 transcriber = WhisperTranscriber(provider=WhisperProvider.API)
                 models = transcriber.get_available_models()
@@ -278,7 +278,7 @@ class TestDictationApp:
         assert AppState.ERROR.value == "error"
 
     @pytest.mark.unit
-    @patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'})
+    @patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"})
     def test_app_initialization(self):
         """Test GlobalDictationApp initialization."""
         try:
@@ -299,7 +299,7 @@ class TestDictationApp:
             pytest.skip("App dependencies not installed")
 
     @pytest.mark.unit
-    @patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'})
+    @patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"})
     def test_app_get_status(self):
         """Test getting application status."""
         try:

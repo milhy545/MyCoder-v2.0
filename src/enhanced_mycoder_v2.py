@@ -24,20 +24,20 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from .api_providers import (
-    APIProviderRouter, 
-    APIProviderConfig, 
-    APIProviderType, 
+    APIProviderRouter,
+    APIProviderConfig,
+    APIProviderType,
     APIResponse,
     ClaudeAnthropicProvider,
-    ClaudeOAuthProvider, 
+    ClaudeOAuthProvider,
     GeminiProvider,
-    OllamaProvider
+    OllamaProvider,
 )
 from .tool_registry import (
     get_tool_registry,
     ToolExecutionContext,
     ToolCategory,
-    ToolAvailability
+    ToolAvailability,
 )
 from .adaptive_modes import AdaptiveModeManager, OperationalMode
 
@@ -47,21 +47,23 @@ logger = logging.getLogger(__name__)
 class EnhancedMyCoderV2:
     """
     Enhanced MyCoder v2.0 with Multi-API Architecture
-    
+
     Provides intelligent AI-powered development assistance with:
     - 5-tier API provider fallback system
     - FEI-inspired tool registry and service layers
-    - Thermal-aware operation for Q9550 systems  
+    - Thermal-aware operation for Q9550 systems
     - Advanced session management across providers
     - Intelligent context-aware provider selection
     """
-    
-    def __init__(self, 
-                 working_directory: Optional[Path] = None,
-                 config: Optional[Dict[str, Any]] = None):
+
+    def __init__(
+        self,
+        working_directory: Optional[Path] = None,
+        config: Optional[Dict[str, Any]] = None,
+    ):
         """
         Initialize Enhanced MyCoder v2.0
-        
+
         Args:
             working_directory: Base directory for operations
             config: Configuration dictionary for API providers and settings
@@ -71,50 +73,54 @@ class EnhancedMyCoderV2:
         self.session_store: Dict[str, Dict] = {}
         self.thermal_monitor = None
         self._initialized = False
-        
+
         # Initialize API provider router
         self.provider_router = None
-        
+
         # Initialize tool registry
         self.tool_registry = get_tool_registry()
-        
+
         # Initialize adaptive mode manager
         self.mode_manager = AdaptiveModeManager(OperationalMode.FULL)
-        
-        logger.info(f"Enhanced MyCoder v2.0 initialized with working directory: {self.working_directory}")
-    
+
+        logger.info(
+            f"Enhanced MyCoder v2.0 initialized with working directory: {self.working_directory}"
+        )
+
     async def initialize(self):
         """Initialize Enhanced MyCoder system with multi-API providers"""
         if self._initialized:
             logger.debug("Enhanced MyCoder already initialized")
             return
-            
+
         logger.info("Initializing Enhanced MyCoder v2.0 with multi-API system...")
-        
+
         # Initialize API providers
         await self._initialize_api_providers()
-        
+
         # Initialize thermal monitoring for Q9550 systems
         await self._initialize_thermal_monitoring()
-        
-        # Start adaptive mode monitoring  
+
+        # Start adaptive mode monitoring
         await self.mode_manager.start_monitoring()
         await self.mode_manager.evaluate_and_adapt()
-        
+
         # Register additional tools
         await self._register_enhanced_tools()
-        
+
         self._initialized = True
         logger.info("Enhanced MyCoder v2.0 initialization complete")
-        
+
         # Log available providers
         available_providers = self.provider_router.get_available_providers()
-        logger.info(f"Available API providers: {[p.value for p in available_providers]}")
-    
+        logger.info(
+            f"Available API providers: {[p.value for p in available_providers]}"
+        )
+
     async def _initialize_api_providers(self):
         """Initialize the multi-API provider system"""
         provider_configs = []
-        
+
         # Claude Anthropic API (Priority 1)
         if self.config.get("claude_anthropic_enabled", True):
             claude_config = APIProviderConfig(
@@ -123,21 +129,23 @@ class EnhancedMyCoderV2:
                 timeout_seconds=30,
                 config={
                     "api_key": os.getenv("ANTHROPIC_API_KEY"),
-                    "model": self.config.get("claude_model", "claude-3-5-sonnet-20241022")
-                }
+                    "model": self.config.get(
+                        "claude_model", "claude-3-5-sonnet-20241022"
+                    ),
+                },
             )
             provider_configs.append(claude_config)
-        
-        # Claude OAuth (Priority 2) 
+
+        # Claude OAuth (Priority 2)
         if self.config.get("claude_oauth_enabled", True):
             oauth_config = APIProviderConfig(
                 provider_type=APIProviderType.CLAUDE_OAUTH,
                 enabled=True,  # Always try OAuth as fallback
                 timeout_seconds=45,
-                config={}
+                config={},
             )
             provider_configs.append(oauth_config)
-        
+
         # Gemini API (Priority 3)
         if self.config.get("gemini_enabled", True):
             gemini_config = APIProviderConfig(
@@ -146,11 +154,11 @@ class EnhancedMyCoderV2:
                 timeout_seconds=30,
                 config={
                     "api_key": os.getenv("GEMINI_API_KEY"),
-                    "model": self.config.get("gemini_model", "gemini-1.5-pro")
-                }
+                    "model": self.config.get("gemini_model", "gemini-1.5-pro"),
+                },
             )
             provider_configs.append(gemini_config)
-        
+
         # Ollama Local (Priority 4)
         if self.config.get("ollama_local_enabled", True):
             local_ollama_config = APIProviderConfig(
@@ -160,11 +168,11 @@ class EnhancedMyCoderV2:
                 config={
                     "base_url": self.config.get("ollama_local_base_url")
                     or self.config.get("ollama_local_url", "http://localhost:11434"),
-                    "model": self.config.get("ollama_local_model", "tinyllama")
-                }
+                    "model": self.config.get("ollama_local_model", "tinyllama"),
+                },
             )
             provider_configs.append(local_ollama_config)
-        
+
         # Ollama Remote (Priority 5)
         remote_urls = self.config.get("ollama_remote_urls", [])
         for i, url in enumerate(remote_urls):
@@ -174,75 +182,87 @@ class EnhancedMyCoderV2:
                 timeout_seconds=45,
                 config={
                     "base_url": url,
-                    "model": self.config.get("ollama_remote_model", "tinyllama")
-                }
+                    "model": self.config.get("ollama_remote_model", "tinyllama"),
+                },
             )
             provider_configs.append(remote_config)
-        
+
         # Initialize router with all providers
         self.provider_router = APIProviderRouter(provider_configs)
-        
+
         logger.info(f"Initialized {len(provider_configs)} API providers")
-    
+
     async def _initialize_thermal_monitoring(self):
         """Initialize thermal monitoring for Q9550 systems"""
         try:
             # Check if PowerManagement system is available
             import subprocess
+
             result = subprocess.run(
-                ["/home/milhy777/Develop/Production/PowerManagement/scripts/performance_manager.sh", "status"],
+                [
+                    "/home/milhy777/Develop/Production/PowerManagement/scripts/performance_manager.sh",
+                    "status",
+                ],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
-            
+
             if result.returncode == 0:
                 self.thermal_monitor = {
                     "enabled": True,
-                    "script_path": "/home/milhy777/Develop/Production/PowerManagement/scripts/performance_manager.sh"
+                    "script_path": "/home/milhy777/Develop/Production/PowerManagement/scripts/performance_manager.sh",
                 }
                 logger.info("Thermal monitoring enabled for Q9550 system")
-                
+
                 # Configure thermal integration in providers
                 thermal_config = {
                     "enabled": True,
                     "max_temp": 80,
                     "critical_temp": 85,
-                    "check_interval": 30
+                    "check_interval": 30,
                 }
                 await self.provider_router.configure_thermal_integration(thermal_config)
             else:
                 logger.info("Thermal monitoring not available")
-                
+
         except Exception as e:
             logger.warning(f"Failed to initialize thermal monitoring: {e}")
             self.thermal_monitor = {"enabled": False}
-    
+
     async def _register_enhanced_tools(self):
         """Register enhanced tools for v2.0 functionality"""
         # Tools are already registered in tool_registry initialization
         # This method can be extended for additional v2.0 specific tools
-        
+
         # Add event handlers for tool monitoring
         def tool_execution_handler(event_type, data):
-            logger.debug(f"Tool event: {event_type} - {data.get('tool_name', 'unknown')}")
-        
-        self.tool_registry.add_event_handler("tool_post_execution", tool_execution_handler)
-        self.tool_registry.add_event_handler("tool_execution_error", tool_execution_handler)
-        
+            logger.debug(
+                f"Tool event: {event_type} - {data.get('tool_name', 'unknown')}"
+            )
+
+        self.tool_registry.add_event_handler(
+            "tool_post_execution", tool_execution_handler
+        )
+        self.tool_registry.add_event_handler(
+            "tool_execution_error", tool_execution_handler
+        )
+
         logger.info("Enhanced tool system configured")
-    
-    async def process_request(self,
-                            prompt: str,
-                            files: Optional[List[Union[str, Path]]] = None,
-                            session_id: Optional[str] = None,
-                            continue_session: bool = False,
-                            preferred_provider: Optional[APIProviderType] = None,
-                            use_tools: bool = True,
-                            **kwargs) -> Dict[str, Any]:
+
+    async def process_request(
+        self,
+        prompt: str,
+        files: Optional[List[Union[str, Path]]] = None,
+        session_id: Optional[str] = None,
+        continue_session: bool = False,
+        preferred_provider: Optional[APIProviderType] = None,
+        use_tools: bool = True,
+        **kwargs,
+    ) -> Dict[str, Any]:
         """
         Process a development request with multi-API intelligence
-        
+
         Args:
             prompt: The user's request or question
             files: Files to include in the request context
@@ -251,19 +271,19 @@ class EnhancedMyCoderV2:
             preferred_provider: Preferred API provider to try first
             use_tools: Whether to use tool registry for enhanced capabilities
             **kwargs: Additional parameters
-            
+
         Returns:
             Dict containing response content, metadata, and provider info
         """
         if not self._initialized:
             await self.initialize()
-        
+
         start_time = time.time()
         current_mode = self.mode_manager.current_mode
-        
+
         logger.info(f"Processing request in {current_mode.value} mode")
         logger.debug(f"Request: {prompt[:100]}{'...' if len(prompt) > 100 else ''}")
-        
+
         try:
             # Prepare request context
             context = await self._prepare_enhanced_context(
@@ -271,34 +291,38 @@ class EnhancedMyCoderV2:
                 files=files,
                 session_id=session_id,
                 continue_session=continue_session,
-                **kwargs
+                **kwargs,
             )
-            
+
             # Get thermal status if monitoring enabled
             if self.thermal_monitor and self.thermal_monitor["enabled"]:
                 context["thermal_status"] = await self._get_thermal_status()
-            
+
             # Execute request with multi-API system
             api_response = await self.provider_router.query(
                 prompt=prompt,
                 context=context,
                 preferred_provider=preferred_provider,
-                **kwargs
+                **kwargs,
             )
-            
+
             # Enhance response with tool integration if requested
             if use_tools and api_response.success:
-                enhanced_response = await self._enhance_with_tools(api_response, context)
+                enhanced_response = await self._enhance_with_tools(
+                    api_response, context
+                )
                 if enhanced_response:
                     api_response = enhanced_response
-            
+
             # Update session store
             if session_id and api_response.success:
-                await self._update_enhanced_session_store(session_id, context, api_response)
-            
+                await self._update_enhanced_session_store(
+                    session_id, context, api_response
+                )
+
             # Prepare final response
             duration = time.time() - start_time
-            
+
             response = {
                 "success": api_response.success,
                 "content": api_response.content,
@@ -309,18 +333,20 @@ class EnhancedMyCoderV2:
                 "duration_ms": api_response.duration_ms,
                 "tokens_used": api_response.tokens_used,
                 "mode": current_mode.value,
-                "metadata": api_response.metadata or {}
+                "metadata": api_response.metadata or {},
             }
-            
+
             if not api_response.success:
                 response["error"] = api_response.error
-            
-            logger.info(f"Request completed in {duration:.1f}s using {api_response.provider.value}")
+
+            logger.info(
+                f"Request completed in {duration:.1f}s using {api_response.provider.value}"
+            )
             return response
-            
+
         except Exception as e:
             logger.error(f"Request processing failed: {e}")
-            
+
             return {
                 "success": False,
                 "content": "",
@@ -328,69 +354,73 @@ class EnhancedMyCoderV2:
                 "error": str(e),
                 "mode": current_mode.value,
                 "duration_seconds": time.time() - start_time,
-                "recovery_suggestions": self._get_recovery_suggestions()
+                "recovery_suggestions": self._get_recovery_suggestions(),
             }
-    
+
     async def _prepare_enhanced_context(self, **kwargs) -> Dict[str, Any]:
         """Prepare enhanced request context for multi-API processing"""
         context = {
             "working_directory": self.working_directory,
             "mode": self.mode_manager.current_mode.value,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
-        
+
         # Add file context
         if kwargs.get("files"):
-            context["files"] = [Path(f) if isinstance(f, str) else f for f in kwargs["files"]]
-        
+            context["files"] = [
+                Path(f) if isinstance(f, str) else f for f in kwargs["files"]
+            ]
+
         # Add session context
         if kwargs.get("session_id"):
             context["session_id"] = kwargs["session_id"]
             context["continue_session"] = kwargs.get("continue_session", False)
-        
+
         # Add network status
         context["network_status"] = self._check_network_status()
-        
+
         # Add resource limits based on mode
         if self.mode_manager.current_mode == OperationalMode.AUTONOMOUS:
             context["resource_limits"] = {
                 "max_tokens": 2048,
                 "timeout_seconds": 30,
-                "thermal_sensitive": True
+                "thermal_sensitive": True,
             }
         elif self.mode_manager.current_mode == OperationalMode.RECOVERY:
             context["resource_limits"] = {
                 "max_tokens": 512,
                 "timeout_seconds": 15,
-                "thermal_sensitive": True
+                "thermal_sensitive": True,
             }
-        
+
         return context
-    
+
     async def _get_thermal_status(self) -> Dict[str, Any]:
         """Get current thermal status for Q9550 system"""
         try:
             import subprocess
+
             result = subprocess.run(
                 [self.thermal_monitor["script_path"], "status"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
-            
+
             if result.returncode == 0:
                 # Parse temperature from output
                 output = result.stdout.lower()
-                
+
                 # Extract temperature if available
                 cpu_temp = 60  # Default safe assumption
                 if "temp" in output:
                     # Try to extract temperature value
                     import re
-                    temp_match = re.search(r'(\d+)°?c', output)
+
+                    temp_match = re.search(r"(\d+)°?c", output)
                     if temp_match:
                         cpu_temp = int(temp_match.group(1))
-                
+
                 status = "normal"
                 if cpu_temp > 85:
                     status = "critical"
@@ -398,20 +428,20 @@ class EnhancedMyCoderV2:
                     status = "high"
                 elif cpu_temp > 75:
                     status = "elevated"
-                
+
                 return {
                     "cpu_temp": cpu_temp,
                     "status": status,
                     "safe_operation": cpu_temp < 80,
-                    "timestamp": time.time()
+                    "timestamp": time.time(),
                 }
-            
+
             return {"status": "unknown", "safe_operation": True}
-            
+
         except Exception as e:
             logger.warning(f"Thermal status check failed: {e}")
             return {"status": "unknown", "safe_operation": True}
-    
+
     def _get_network_target(self) -> tuple[str, int]:
         """
         Determine the primary network target for connectivity checks.
@@ -481,7 +511,7 @@ class EnhancedMyCoderV2:
                 "quality": quality,
                 "latency_ms": round(latency_ms, 2),
                 "target": f"{host}:{port}",
-                "timestamp": time.time()
+                "timestamp": time.time(),
             }
 
         except (socket.timeout, socket.error, Exception) as e:
@@ -491,12 +521,12 @@ class EnhancedMyCoderV2:
                 "latency_ms": 0,
                 "target": f"{host}:{port}",
                 "timestamp": time.time(),
-                "error": str(e)
+                "error": str(e),
             }
 
-    async def _enhance_with_tools(self, 
-                                 api_response: APIResponse, 
-                                 context: Dict[str, Any]) -> Optional[APIResponse]:
+    async def _enhance_with_tools(
+        self, api_response: APIResponse, context: Dict[str, Any]
+    ) -> Optional[APIResponse]:
         """Enhance API response using tool registry"""
         try:
             # Create tool execution context
@@ -506,16 +536,20 @@ class EnhancedMyCoderV2:
                 session_id=context.get("session_id"),
                 thermal_status=context.get("thermal_status"),
                 network_status=context.get("network_status"),
-                resource_limits=context.get("resource_limits")
+                resource_limits=context.get("resource_limits"),
             )
-            
+
             content = api_response.content.lower()
-            
+
             # Check for command execution intent (Simulation/Test logic)
-            if any(key in content for key in ["run command:", "execute:", "poetry update"]):
+            if any(
+                key in content for key in ["run command:", "execute:", "poetry update"]
+            ):
                 # In a real scenario, we would parse the command.
                 # Here we just detect the intent for testing routing logic.
-                cmd_match = "poetry update" if "poetry update" in content else "unknown command"
+                cmd_match = (
+                    "poetry update" if "poetry update" in content else "unknown command"
+                )
 
                 logger.info(f"Detected command execution intent: {cmd_match}")
 
@@ -527,14 +561,14 @@ class EnhancedMyCoderV2:
                     content=enhanced_content,
                     provider=api_response.provider,
                     cost=api_response.cost,
-                    duration_ms=api_response.duration_ms + 10, # Simulate overhead
+                    duration_ms=api_response.duration_ms + 10,  # Simulate overhead
                     tokens_used=api_response.tokens_used,
                     session_id=api_response.session_id,
                     metadata={
                         **api_response.metadata,
                         "tools_used": ["command_execution"],
-                        "tool_results": [{"command": cmd_match, "status": "simulated"}]
-                    }
+                        "tool_results": [{"command": cmd_match, "status": "simulated"}],
+                    },
                 )
 
             # Existing file read logic
@@ -545,13 +579,15 @@ class EnhancedMyCoderV2:
                     "file_read",
                     tool_context,
                     operation="read",
-                    path="example.txt"  # This should be extracted from content
+                    path="example.txt",  # This should be extracted from content
                 )
-                
+
                 if file_result.success:
                     # Append file contents to response
-                    enhanced_content = f"{api_response.content}\n\nFile Contents:\n{file_result.data}"
-                    
+                    enhanced_content = (
+                        f"{api_response.content}\n\nFile Contents:\n{file_result.data}"
+                    )
+
                     return APIResponse(
                         success=True,
                         content=enhanced_content,
@@ -563,20 +599,19 @@ class EnhancedMyCoderV2:
                         metadata={
                             **api_response.metadata,
                             "tools_used": ["file_read"],
-                            "tool_results": [file_result.metadata]
-                        }
+                            "tool_results": [file_result.metadata],
+                        },
                     )
-            
+
             return None  # No enhancement applied
-            
+
         except Exception as e:
             logger.error(f"Tool enhancement failed: {e}")
             return None
-    
-    async def _update_enhanced_session_store(self, 
-                                           session_id: str, 
-                                           context: Dict[str, Any], 
-                                           response: APIResponse):
+
+    async def _update_enhanced_session_store(
+        self, session_id: str, context: Dict[str, Any], response: APIResponse
+    ):
         """Update session store with enhanced metadata"""
         self.session_store[session_id] = {
             "last_context": context,
@@ -585,23 +620,25 @@ class EnhancedMyCoderV2:
                 "success": response.success,
                 "cost": response.cost,
                 "duration_ms": response.duration_ms,
-                "tokens_used": response.tokens_used
+                "tokens_used": response.tokens_used,
             },
             "updated_at": time.time(),
             "mode": context.get("mode"),
             "thermal_status": context.get("thermal_status"),
-            "total_interactions": self.session_store.get(session_id, {}).get("total_interactions", 0) + 1
+            "total_interactions": self.session_store.get(session_id, {}).get(
+                "total_interactions", 0
+            )
+            + 1,
         }
-        
+
         # Cleanup old sessions (keep last 100)
         if len(self.session_store) > 100:
             oldest_sessions = sorted(
-                self.session_store.items(), 
-                key=lambda x: x[1]["updated_at"]
+                self.session_store.items(), key=lambda x: x[1]["updated_at"]
             )[:-100]
             for session_id, _ in oldest_sessions:
                 del self.session_store[session_id]
-    
+
     def _get_recovery_suggestions(self) -> List[str]:
         """Get recovery suggestions for failed requests"""
         return [
@@ -611,27 +648,28 @@ class EnhancedMyCoderV2:
             "Check if Ollama is running: ollama list",
             "Monitor system temperature for Q9550 thermal limits",
             "Try with preferred_provider parameter to force specific provider",
-            "Use RECOVERY mode for basic file operations only"
+            "Use RECOVERY mode for basic file operations only",
         ]
+
     async def get_system_status(self) -> Dict[str, Any]:
         """Get comprehensive system status"""
         if not self._initialized:
             return {"status": "not_initialized"}
-        
+
         # Get provider health
         provider_health = await self.provider_router.health_check_all()
-        
+
         # Get thermal status
         thermal_status = None
         if self.thermal_monitor and self.thermal_monitor["enabled"]:
             thermal_status = await self._get_thermal_status()
-        
+
         # Get tool registry stats
         tool_stats = self.tool_registry.get_registry_stats()
-        
+
         # Get mode manager status
         mode_status = self.mode_manager.get_system_status()
-        
+
         return {
             "status": "initialized",
             "working_directory": str(self.working_directory),
@@ -640,9 +678,9 @@ class EnhancedMyCoderV2:
             "thermal": thermal_status,
             "tools": tool_stats,
             "mode": mode_status,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
-    
+
     async def force_provider(self, provider_type: APIProviderType) -> bool:
         """Force a specific provider for testing purposes"""
         try:
@@ -655,17 +693,17 @@ class EnhancedMyCoderV2:
         except Exception as e:
             logger.error(f"Provider test failed: {e}")
             return False
-    
+
     async def shutdown(self):
         """Gracefully shutdown Enhanced MyCoder system"""
         logger.info("Shutting down Enhanced MyCoder v2.0...")
-        
+
         # Stop adaptive mode monitoring
-        if hasattr(self.mode_manager, 'stop_monitoring'):
+        if hasattr(self.mode_manager, "stop_monitoring"):
             await self.mode_manager.stop_monitoring()
-        
+
         # Clear session store
         self.session_store.clear()
-        
+
         self._initialized = False
         logger.info("Enhanced MyCoder v2.0 shutdown complete")

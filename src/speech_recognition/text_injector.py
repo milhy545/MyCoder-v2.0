@@ -12,6 +12,7 @@ from typing import Optional
 
 try:
     import pyperclip
+
     CLIPBOARD_AVAILABLE = True
 except ImportError:
     CLIPBOARD_AVAILABLE = False
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 class InjectionMethod(Enum):
     """Available text injection methods."""
+
     XDOTOOL_TYPE = "xdotool_type"  # Direct typing simulation
     XDOTOOL_PASTE = "xdotool_paste"  # Paste via clipboard
     CLIPBOARD_ONLY = "clipboard_only"  # Only copy to clipboard
@@ -144,7 +146,8 @@ class TextInjector:
                 [
                     "xdotool",
                     "type",
-                    "--delay", str(self.typing_delay),
+                    "--delay",
+                    str(self.typing_delay),
                     "--",
                     text,
                 ],
@@ -278,7 +281,9 @@ class TextInjector:
                 timeout=1,
             )
 
-            window_class = result.stdout.strip() if result.returncode == 0 else "Unknown"
+            window_class = (
+                result.stdout.strip() if result.returncode == 0 else "Unknown"
+            )
 
             return {
                 "id": window_id,

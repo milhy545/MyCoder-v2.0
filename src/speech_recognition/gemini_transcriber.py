@@ -10,6 +10,7 @@ from typing import Optional
 
 try:
     import google.generativeai as genai
+
     GEMINI_AVAILABLE = True
 except ImportError:
     GEMINI_AVAILABLE = False
@@ -74,6 +75,7 @@ class GeminiTranscriber:
 
             # Upload audio file
             import tempfile
+
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
                 tmp.write(audio_data)
                 tmp_path = tmp.name
@@ -96,6 +98,7 @@ class GeminiTranscriber:
             finally:
                 # Cleanup
                 import os
+
                 try:
                     os.unlink(tmp_path)
                 except Exception:

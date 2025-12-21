@@ -4,7 +4,8 @@ A comprehensive AI-powered development assistant with multi-provider fallback,
 Q9550 thermal management, and FEI-inspired architecture.
 
 Key Features:
-- 5-tier API provider fallback (Claude Anthropic, Claude OAuth, Gemini, Ollama Local, Ollama Remote)
+- 5-tier API provider fallback (Claude Anthropic, Claude OAuth, Gemini,
+  Ollama Local, Ollama Remote)
 - Q9550 thermal management integration
 - FEI-inspired architecture with tool registry
 - Comprehensive testing framework
@@ -97,37 +98,33 @@ __license__ = "MIT"
 __all__ = [
     # Core interface
     "EnhancedMyCoderV2",
-    
     # API Providers
     "APIProviderRouter",
     "APIProviderType",
-    "APIProviderConfig", 
+    "APIProviderConfig",
     "APIResponse",
     "APIProviderStatus",
     "ClaudeAnthropicProvider",
     "ClaudeOAuthProvider",
     "GeminiProvider",
     "OllamaProvider",
-    
     # Configuration Management
     "ConfigManager",
     "MyCoderConfig",
     "APIProviderSettings",
-    "ThermalSettings", 
+    "ThermalSettings",
     "SystemSettings",
     "load_config",
     "get_config_manager",
-    
     # Tool Registry
     "get_tool_registry",
     "ToolRegistry",
     "ToolExecutionContext",
     "ToolResult",
-    
     # Metadata
     "__version__",
     "__author__",
-    "__email__", 
+    "__email__",
     "__license__",
 ]
 
@@ -139,7 +136,7 @@ import os
 if not logging.getLogger(__name__).handlers:
     logging.basicConfig(
         level=logging.INFO if os.getenv("MYCODER_DEBUG") else logging.WARNING,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
 # Disable debug logging for dependencies by default

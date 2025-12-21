@@ -16,6 +16,7 @@ from pathlib import Path
 try:
     import sounddevice as sd
     import numpy as np
+
     AUDIO_AVAILABLE = True
 except ImportError:
     AUDIO_AVAILABLE = False
@@ -44,7 +45,7 @@ class SetupWizard:
                 ["pactl", "list", "sources", "short"],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             # Try to match device name (alsa_input usually)
@@ -67,11 +68,11 @@ class SetupWizard:
                 ["pactl", "get-source-volume", source],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             # Parse: "Volume: front-left: 78643 / 120% / 4.75 dB"
-            match = re.search(r'(\d+)%', result.stdout)
+            match = re.search(r"(\d+)%", result.stdout)
             if match:
                 return int(match.group(1))
 
@@ -89,7 +90,7 @@ class SetupWizard:
             subprocess.run(
                 ["pactl", "set-source-volume", source, f"{percent}%"],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
             return True
         except (subprocess.CalledProcessError, FileNotFoundError):
@@ -140,16 +141,18 @@ class SetupWizard:
             # Filter only real hardware devices (hw:X,Y) and system default
             input_devices = []
             for idx, dev in enumerate(devices):
-                if dev['max_input_channels'] > 0:
-                    name = dev['name']
+                if dev["max_input_channels"] > 0:
+                    name = dev["name"]
                     # Include: hardware devices (hw:), pulse, pipewire, or default
                     # Exclude: virtual ALSA plugins (sysdefault, lavrate, samplerate, etc.)
-                    if any([
-                        'hw:' in name,
-                        name == 'default',
-                        name == 'pulse',
-                        name == 'pipewire',
-                    ]):
+                    if any(
+                        [
+                            "hw:" in name,
+                            name == "default",
+                            name == "pulse",
+                            name == "pipewire",
+                        ]
+                    ):
                         input_devices.append((idx, dev))
 
             if not input_devices:
@@ -161,22 +164,29 @@ class SetupWizard:
             for i, (idx, dev) in enumerate(input_devices, 1):
                 default_marker = " (VÝCHOZÍ)" if idx == sd.default.device[0] else ""
                 print(f"  [{i}] {dev['name']}{default_marker}")
-                print(f"      Kanály: {dev['max_input_channels']}, "
-                      f"Vzorkovací frekvence: {dev['default_samplerate']} Hz")
+                print(
+                    f"      Kanály: {dev['max_input_channels']}, "
+                    f"Vzorkovací frekvence: {dev['default_samplerate']} Hz"
+                )
                 print()
 
             # Auto-select default or first device
             if sd.default.device[0] is not None:
                 default_idx = next(
-                    (i for i, (idx, _) in enumerate(input_devices)
-                     if idx == sd.default.device[0]),
-                    0
+                    (
+                        i
+                        for i, (idx, _) in enumerate(input_devices)
+                        if idx == sd.default.device[0]
+                    ),
+                    0,
                 )
             else:
                 default_idx = 0
 
             print(f"Doporučené zařízení: [{default_idx + 1}]")
-            choice = input(f"Vyberte zařízení (1-{len(input_devices)}) nebo Enter pro výchozí: ").strip()
+            choice = input(
+                f"Vyberte zařízení (1-{len(input_devices)}) nebo Enter pro výchozí: "
+            ).strip()
 
             if not choice:
                 selected_idx = default_idx
@@ -253,7 +263,7 @@ class SetupWizard:
                 bar_length = 50
                 level_percent = min(100, (rms / 0.5) * 100)
                 filled = int(bar_length * level_percent / 100)
-                bar = '█' * filled + '░' * (bar_length - filled)
+                bar = "█" * filled + "░" * (bar_length - filled)
 
                 # Color coding based on level
                 if level_percent < 20:
@@ -265,7 +275,9 @@ class SetupWizard:
                 else:
                     status_icon = "🟠"  # Too loud
 
-                print(f"\r{status_icon} [{bar}] {level_percent:5.1f}%", end='', flush=True)
+                print(
+                    f"\r{status_icon} [{bar}] {level_percent:5.1f}%", end="", flush=True
+                )
 
             try:
                 with sd.InputStream(
@@ -315,10 +327,16 @@ class SetupWizard:
                     if can_auto_adjust:
                         current_vol = self._get_mic_volume()
                         # Calculate needed increase (aim for 50%)
-                        needed_vol = int(current_vol * (50 / max_percent)) if max_percent > 0 else current_vol + 20
+                        needed_vol = (
+                            int(current_vol * (50 / max_percent))
+                            if max_percent > 0
+                            else current_vol + 20
+                        )
                         needed_vol = min(150, needed_vol)  # Cap at 150%
 
-                        print(f"🔧 Automaticky zvyšuji z {current_vol}% na {needed_vol}%...")
+                        print(
+                            f"🔧 Automaticky zvyšuji z {current_vol}% na {needed_vol}%..."
+                        )
                         if self._set_mic_volume(needed_vol):
                             print("✅ Hlasitost upravena, zkusím znovu...")
                             time.sleep(1)
@@ -330,7 +348,7 @@ class SetupWizard:
                     print("   → Nebo mluvte blíž k mikrofonu")
                     print("")
 
-                    if input("Zkusit znovu? (a/n): ").strip().lower() == 'a':
+                    if input("Zkusit znovu? (a/n): ").strip().lower() == "a":
                         continue
                     else:
                         self.optimal_threshold = 0.005
@@ -346,7 +364,9 @@ class SetupWizard:
                         needed_vol = int(current_vol * (50 / max_percent))
                         needed_vol = max(20, needed_vol)  # Min 20%
 
-                        print(f"🔧 Automaticky snižuji z {current_vol}% na {needed_vol}%...")
+                        print(
+                            f"🔧 Automaticky snižuji z {current_vol}% na {needed_vol}%..."
+                        )
                         if self._set_mic_volume(needed_vol):
                             print("✅ Hlasitost upravena, zkusím znovu...")
                             time.sleep(1)
@@ -357,7 +377,7 @@ class SetupWizard:
                     print("   → Snižte hlasitost mikrofonu na 50-70%")
                     print("")
 
-                    if input("Zkusit znovu? (a/n): ").strip().lower() == 'a':
+                    if input("Zkusit znovu? (a/n): ").strip().lower() == "a":
                         continue
                     else:
                         self.optimal_threshold = max_level * 0.1
@@ -387,7 +407,7 @@ class SetupWizard:
         print("")
 
         response = input("Spustit test rozpoznávání? (a/n): ").strip().lower()
-        if response != 'a':
+        if response != "a":
             print("⏭️  Test přeskočen")
             return True
 
@@ -414,7 +434,7 @@ class SetupWizard:
             # Wait for recording to finish
             while recorder.is_active():
                 duration = recorder.get_duration()
-                print(f"\r⏺️  Nahrávám... {duration:.1f}s", end='', flush=True)
+                print(f"\r⏺️  Nahrávám... {duration:.1f}s", end="", flush=True)
                 time.sleep(0.1)
 
             print("\n\n⏹️  Nahrávání zastaveno")
@@ -430,10 +450,10 @@ class SetupWizard:
 
             if text:
                 print(f"\n✅ ROZPOZNANÝ TEXT:")
-                print(f"\n  📝 \"{text}\"\n")
+                print(f'\n  📝 "{text}"\n')
 
                 correct = input("Je text správně rozpoznán? (a/n): ").strip().lower()
-                if correct == 'a':
+                if correct == "a":
                     print("✅ Skvělé! Tiny model funguje dobře!")
                     return True
                 else:
@@ -459,16 +479,20 @@ class SetupWizard:
 
                         if text_base:
                             print(f"\n✅ NOVÝ ROZPOZNANÝ TEXT (base model):")
-                            print(f"\n  📝 \"{text_base}\"\n")
+                            print(f'\n  📝 "{text_base}"\n')
 
-                            correct_base = input("Je tento text správně? (a/n): ").strip().lower()
-                            if correct_base == 'a':
+                            correct_base = (
+                                input("Je tento text správně? (a/n): ").strip().lower()
+                            )
+                            if correct_base == "a":
                                 print("✅ Skvělé! Base model funguje lépe!")
                                 print("💡 Doporučuji použít model 'base' místo 'tiny'")
                                 return True
                             else:
                                 print("⚠️  Ani base model není dokonalý.")
-                                print("💡 Tip: Můžete zkusit model 'small', ale je pomalejší")
+                                print(
+                                    "💡 Tip: Můžete zkusit model 'small', ale je pomalejší"
+                                )
                                 return True
                         else:
                             print("❌ Ani base model nerozpoznal text")
@@ -476,7 +500,9 @@ class SetupWizard:
 
                     except Exception as e:
                         print(f"⚠️  Nepodařilo se načíst base model: {e}")
-                        print("💡 Tip: Zkuste model 'base' nebo 'small' při spuštění aplikace")
+                        print(
+                            "💡 Tip: Zkuste model 'base' nebo 'small' při spuštění aplikace"
+                        )
                         return True
 
             else:
@@ -502,7 +528,7 @@ class SetupWizard:
         print("")
 
         response = input("Jste připraveni? (a/n): ").strip().lower()
-        if response != 'a':
+        if response != "a":
             print("⏭️  Test přeskočen")
             return True
 
@@ -522,7 +548,7 @@ class SetupWizard:
             print("")
             if success:
                 response = input("Byl text úspěšně vložen? (a/n): ").strip().lower()
-                if response == 'a':
+                if response == "a":
                     print("✅ Vkládání textu funguje!")
                     return True
                 else:
@@ -655,10 +681,12 @@ class SetupWizard:
         print()
 
         launch = input("Chcete spustit aplikaci nyní? (a/n): ").strip().lower()
-        if launch == 'a':
+        if launch == "a":
             print("\n🚀 Spouštím Global Dictation...")
             print("   Měli byste vidět zelené tlačítko 🎤")
-            print(f"   Stiskněte {'+'.join(self.config.hotkey.combination)} pro diktování")
+            print(
+                f"   Stiskněte {'+'.join(self.config.hotkey.combination)} pro diktování"
+            )
             print()
             return True
         else:
@@ -681,14 +709,14 @@ class SetupWizard:
             if not success:
                 print("\n⚠️  Problém s hlasitostí mikrofonu.")
                 response = input("Pokračovat i přesto? (a/n): ").strip().lower()
-                if response != 'a':
+                if response != "a":
                     return False
 
             # Step 3: Speech recognition
             if not self.test_speech_recognition():
                 print("\n⚠️  Problém s rozpoznáváním řeči.")
                 response = input("Pokračovat i přesto? (a/n): ").strip().lower()
-                if response != 'a':
+                if response != "a":
                     return False
 
             # Step 4: Text injection
@@ -718,10 +746,7 @@ class SetupWizard:
 
 def main() -> int:
     """Main entry point for setup wizard."""
-    logging.basicConfig(
-        level=logging.WARNING,
-        format='%(levelname)s: %(message)s'
-    )
+    logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 
     wizard = SetupWizard()
     should_launch = wizard.run()
@@ -729,6 +754,7 @@ def main() -> int:
     if should_launch:
         # Launch the application
         from .cli import run as run_dictation
+
         try:
             run_dictation.callback(
                 config=None,

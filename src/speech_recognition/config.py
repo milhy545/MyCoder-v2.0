@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AudioConfig:
     """Audio recording configuration."""
+
     sample_rate: int = 16000
     channels: int = 1
     silence_threshold: float = 0.01
@@ -27,6 +28,7 @@ class AudioConfig:
 @dataclass
 class WhisperConfig:
     """Whisper transcription configuration."""
+
     provider: str = "api"  # "api" or "local"
     api_key: Optional[str] = None
     model: str = "whisper-1"  # For API
@@ -38,6 +40,7 @@ class WhisperConfig:
 @dataclass
 class InjectionConfig:
     """Text injection configuration."""
+
     method: str = "auto"  # "xdotool_type", "xdotool_paste", "clipboard_only", "auto"
     typing_delay: int = 12
     use_clipboard_backup: bool = True
@@ -46,6 +49,7 @@ class InjectionConfig:
 @dataclass
 class GuiConfig:
     """GUI overlay configuration."""
+
     enabled: bool = True
     button_size: int = 80
     position_x: Optional[int] = None
@@ -55,6 +59,7 @@ class GuiConfig:
 @dataclass
 class HotkeyConfig:
     """Global hotkey configuration."""
+
     enabled: bool = True
     combination: list[str] = field(default_factory=lambda: ["ctrl", "shift", "space"])
 
@@ -62,6 +67,7 @@ class HotkeyConfig:
 @dataclass
 class DictationConfig:
     """Complete dictation application configuration."""
+
     audio: AudioConfig = field(default_factory=AudioConfig)
     whisper: WhisperConfig = field(default_factory=WhisperConfig)
     injection: InjectionConfig = field(default_factory=InjectionConfig)
@@ -118,34 +124,34 @@ class ConfigManager:
 
     def _load_from_file(self) -> None:
         """Load configuration from JSON file."""
-        with open(self.config_path, 'r') as f:
+        with open(self.config_path, "r") as f:
             data = json.load(f)
 
         # Audio config
-        if 'audio' in data:
-            self.config.audio = AudioConfig(**data['audio'])
+        if "audio" in data:
+            self.config.audio = AudioConfig(**data["audio"])
 
         # Whisper config
-        if 'whisper' in data:
-            self.config.whisper = WhisperConfig(**data['whisper'])
+        if "whisper" in data:
+            self.config.whisper = WhisperConfig(**data["whisper"])
 
         # Injection config
-        if 'injection' in data:
-            self.config.injection = InjectionConfig(**data['injection'])
+        if "injection" in data:
+            self.config.injection = InjectionConfig(**data["injection"])
 
         # GUI config
-        if 'gui' in data:
-            self.config.gui = GuiConfig(**data['gui'])
+        if "gui" in data:
+            self.config.gui = GuiConfig(**data["gui"])
 
         # Hotkey config
-        if 'hotkey' in data:
-            self.config.hotkey = HotkeyConfig(**data['hotkey'])
+        if "hotkey" in data:
+            self.config.hotkey = HotkeyConfig(**data["hotkey"])
 
         # Logging config
-        if 'log_level' in data:
-            self.config.log_level = data['log_level']
-        if 'log_file' in data:
-            self.config.log_file = data['log_file']
+        if "log_level" in data:
+            self.config.log_level = data["log_level"]
+        if "log_file" in data:
+            self.config.log_file = data["log_file"]
 
     def _load_from_env(self) -> None:
         """Override configuration with environment variables."""
@@ -172,12 +178,12 @@ class ConfigManager:
         # GUI enabled
         gui_enabled = os.getenv("DICTATION_GUI_ENABLED")
         if gui_enabled:
-            self.config.gui.enabled = gui_enabled.lower() in ('true', '1', 'yes')
+            self.config.gui.enabled = gui_enabled.lower() in ("true", "1", "yes")
 
         # Hotkey enabled
         hotkey_enabled = os.getenv("DICTATION_HOTKEY_ENABLED")
         if hotkey_enabled:
-            self.config.hotkey.enabled = hotkey_enabled.lower() in ('true', '1', 'yes')
+            self.config.hotkey.enabled = hotkey_enabled.lower() in ("true", "1", "yes")
 
     def save(self) -> bool:
         """
@@ -194,7 +200,7 @@ class ConfigManager:
             data = self._config_to_dict()
 
             # Write to file
-            with open(self.config_path, 'w') as f:
+            with open(self.config_path, "w") as f:
                 json.dump(data, f, indent=2)
 
             logger.info(f"Saved configuration to: {self.config_path}")
@@ -207,17 +213,17 @@ class ConfigManager:
     def _config_to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary."""
         return {
-            'audio': asdict(self.config.audio),
-            'whisper': {
+            "audio": asdict(self.config.audio),
+            "whisper": {
                 **asdict(self.config.whisper),
                 # Don't save API key to file
-                'api_key': None,
+                "api_key": None,
             },
-            'injection': asdict(self.config.injection),
-            'gui': asdict(self.config.gui),
-            'hotkey': asdict(self.config.hotkey),
-            'log_level': self.config.log_level,
-            'log_file': self.config.log_file,
+            "injection": asdict(self.config.injection),
+            "gui": asdict(self.config.gui),
+            "hotkey": asdict(self.config.hotkey),
+            "log_level": self.config.log_level,
+            "log_file": self.config.log_file,
         }
 
     def create_default_config(self) -> bool:
@@ -246,7 +252,10 @@ class ConfigManager:
                 "Must be one of: 8000, 16000, 22050, 44100, 48000"
             )
 
-        if self.config.audio.silence_threshold < 0 or self.config.audio.silence_threshold > 1:
+        if (
+            self.config.audio.silence_threshold < 0
+            or self.config.audio.silence_threshold > 1
+        ):
             errors.append(
                 f"Invalid silence threshold: {self.config.audio.silence_threshold}. "
                 "Must be between 0 and 1"
@@ -343,6 +352,6 @@ def setup_logging(config: DictationConfig) -> None:
 
     logging.basicConfig(
         level=log_level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=handlers,
     )
