@@ -12,7 +12,7 @@ Core code lives in `src/` (main class in `enhanced_mycoder_v2.py`, providers in 
 - Local runs: `python -m pytest tests/ -v`.
 
 ## Coding Style & Naming Conventions
-Python 3.8+, 4-space indent. Format with Black (see `pyproject.toml`), lint with flake8, and install hooks via `pre-commit install`. Use type hints and docstrings for public APIs. Naming: `snake_case` for functions/vars, `PascalCase` for classes, `UPPER_SNAKE` for constants. Keep configuration in JSON and environment variables, not hard-coded.
+Python 3.10+, 4-space indent. Format with Black (see `pyproject.toml`), lint with flake8, and install hooks via `pre-commit install`. Use type hints and docstrings for public APIs. Naming: `snake_case` for functions/vars, `PascalCase` for classes, `UPPER_SNAKE` for constants. Keep configuration in JSON and environment variables, not hard-coded.
 
 ## Testing Guidelines
 Pytest with pytest-asyncio is the standard. File naming: `test_*.py` or `*_test.py`; functions `test_*`. Markers include `unit`, `integration`, `functional`, `stress`. Aim for 85%+ coverage for new features. Examples: `python -m pytest tests/unit/ -v`, `python tests/stress/run_stress_tests.py --quick`.

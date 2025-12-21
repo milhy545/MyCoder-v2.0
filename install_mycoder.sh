@@ -35,12 +35,12 @@ fi
 
 # Check Python version
 if ! command -v python3 &> /dev/null; then
-    print_error "Python 3 není nainstalován. Nainstaluj Python 3.8+"
+    print_error "Python 3 není nainstalován. Nainstaluj Python 3.10+"
     exit 1
 fi
 
 PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
-REQUIRED_VERSION="3.8"
+REQUIRED_VERSION="3.10"
 
 if [ "$(printf '%s\n' "$REQUIRED_VERSION" "$PYTHON_VERSION" | sort -V | head -n1)" != "$REQUIRED_VERSION" ]; then
     print_error "Python $PYTHON_VERSION nalezen, ale vyžadujeme $REQUIRED_VERSION+"

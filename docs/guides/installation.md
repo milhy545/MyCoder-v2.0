@@ -4,7 +4,7 @@ Complete installation guide for Enhanced MyCoder v2.0.
 
 ## System Requirements
 
-- **Python**: 3.8+ (recommended: 3.11)
+- **Python**: 3.10+ (recommended: 3.11)
 - **Operating System**: Linux, macOS, Windows
 - **Memory**: 4GB RAM minimum, 8GB recommended
 - **Storage**: 1GB free space

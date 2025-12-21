@@ -24,7 +24,7 @@ python -c "from mycoder import MyCoder; print('✅ MyCoder v2.0 nainstalován!')
 
 ### 1. Systémové požadavky
 ```bash
-# Python 3.8+
+# Python 3.10+
 python3 --version
 
 # Git

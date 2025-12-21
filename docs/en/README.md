@@ -1,6 +1,6 @@
 # Claude CLI Authentication Module - English Documentation
 
-[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 Robust, production-ready Python module for integrating with Claude AI **without API keys**. Uses Claude CLI authentication for seamless access to Claude Code functionality.
