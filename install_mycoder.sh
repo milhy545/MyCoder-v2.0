@@ -35,7 +35,7 @@ fi
 
 # Check Python version
 if ! command -v python3 &> /dev/null; then
-    print_error "Python 3 není nainstalován. Nainstaluj Python 3.10+"
+    print_error "Python 3 není nainstalován. Nainstaluj Python 3.10-3.13"
     exit 1
 fi
 

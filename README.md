@@ -2,7 +2,7 @@
 
 > **Multi-API AI Development Assistant with Q9550 Thermal Management**
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10-3.13](https://img.shields.io/badge/python-3.10--3.13-blue.svg)](https://www.python.org/downloads/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Test Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](#testing)
 [![Q9550 Compatible](https://img.shields.io/badge/Q9550-thermal%20managed-orange.svg)](#thermal-management)
@@ -379,7 +379,7 @@ python -m pytest tests/
 
 ### Code Standards
 
-- **Python 3.10+** compatibility
+- **Python 3.10-3.13** compatibility
 - **Type hints** for all public APIs
 - **Docstrings** for all classes and methods
 - **85%+ test coverage** for new features

@@ -1,6 +1,6 @@
 # Enhanced MyCoder v2.0 - Česká příručka
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10-3.13](https://img.shields.io/badge/python-3.10--3.13-blue.svg)](https://www.python.org/downloads/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](../../LICENSE)
 [![Test Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](#testovani)
 [![Q9550 Compatible](https://img.shields.io/badge/Q9550-thermal%20managed-orange.svg)](#tepelni-management)
@@ -389,7 +389,7 @@ python -m pytest tests/
 
 ### Kódovací Standardy
 
-- **Python 3.10+** kompatibilita
+- **Python 3.10-3.13** kompatibilita
 - **Type hints** pro všechny veřejné APIs
 - **Docstrings** pro všechny třídy a metody
 - **85%+ test coverage** pro nové funkce

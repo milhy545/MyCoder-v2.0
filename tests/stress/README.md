@@ -140,7 +140,7 @@ python tests/stress/run_stress_tests.py --all --no-thermal
 - **Memory:** 4GB RAM available
 - **CPU:** 2+ cores
 - **Disk:** 2GB free space
-- **Python:** 3.10+ with pytest
+- **Python:** 3.10-3.13 with pytest
 
 ### Optimal Requirements  
 - **Memory:** 8GB+ RAM

@@ -100,7 +100,7 @@ def main():
     
     # Check Python version
     if sys.version_info < (3, 8):
-        print("❌ Python 3.10+ je vyžadován")
+        print("❌ Python 3.10-3.13 je vyžadován")
         sys.exit(1)
     
     # Run demo
