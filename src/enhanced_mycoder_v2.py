@@ -206,17 +206,53 @@ class EnhancedMyCoderV2:
         )
         gemini_api_key = gemini_config.get("api_key") or os.getenv("GEMINI_API_KEY")
         if bool(gemini_enabled):
-            gemini_provider_config = APIProviderConfig(
-                provider_type=APIProviderType.GEMINI,
+        gemini_provider_config = APIProviderConfig(
+            provider_type=APIProviderType.GEMINI,
+            enabled=True,
+            timeout_seconds=gemini_timeout,
+            max_retries=gemini_max_retries,
+            config={
+                "api_key": gemini_api_key,
+                "model": gemini_model,
+            },
+        )
+        provider_configs.append(gemini_provider_config)
+
+        # Mercury Diffusion LLM (Priority 4)
+        mercury_config = self._get_section("inception_mercury")
+        mercury_enabled = mercury_config.get(
+            "enabled", self.config.get("inception_mercury_enabled", False)
+        )
+
+        if mercury_enabled:
+            mercury_provider_config = APIProviderConfig(
+                provider_type=APIProviderType.MERCURY,
                 enabled=True,
-                timeout_seconds=gemini_timeout,
-                max_retries=gemini_max_retries,
+                timeout_seconds=mercury_config.get(
+                    "timeout_seconds", self.config.get("inception_mercury_timeout_seconds", 60)
+                ),
                 config={
-                    "api_key": gemini_api_key,
-                    "model": gemini_model,
+                    "api_key": mercury_config.get("api_key")
+                    or os.getenv("INCEPTION_API_KEY"),
+                    "base_url": mercury_config.get(
+                        "base_url",
+                        self.config.get(
+                            "inception_mercury_base_url",
+                            "https://api.inceptionlabs.ai/v1",
+                        ),
+                    ),
+                    "model": mercury_config.get(
+                        "model", self.config.get("inception_mercury_model", "mercury")
+                    ),
+                    "realtime": mercury_config.get(
+                        "realtime", self.config.get("inception_mercury_realtime", False)
+                    ),
+                    "diffusing": mercury_config.get(
+                        "diffusing", self.config.get("inception_mercury_diffusing", False)
+                    ),
                 },
             )
-            provider_configs.append(gemini_provider_config)
+            provider_configs.append(mercury_provider_config)
 
         # Ollama Local (Priority 4)
         ollama_local_config = self._get_section("ollama_local")

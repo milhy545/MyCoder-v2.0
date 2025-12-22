@@ -40,6 +40,7 @@ class APIProviderType(Enum):
     GEMINI = "gemini"
     OLLAMA_LOCAL = "ollama_local"
     OLLAMA_REMOTE = "ollama_remote"
+    MERCURY = "mercury"
     RECOVERY = "recovery"
 
 
@@ -158,6 +159,9 @@ class ClaudeAnthropicProvider(BaseAPIProvider):
         """Execute query using Anthropic API"""
         self.total_requests += 1
         start_time = time.time()
+
+        if not self.api_key:
+            return APIProviderStatus.UNAVAILABLE
 
         try:
             if not self.api_key:
@@ -364,6 +368,125 @@ class ClaudeOAuthProvider(BaseAPIProvider):
 
         except Exception as e:
             logger.warning(f"Claude OAuth health check failed: {e}")
+            return APIProviderStatus.UNAVAILABLE
+
+
+class MercuryProvider(BaseAPIProvider):
+    """Mercury diffusion-based LLM from Inception Labs"""
+
+    def __init__(self, config: APIProviderConfig):
+        super().__init__(config)
+        self.api_key = config.config.get("api_key") or os.getenv("INCEPTION_API_KEY")
+        self.base_url = config.config.get("base_url", "https://api.inceptionlabs.ai/v1")
+        self.model = config.config.get("model", "mercury")
+        self.realtime = config.config.get("realtime", False)
+        self.diffusing = config.config.get("diffusing", False)
+
+    async def query(
+        self, prompt: str, context: Dict[str, Any] = None, **kwargs
+    ) -> APIResponse:
+        """Execute query against Mercury"""
+        self.total_requests += 1
+        start_time = time.time()
+
+        if not self.api_key:
+            return APIResponse(
+                success=False,
+                content="",
+                provider=APIProviderType.MERCURY,
+                error="INCEPTION_API_KEY not configured",
+                duration_ms=0,
+            )
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+        }
+
+        payload = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": kwargs.get("max_tokens", 1024),
+            "temperature": kwargs.get("temperature", 0.75),
+            "top_p": kwargs.get("top_p", 1.0),
+            "stream": False,
+            "diffusing": kwargs.get("diffusing", self.diffusing),
+            "realtime": kwargs.get("realtime", self.realtime),
+        }
+
+        if kwargs.get("tools"):
+            payload["tools"] = kwargs["tools"]
+
+        if kwargs.get("session_id"):
+            payload["session_id"] = kwargs.get("session_id")
+
+        url = f"{self.base_url}/chat/completions"
+
+        try:
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+            ) as session:
+                async with session.post(url, headers=headers, json=payload) as response:
+                    status = response.status
+                    data = await response.json()
+
+            duration_ms = int((time.time() - start_time) * 1000)
+
+            if status != 200:
+                error_text = data.get("error", {}).get("message", str(data))
+                raise Exception(f"Mercury API error {status}: {error_text}")
+
+            choice = data.get("choices", [{}])[0]
+            message = choice.get("message", {})
+            content = message.get("content", "")
+            tool_call = message.get("tool_call") or message.get("function_call")
+
+            self.successful_requests += 1
+            self.status = APIProviderStatus.HEALTHY
+
+            return APIResponse(
+                success=True,
+                content=content,
+                provider=APIProviderType.MERCURY,
+                duration_ms=duration_ms,
+                tokens_used=data.get("usage", {}).get("total_tokens", 0),
+                session_id=data.get("session_id"),
+                metadata={
+                    "choice": choice,
+                    "tool_call": tool_call,
+                    "diffusing": payload["diffusing"],
+                },
+            )
+
+        except Exception as e:
+            self.error_count += 1
+            self.status = APIProviderStatus.UNAVAILABLE
+            logger.error(f"Mercury error: {e}")
+
+            return APIResponse(
+                success=False,
+                content="",
+                provider=APIProviderType.MERCURY,
+                error=str(e),
+                duration_ms=int((time.time() - start_time) * 1000),
+            )
+
+    async def health_check(self) -> APIProviderStatus:
+        try:
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}",
+            }
+
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=10)
+            ) as session:
+                async with session.get(f"{self.base_url}/health", headers=headers) as resp:
+                    if resp.status == 200:
+                        return APIProviderStatus.HEALTHY
+                    return APIProviderStatus.DEGRADED
+        except Exception as e:
+            logger.warning(f"Mercury health check failed: {e}")
             return APIProviderStatus.UNAVAILABLE
 
 
@@ -677,6 +800,7 @@ class APIProviderRouter:
             APIProviderType.GEMINI: GeminiProvider,
             APIProviderType.OLLAMA_LOCAL: OllamaProvider,
             APIProviderType.OLLAMA_REMOTE: OllamaProvider,
+            APIProviderType.MERCURY: MercuryProvider,
         }
 
         for config in configs:

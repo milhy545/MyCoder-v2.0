@@ -66,6 +66,8 @@ class MyCoderConfig:
     ollama_local: APIProviderSettings = None
     ollama_remote_urls: List[str] = None
 
+    inception_mercury: APIProviderSettings = None
+
     # System Settings
     thermal: ThermalSettings = None
     system: SystemSettings = None
@@ -89,6 +91,8 @@ class MyCoderConfig:
             )
         if self.ollama_remote_urls is None:
             self.ollama_remote_urls = []
+        if self.inception_mercury is None:
+            self.inception_mercury = APIProviderSettings(enabled=False)
         if self.thermal is None:
             self.thermal = ThermalSettings()
         if self.system is None:
@@ -179,13 +183,22 @@ class ConfigManager:
                 "emergency_shutdown": False,
                 "performance_script": "/home/milhy777/Develop/Production/PowerManagement/scripts/performance_manager.sh",
             },
-            "system": {
-                "log_level": "INFO",
-                "session_timeout_hours": 24,
-                "max_concurrent_requests": 10,
-                "enable_tool_registry": True,
-                "enable_mcp_integration": True,
-            },
+                "system": {
+                    "log_level": "INFO",
+                    "session_timeout_hours": 24,
+                    "max_concurrent_requests": 10,
+                    "enable_tool_registry": True,
+                    "enable_mcp_integration": True,
+                },
+                "inception_mercury": {
+                    "enabled": False,
+                    "model": "mercury",
+                    "base_url": "https://api.inceptionlabs.ai/v1",
+                    "timeout_seconds": 60,
+                    "realtime": False,
+                    "diffusing": False,
+                    "tools": [],
+                },
             "preferred_provider": None,
             "fallback_enabled": True,
             "debug_mode": False,
@@ -246,6 +259,7 @@ class ConfigManager:
             "anthropic_api_key": os.getenv("ANTHROPIC_API_KEY"),
             "gemini_api_key": os.getenv("GEMINI_API_KEY"),
             "openai_api_key": os.getenv("OPENAI_API_KEY"),  # For future use
+            "inception_api_key": os.getenv("INCEPTION_API_KEY"),
         }
 
         for key, value in api_keys.items():
@@ -277,12 +291,14 @@ class ConfigManager:
             "ollama_local",
             "thermal",
             "system",
+            "inception_mercury",
         }
         provider_prefixes = [
             "claude_anthropic",
             "claude_oauth",
             "gemini",
             "ollama_local",
+            "inception_mercury",
         ]
 
         for key, value in env_config.items():
@@ -388,6 +404,9 @@ class ConfigManager:
             claude_oauth = APIProviderSettings(**config_dict.get("claude_oauth", {}))
             gemini = APIProviderSettings(**config_dict.get("gemini", {}))
             ollama_local = APIProviderSettings(**config_dict.get("ollama_local", {}))
+            inception_mercury = APIProviderSettings(
+                **config_dict.get("inception_mercury", {})
+            )
 
             thermal = ThermalSettings(**config_dict.get("thermal", {}))
             system = SystemSettings(**config_dict.get("system", {}))
@@ -397,6 +416,7 @@ class ConfigManager:
                 claude_oauth=claude_oauth,
                 gemini=gemini,
                 ollama_local=ollama_local,
+                inception_mercury=inception_mercury,
                 ollama_remote_urls=config_dict.get("ollama_remote_urls", []),
                 thermal=thermal,
                 system=system,
@@ -426,6 +446,14 @@ class ConfigManager:
             if not os.getenv("GEMINI_API_KEY"):
                 logger.warning("Gemini enabled but no API key found")
 
+        if (
+            self.config.inception_mercury
+            and self.config.inception_mercury.enabled
+            and not self.config.inception_mercury.api_key
+        ):
+            if not os.getenv("INCEPTION_API_KEY"):
+                logger.warning("Inception Mercury enabled but no API key found")
+
         # Check thermal script availability
         if self.config.thermal.enabled:
             script_path = Path(self.config.thermal.performance_script)
@@ -444,6 +472,7 @@ class ConfigManager:
             self.config.claude_oauth,
             self.config.gemini,
             self.config.ollama_local,
+            self.config.inception_mercury,
         ]
         for provider in providers:
             if provider.timeout_seconds <= 0:
@@ -471,6 +500,7 @@ class ConfigManager:
                 "claude_oauth": asdict(self.config.claude_oauth),
                 "gemini": asdict(self.config.gemini),
                 "ollama_local": asdict(self.config.ollama_local),
+                "inception_mercury": asdict(self.config.inception_mercury),
                 "ollama_remote_urls": self.config.ollama_remote_urls,
                 "thermal": asdict(self.config.thermal),
                 "system": asdict(self.config.system),
@@ -500,6 +530,7 @@ class ConfigManager:
             "claude_oauth": self.config.claude_oauth,
             "gemini": self.config.gemini,
             "ollama_local": self.config.ollama_local,
+            "inception_mercury": self.config.inception_mercury,
         }
 
         return provider_map.get(provider_type)
