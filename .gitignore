@@ -60,3 +60,6 @@ docker-compose.override.yml
 *.tmp
 temp/
 tmp/
+
+.gemini/
+gha-creds-*.json
