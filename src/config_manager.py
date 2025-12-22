@@ -26,6 +26,10 @@ class APIProviderSettings:
     base_url: Optional[str] = None
     api_key: Optional[str] = None
     priority: int = 10  # Lower number = higher priority
+    # Mercury-specific settings
+    realtime: bool = False
+    diffusing: bool = False
+    tools: Optional[List[Dict[str, Any]]] = None
 
 
 @dataclass
@@ -183,22 +187,22 @@ class ConfigManager:
                 "emergency_shutdown": False,
                 "performance_script": "/home/milhy777/Develop/Production/PowerManagement/scripts/performance_manager.sh",
             },
-                "system": {
-                    "log_level": "INFO",
-                    "session_timeout_hours": 24,
-                    "max_concurrent_requests": 10,
-                    "enable_tool_registry": True,
-                    "enable_mcp_integration": True,
-                },
-                "inception_mercury": {
-                    "enabled": False,
-                    "model": "mercury",
-                    "base_url": "https://api.inceptionlabs.ai/v1",
-                    "timeout_seconds": 60,
-                    "realtime": False,
-                    "diffusing": False,
-                    "tools": [],
-                },
+            "system": {
+                "log_level": "INFO",
+                "session_timeout_hours": 24,
+                "max_concurrent_requests": 10,
+                "enable_tool_registry": True,
+                "enable_mcp_integration": True,
+            },
+            "inception_mercury": {
+                "enabled": False,
+                "model": "mercury",
+                "base_url": "https://api.inceptionlabs.ai/v1",
+                "timeout_seconds": 60,
+                "realtime": False,
+                "diffusing": False,
+                "tools": [],
+            },
             "preferred_provider": None,
             "fallback_enabled": True,
             "debug_mode": False,

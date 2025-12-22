@@ -161,7 +161,13 @@ class ClaudeAnthropicProvider(BaseAPIProvider):
         start_time = time.time()
 
         if not self.api_key:
-            return APIProviderStatus.UNAVAILABLE
+            return APIResponse(
+                success=False,
+                content="",
+                provider=APIProviderType.CLAUDE_ANTHROPIC,
+                error="ANTHROPIC_API_KEY not configured",
+                duration_ms=0,
+            )
 
         try:
             if not self.api_key:
@@ -481,7 +487,9 @@ class MercuryProvider(BaseAPIProvider):
             async with aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(total=10)
             ) as session:
-                async with session.get(f"{self.base_url}/health", headers=headers) as resp:
+                async with session.get(
+                    f"{self.base_url}/health", headers=headers
+                ) as resp:
                     if resp.status == 200:
                         return APIProviderStatus.HEALTHY
                     return APIProviderStatus.DEGRADED

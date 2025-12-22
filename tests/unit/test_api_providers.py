@@ -387,12 +387,13 @@ class TestGeminiProvider:
     @pytest.mark.asyncio
     async def test_query_no_api_key(self):
         """Test query without API key"""
-        provider = self.create_provider(api_key=None)
+        with patch.dict(os.environ, {}, clear=True):
+            provider = self.create_provider(api_key=None)
 
-        response = await provider.query("Hello")
+            response = await provider.query("Hello")
 
-        assert response.success is False
-        assert "GEMINI_API_KEY not configured" in response.error
+            assert response.success is False
+            assert "GEMINI_API_KEY not configured" in response.error
 
     @pytest.mark.asyncio
     @patch("aiohttp.ClientSession.post")

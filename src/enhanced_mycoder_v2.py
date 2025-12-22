@@ -229,7 +229,8 @@ class EnhancedMyCoderV2:
                 provider_type=APIProviderType.MERCURY,
                 enabled=True,
                 timeout_seconds=mercury_config.get(
-                    "timeout_seconds", self.config.get("inception_mercury_timeout_seconds", 60)
+                    "timeout_seconds",
+                    self.config.get("inception_mercury_timeout_seconds", 60),
                 ),
                 config={
                     "api_key": mercury_config.get("api_key")
@@ -248,7 +249,8 @@ class EnhancedMyCoderV2:
                         "realtime", self.config.get("inception_mercury_realtime", False)
                     ),
                     "diffusing": mercury_config.get(
-                        "diffusing", self.config.get("inception_mercury_diffusing", False)
+                        "diffusing",
+                        self.config.get("inception_mercury_diffusing", False),
                     ),
                 },
             )

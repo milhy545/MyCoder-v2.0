@@ -1,6 +1,7 @@
 import asyncio
 import os
 import sys
+
 # Rich library is now required via poetry
 try:
     from rich.console import Console
@@ -19,7 +20,7 @@ try:
     from src.enhanced_mycoder_v2 import EnhancedMyCoderV2
     from src.config_manager import ConfigManager
 except ImportError:
-    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
     from src.enhanced_mycoder_v2 import EnhancedMyCoderV2
     from src.config_manager import ConfigManager
 
@@ -29,6 +30,7 @@ COLOR_USER = "bold green"
 COLOR_SUCCESS = "bold magenta"
 COLOR_INFO = "italic yellow"
 COLOR_BORDER = "blue"
+
 
 class InteractiveCLI:
     def __init__(self):
@@ -50,7 +52,13 @@ class InteractiveCLI:
 ╚═╝     ╚═╝   ╚═╝    ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝
         v2.0 :: SYSTEM READY :: MERCURY ENGINE LINKED
         """
-        self.console.print(Panel(Text(banner, justify="center", style="bold magenta"), border_style=COLOR_BORDER, box=box.HEAVY))
+        self.console.print(
+            Panel(
+                Text(banner, justify="center", style="bold magenta"),
+                border_style=COLOR_BORDER,
+                box=box.HEAVY,
+            )
+        )
 
     async def handle_slash_command(self, command: str):
         parts = command.strip().split()
@@ -83,7 +91,8 @@ class InteractiveCLI:
 
     def show_help(self):
         table = Table(title="Commands", box=box.ROUNDED, border_style=COLOR_BORDER)
-        table.add_column("Command", style="green"); table.add_column("Action", style="white")
+        table.add_column("Command", style="green")
+        table.add_column("Action", style="white")
         table.add_row("/status", "Show system flags")
         table.add_row("/diffon | /diffoff", "Toggle Mercury Diffusion")
         table.add_row("/realtime", "Toggle Realtime")
@@ -99,21 +108,40 @@ class InteractiveCLI:
         [bold magenta]Realtime:[/bold magenta] {self.realtime_mode}
         [yellow]Thermal:[/yellow] DISABLED (Silent)
         """
-        self.console.print(Panel(status.strip(), title="System Status", border_style="blue"))
+        self.console.print(
+            Panel(status.strip(), title="System Status", border_style="blue")
+        )
 
     def list_tools(self):
         # Placeholder for visual feedback until tool registry is fully linked
-        tools = self.coder.tool_registry.list_tools() if hasattr(self.coder, 'tool_registry') else {}
+        tools = (
+            self.coder.tool_registry.list_tools()
+            if hasattr(self.coder, "tool_registry")
+            else {}
+        )
         self.console.print(f"[italic]Registered Tools: {len(tools)}[/italic]")
 
     async def process_chat(self, user_input: str):
         with self.console.status("[bold magenta]Processing...[/]", spinner="dots12"):
             try:
                 response = await self.coder.process_request(
-                    user_input, diffusing=self.diffusing_mode, realtime=self.realtime_mode
+                    user_input,
+                    diffusing=self.diffusing_mode,
+                    realtime=self.realtime_mode,
                 )
-                content = response.get("content", str(response)) if isinstance(response, dict) else str(response)
-                self.console.print(Panel(Markdown(content), title="MyCoder", border_style="green", box=box.ROUNDED))
+                content = (
+                    response.get("content", str(response))
+                    if isinstance(response, dict)
+                    else str(response)
+                )
+                self.console.print(
+                    Panel(
+                        Markdown(content),
+                        title="MyCoder",
+                        border_style="green",
+                        box=box.ROUNDED,
+                    )
+                )
             except Exception as e:
                 self.console.print(f"[bold red]Error:[/bold red] {e}")
 
@@ -122,10 +150,15 @@ class InteractiveCLI:
         while True:
             try:
                 user_input = Prompt.ask(f"[{COLOR_USER}]You[/]")
-                if not user_input: continue
-                if user_input.startswith("/"): await self.handle_slash_command(user_input)
-                else: await self.process_chat(user_input)
-            except (KeyboardInterrupt, EOFError): break
+                if not user_input:
+                    continue
+                if user_input.startswith("/"):
+                    await self.handle_slash_command(user_input)
+                else:
+                    await self.process_chat(user_input)
+            except (KeyboardInterrupt, EOFError):
+                break
+
 
 if __name__ == "__main__":
     try:
