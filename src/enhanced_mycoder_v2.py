@@ -206,17 +206,17 @@ class EnhancedMyCoderV2:
         )
         gemini_api_key = gemini_config.get("api_key") or os.getenv("GEMINI_API_KEY")
         if bool(gemini_enabled):
-        gemini_provider_config = APIProviderConfig(
-            provider_type=APIProviderType.GEMINI,
-            enabled=True,
-            timeout_seconds=gemini_timeout,
-            max_retries=gemini_max_retries,
-            config={
-                "api_key": gemini_api_key,
-                "model": gemini_model,
-            },
-        )
-        provider_configs.append(gemini_provider_config)
+            gemini_provider_config = APIProviderConfig(
+                provider_type=APIProviderType.GEMINI,
+                enabled=True,
+                timeout_seconds=gemini_timeout,
+                max_retries=gemini_max_retries,
+                config={
+                    "api_key": gemini_api_key,
+                    "model": gemini_model,
+                },
+            )
+            provider_configs.append(gemini_provider_config)
 
         # Mercury Diffusion LLM (Priority 4)
         mercury_config = self._get_section("inception_mercury")
