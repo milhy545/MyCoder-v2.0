@@ -6,7 +6,7 @@ architecture for managing and routing tools across different operational modes.
 
 Features:
 - Tool Registry Pattern for centralized management
-- Service Layer Pattern for modular tool interfaces  
+- Service Layer Pattern for modular tool interfaces
 - Event-based tool execution and monitoring
 - Intelligent tool routing based on context and capabilities
 """

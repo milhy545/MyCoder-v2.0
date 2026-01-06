@@ -7,7 +7,7 @@ and intelligent fallbacks across different AI providers.
 
 Features:
 - 5-tier API provider system (Claude Anthropic, Claude OAuth, Gemini, Ollama Local/Remote)
-- FEI-inspired tool registry and service layer architecture  
+- FEI-inspired tool registry and service layer architecture
 - Intelligent provider selection based on context and thermal conditions
 - Advanced error recovery with provider fallbacks
 - Thermal-aware operation for Q9550 systems
