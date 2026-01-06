@@ -310,9 +310,7 @@ class LocalMCPServer:
                 continue
             for idx, line in enumerate(content.splitlines(), start=1):
                 if query.lower() in line.lower():
-                    matches.append(
-                        {"path": str(file_path), "line": idx, "text": line}
-                    )
+                    matches.append({"path": str(file_path), "line": idx, "text": line})
                     if len(matches) >= max_results:
                         return {"matches": matches}
         return {"matches": matches}

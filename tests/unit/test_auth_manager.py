@@ -46,7 +46,9 @@ def test_config(temp_dir: Path) -> AuthConfig:
 def mock_auth_manager(test_config: AuthConfig):
     """Create an AuthManager with CLI calls mocked."""
     with patch("claude_cli_auth.auth_manager.AuthManager._load_sessions"):
-        with patch("claude_cli_auth.auth_manager.AuthManager._find_claude_cli") as mock_find:
+        with patch(
+            "claude_cli_auth.auth_manager.AuthManager._find_claude_cli"
+        ) as mock_find:
             mock_find.return_value = "/usr/local/bin/claude"
             manager = AuthManager(test_config)
     yield manager

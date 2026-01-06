@@ -128,9 +128,7 @@ class MCPConnector:
             await self._start_local_server()
             self.orchestrator_url = self._local_server_url
             if await self.test_connection():
-                logger.info(
-                    "Using local MCP server at %s", self._local_server_url
-                )
+                logger.info("Using local MCP server at %s", self._local_server_url)
             else:
                 logger.warning(
                     "Local MCP server not reachable at %s", self._local_server_url
@@ -147,9 +145,7 @@ class MCPConnector:
             from local_mcp_server import LocalMCPServer  # type: ignore
 
         data_dir = (
-            Path(self.local_data_dir).expanduser()
-            if self.local_data_dir
-            else None
+            Path(self.local_data_dir).expanduser() if self.local_data_dir else None
         )
         self.local_server = LocalMCPServer(
             host=self.local_host, port=self.local_port, data_dir=data_dir

@@ -228,10 +228,11 @@ class InteractiveCLI:
             buffer.text = choices[index]
             buffer.cursor_position = len(buffer.text)
 
-        toolbar = lambda: (
-            "Tab/Shift+Tab meni volbu, Enter potvrdi. "
-            f"Aktualni: {choices[index]}"
-        )
+        def toolbar():
+            return (
+                "Tab/Shift+Tab meni volbu, Enter potvrdi. "
+                f"Aktualni: {choices[index]}"
+            )
 
         value = (
             await session.prompt_async(

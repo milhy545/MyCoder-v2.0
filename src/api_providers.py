@@ -451,6 +451,7 @@ class MercuryProvider(BaseAPIProvider):
                         content_accum = ""
                         delta_accum = ""
                         clean_candidate = ""
+
                         def _sanitize_text(text: str) -> str:
                             filtered = "".join(
                                 ch
@@ -499,9 +500,7 @@ class MercuryProvider(BaseAPIProvider):
                             if lower.startswith("y") and lower not in {"y", "ypsilon"}:
                                 return False
                             vowels = "aeiouyáéíóúůýě"
-                            allowed = set(
-                                "aábcčdďeéěfghhiíjklmnňoópqrřsštťuúůvyýzž"
-                            )
+                            allowed = set("aábcčdďeéěfghhiíjklmnňoópqrřsštťuúůvyýzž")
                             banned = set("qwx")
                             if any(ch in banned for ch in lower):
                                 return False
@@ -612,7 +611,9 @@ class MercuryProvider(BaseAPIProvider):
                                 "ová",
                                 "ové",
                             )
-                            return any(lower.endswith(suffix) for suffix in adj_suffixes)
+                            return any(
+                                lower.endswith(suffix) for suffix in adj_suffixes
+                            )
 
                         def _looks_like_verb(word: str) -> bool:
                             lower = word.lower().strip(".,!?")
@@ -634,7 +635,9 @@ class MercuryProvider(BaseAPIProvider):
                                 "á",
                                 "ou",
                             )
-                            return any(lower.endswith(suffix) for suffix in verb_suffixes)
+                            return any(
+                                lower.endswith(suffix) for suffix in verb_suffixes
+                            )
 
                         def _ensure_subject(sentence: str) -> str:
                             normalized = (
@@ -663,14 +666,18 @@ class MercuryProvider(BaseAPIProvider):
                             if "model" in lowered:
                                 return normalized
                             if len(words) >= 3:
-                                if _looks_like_adj(words[0]) and _looks_like_adj(
-                                    words[1]
-                                ) and _looks_like_verb(words[2]):
+                                if (
+                                    _looks_like_adj(words[0])
+                                    and _looks_like_adj(words[1])
+                                    and _looks_like_verb(words[2])
+                                ):
                                     words.insert(2, "model")
                                     return " ".join(words)
-                                if _looks_like_adj(words[0]) and (
-                                    words[1].lower().strip(".,!?") in nouns
-                                ) and _looks_like_verb(words[2]):
+                                if (
+                                    _looks_like_adj(words[0])
+                                    and (words[1].lower().strip(".,!?") in nouns)
+                                    and _looks_like_verb(words[2])
+                                ):
                                     words.insert(1, "model")
                                     return " ".join(words)
                             if _looks_like_adj(words[0]) and _looks_like_verb(words[1]):
@@ -700,6 +707,7 @@ class MercuryProvider(BaseAPIProvider):
                                 if len(word) > 1 and word[:2].isupper():
                                     return True
                             return False
+
                         async for raw_line in response.content:
                             line = raw_line.decode("utf-8", errors="ignore").strip()
                             if not line or not line.startswith("data:"):
@@ -750,9 +758,7 @@ class MercuryProvider(BaseAPIProvider):
                                 )
                         if not content_accum and delta_accum:
                             content_accum = delta_accum
-                        data = {
-                            "choices": [{"message": {"content": content_accum}}]
-                        }
+                        data = {"choices": [{"message": {"content": content_accum}}]}
                     else:
                         data = await response.json()
 
