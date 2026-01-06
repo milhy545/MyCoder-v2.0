@@ -14,42 +14,42 @@ Key Features:
 
 Example:
     Basic usage:
-    
+
     ```python
     from enhanced_mycoder_v2 import EnhancedMyCoderV2
     from pathlib import Path
-    
+
     config = {
         "claude_oauth": {"enabled": True},
         "ollama_local": {"enabled": True},
         "thermal": {"enabled": True, "max_temp": 75}
     }
-    
+
     mycoder = EnhancedMyCoderV2(
         working_directory=Path("."),
         config=config
     )
-    
+
     await mycoder.initialize()
-    
+
     response = await mycoder.process_request(
         "Analyze this code and suggest improvements",
         files=[Path("example.py")]
     )
-    
+
     print(response["content"])
     ```
 
     With advanced configuration:
-    
+
     ```python
     from config_manager import ConfigManager
     from api_providers import APIProviderRouter
-    
+
     # Load configuration from file
     config_manager = ConfigManager("mycoder_config.json")
     config = config_manager.load_config()
-    
+
     # Create with advanced settings
     mycoder = EnhancedMyCoderV2(
         working_directory=Path("."),
