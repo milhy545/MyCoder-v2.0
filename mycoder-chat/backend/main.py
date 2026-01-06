@@ -244,10 +244,11 @@ async def test_has_connection():
                 "has_response": response.json() if response.status_code == 200 else None,
                 "status_code": response.status_code
             }
-    except Exception as e:
+    except Exception:
+        logger.exception("HAS health check failed")
         return {
             "status": "failed",
-            "error": str(e)
+            "error": "HAS health check failed"
         }
 
 
@@ -262,10 +263,11 @@ async def test_llm_connection():
                 "llm_response": response.json() if response.status_code == 200 else None,
                 "status_code": response.status_code
             }
-    except Exception as e:
+    except Exception:
+        logger.exception("LLM server health check failed")
         return {
             "status": "failed",
-            "error": str(e)
+            "error": "LLM server health check failed"
         }
 
 
