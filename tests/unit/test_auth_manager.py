@@ -20,6 +20,38 @@ from claude_cli_auth import (
 from claude_cli_auth.models import AuthConfig, SessionStatus
 
 
+@pytest.fixture
+def test_config(temp_dir: Path) -> AuthConfig:
+    """Create a test AuthConfig with a credentials file."""
+    config_dir = temp_dir / "claude_config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    (config_dir / ".credentials.json").write_text("{}")
+    fake_cli = temp_dir / "claude"
+    fake_cli.write_text("#!/bin/sh\n")
+    fake_cli.chmod(0o755)
+    return AuthConfig(
+        claude_cli_path=str(fake_cli),
+        claude_config_dir=config_dir,
+        timeout_seconds=30,
+        max_turns=10,
+        session_timeout_hours=24,
+        max_cost_per_session=1.0,
+        working_directory=temp_dir,
+        use_sdk=False,
+        enable_streaming=True,
+    )
+
+
+@pytest.fixture
+def mock_auth_manager(test_config: AuthConfig):
+    """Create an AuthManager with CLI calls mocked."""
+    with patch("claude_cli_auth.auth_manager.AuthManager._load_sessions"):
+        with patch("claude_cli_auth.auth_manager.AuthManager._find_claude_cli") as mock_find:
+            mock_find.return_value = "/usr/local/bin/claude"
+            manager = AuthManager(test_config)
+    yield manager
+
+
 @pytest.mark.unit
 class TestAuthManager:
     """Test cases for AuthManager class."""
@@ -51,7 +83,11 @@ class TestAuthManager:
 
     def test_is_authenticated_success(self, mock_auth_manager: AuthManager):
         """Test successful authentication check."""
-        assert mock_auth_manager.is_authenticated() is True
+        with patch.object(mock_auth_manager, "_run_claude_command") as mock_cmd:
+            mock_cmd.return_value = MagicMock(
+                returncode=0, stdout="test_user", stderr=""
+            )
+            assert mock_auth_manager.is_authenticated() is True
 
     def test_is_authenticated_no_credentials(self, test_config: AuthConfig):
         """Test authentication check when no credentials file exists."""
@@ -195,7 +231,7 @@ class TestAuthManager:
         mock_auth_manager.update_session("cost_limit_test", cost=0.15)
 
         # Check that session is marked as failed
-        updated_session = mock_auth_manager.get_session("cost_limit_test")
+        updated_session = mock_auth_manager._sessions["cost_limit_test"]
         assert updated_session.status == SessionStatus.FAILED
 
     def test_list_sessions_all(self, mock_auth_manager: AuthManager):
@@ -297,6 +333,7 @@ class TestAuthManager:
 
     def test_find_claude_cli_success(self, mock_auth_manager: AuthManager):
         """Test finding Claude CLI executable."""
+        mock_auth_manager.config.claude_cli_path = None
         with patch("shutil.which") as mock_which:
             mock_which.return_value = "/usr/local/bin/claude"
 
@@ -305,6 +342,7 @@ class TestAuthManager:
 
     def test_find_claude_cli_not_found(self, mock_auth_manager: AuthManager):
         """Test Claude CLI not found."""
+        mock_auth_manager.config.claude_cli_path = None
         with patch("shutil.which") as mock_which:
             mock_which.return_value = None
 

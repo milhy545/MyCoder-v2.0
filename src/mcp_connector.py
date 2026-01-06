@@ -7,7 +7,10 @@ running on 192.168.0.58:8020 for enhanced tool capabilities and data persistence
 
 import asyncio
 import logging
+import os
+from pathlib import Path
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 import aiohttp
 
@@ -27,13 +30,30 @@ class MCPConnector:
     current operational mode and service availability.
     """
 
-    def __init__(self, orchestrator_url: str = "http://192.168.0.58:8020"):
+    def __init__(
+        self,
+        orchestrator_url: str = "http://192.168.0.58:8020",
+        auto_start_local: Optional[bool] = None,
+        local_host: Optional[str] = None,
+        local_port: Optional[int] = None,
+        local_data_dir: Optional[str] = None,
+    ):
         self.orchestrator_url = orchestrator_url
         self.session: Optional[aiohttp.ClientSession] = None
         self.available_tools: List[str] = []
         self.service_status: Dict[str, Any] = {}
         self.last_health_check: float = 0
         self.health_check_interval = 60  # Check every 60 seconds
+        self.auto_start_local = (
+            auto_start_local
+            if auto_start_local is not None
+            else self._env_bool("MYCODER_MCP_LOCAL_AUTOSTART", True)
+        )
+        self.local_host = local_host or os.getenv("MYCODER_MCP_LOCAL_HOST", "127.0.0.1")
+        self.local_port = local_port or int(os.getenv("MYCODER_MCP_LOCAL_PORT", "8020"))
+        self.local_data_dir = local_data_dir or os.getenv("MYCODER_MCP_LOCAL_DATA_DIR")
+        self.local_server = None
+        self._local_server_url = f"http://{self.local_host}:{self.local_port}"
 
     async def __aenter__(self):
         """Async context manager entry."""
@@ -49,6 +69,7 @@ class MCPConnector:
         """Async context manager exit."""
         if self.session:
             await self.session.close()
+        await self._stop_local_server()
 
     async def check_services_health(self) -> Dict[str, Any]:
         """Check health of all MCP services."""
@@ -56,6 +77,7 @@ class MCPConnector:
             return {}
 
         try:
+            await self._ensure_orchestrator()
             # Get service status from orchestrator
             async with self.session.get(
                 f"{self.orchestrator_url}/services"
@@ -91,6 +113,64 @@ class MCPConnector:
         except Exception as e:
             logger.error(f"MCP health check error: {e}")
             return {}
+
+    async def _ensure_orchestrator(self) -> None:
+        if not self.session:
+            return
+
+        if await self.test_connection():
+            return
+
+        if not self.auto_start_local:
+            return
+
+        try:
+            await self._start_local_server()
+            self.orchestrator_url = self._local_server_url
+            if await self.test_connection():
+                logger.info(
+                    "Using local MCP server at %s", self._local_server_url
+                )
+            else:
+                logger.warning(
+                    "Local MCP server not reachable at %s", self._local_server_url
+                )
+        except Exception as exc:
+            logger.warning("Failed to start local MCP server: %s", exc)
+
+    async def _start_local_server(self) -> None:
+        if self.local_server:
+            return
+        try:
+            from .local_mcp_server import LocalMCPServer
+        except Exception:
+            from local_mcp_server import LocalMCPServer  # type: ignore
+
+        data_dir = (
+            Path(self.local_data_dir).expanduser()
+            if self.local_data_dir
+            else None
+        )
+        self.local_server = LocalMCPServer(
+            host=self.local_host, port=self.local_port, data_dir=data_dir
+        )
+        await self.local_server.start()
+
+    async def _stop_local_server(self) -> None:
+        if self.local_server:
+            await self.local_server.stop()
+            self.local_server = None
+
+    def _env_bool(self, name: str, default: bool) -> bool:
+        value = os.getenv(name)
+        if value is None:
+            return default
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+
+    def _is_local_url(self, url: str) -> bool:
+        parsed = urlparse(url)
+        host = parsed.hostname or ""
+        return host in {"localhost", "127.0.0.1", "::1", self.local_host}
 
     async def get_available_tools_for_mode(self, mode: OperationalMode) -> List[str]:
         """Get available tools filtered by operational mode."""
@@ -161,6 +241,8 @@ class MCPConnector:
                 "error": "MCP connector not initialized",
                 "fallback_suggestion": "use_local_fallback",
             }
+
+        await self._ensure_orchestrator()
 
         # Check if tool is available in current mode
         available_tools = await self.get_available_tools_for_mode(mode)
@@ -338,6 +420,11 @@ class MCPConnector:
             "available_tools": self.available_tools,
             "services": self.service_status,
             "health_check_interval": self.health_check_interval,
+            "local_server": {
+                "auto_start": self.auto_start_local,
+                "enabled": self.local_server is not None,
+                "url": self._local_server_url,
+            },
         }
 
     async def test_connection(self) -> bool:

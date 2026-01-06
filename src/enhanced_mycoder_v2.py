@@ -104,7 +104,12 @@ class EnhancedMyCoderV2:
         self.tool_registry = get_tool_registry()
 
         # Initialize adaptive mode manager
-        self.mode_manager = AdaptiveModeManager(OperationalMode.FULL)
+        claude_oauth_enabled = bool(
+            self._get_section("claude_oauth").get("enabled", False)
+        )
+        self.mode_manager = AdaptiveModeManager(
+            OperationalMode.FULL, claude_auth_enabled=claude_oauth_enabled
+        )
 
         logger.info(
             f"Enhanced MyCoder v2.0 initialized with working directory: {self.working_directory}"
@@ -176,7 +181,7 @@ class EnhancedMyCoderV2:
         # Claude OAuth (Priority 2)
         claude_oauth_config = self._get_section("claude_oauth")
         claude_oauth_enabled = claude_oauth_config.get(
-            "enabled", self.config.get("claude_oauth_enabled", True)
+            "enabled", self.config.get("claude_oauth_enabled", False)
         )
         claude_oauth_timeout = claude_oauth_config.get(
             "timeout_seconds", self.config.get("claude_oauth_timeout_seconds", 45)

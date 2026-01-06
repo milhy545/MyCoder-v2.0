@@ -379,7 +379,7 @@ INVALID_LINE_WITHOUT_EQUALS
 
     def test_load_file_config_nonexistent(self):
         """Test loading config when file doesn't exist"""
-        manager = self.create_manager()
+        manager = ConfigManager(Path("/tmp/does-not-exist-config.json"))
         file_config = manager._load_file_config()
 
         assert file_config is None
@@ -532,7 +532,7 @@ INVALID_LINE_WITHOUT_EQUALS
                 assert config.claude_anthropic.enabled is True
                 assert config.claude_anthropic.model == "custom-model"  # From file
                 assert config.thermal.max_temp == 82  # From environment
-                assert config.claude_oauth.enabled is True  # From defaults
+                assert config.claude_oauth.enabled is False  # From defaults
                 assert config.debug_mode is True  # From file
 
                 # Config should be stored in manager
@@ -792,7 +792,7 @@ class TestConfigManagerIntegration:
                 assert config.thermal.max_temp == 82  # Overridden by env
 
                 # Should have defaults for unspecified
-                assert config.claude_oauth.enabled is True
+                assert config.claude_oauth.enabled is False
                 assert config.system.log_level == "INFO"
 
         finally:

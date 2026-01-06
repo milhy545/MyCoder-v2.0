@@ -286,18 +286,24 @@ class ResourceMonitor:
 class AdaptiveModeManager:
     """Central manager for adaptive mode switching and system health."""
 
-    def __init__(self, initial_mode: OperationalMode = OperationalMode.FULL):
+    def __init__(
+        self,
+        initial_mode: OperationalMode = OperationalMode.FULL,
+        claude_auth_enabled: bool = True,
+    ):
         self.current_mode = initial_mode
         self.mode_history: List[tuple] = []  # (mode, timestamp, reason)
         self.health_status = HealthStatus()
         self.claude_auth: Optional[ClaudeAuthManager] = None
         self.monitoring_task: Optional[asyncio.Task] = None
         self._mode_transition_lock = asyncio.Lock()
+        self.claude_auth_enabled = claude_auth_enabled
 
         # Mode configurations
+        claude_auth = bool(claude_auth_enabled)
         self.mode_configs = {
             OperationalMode.FULL: ModeCapabilities(
-                claude_auth=True,
+                claude_auth=claude_auth,
                 mcp_orchestrator="http://192.168.0.58:8020",
                 memory_system="postgresql+qdrant",
                 available_tools=[
@@ -314,7 +320,7 @@ class AdaptiveModeManager:
                 use_sdk=True,
             ),
             OperationalMode.DEGRADED: ModeCapabilities(
-                claude_auth=True,
+                claude_auth=claude_auth,
                 mcp_orchestrator="http://localhost:8020",
                 memory_system="sqlite",
                 available_tools=["filesystem", "git", "terminal"],
@@ -389,9 +395,12 @@ class AdaptiveModeManager:
             self.health_status.orchestrator_available = (
                 await detective.test_orchestrator_connection()
             )
-            self.health_status.claude_auth_working = (
-                await detective.test_claude_authentication()
-            )
+            if self.claude_auth_enabled:
+                self.health_status.claude_auth_working = (
+                    await detective.test_claude_authentication()
+                )
+            else:
+                self.health_status.claude_auth_working = True
 
         resource_monitor = ResourceMonitor()
         resources = await resource_monitor.check_system_resources()

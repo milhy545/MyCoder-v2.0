@@ -86,7 +86,7 @@ class MyCoderConfig:
         if self.claude_anthropic is None:
             self.claude_anthropic = APIProviderSettings(enabled=False)
         if self.claude_oauth is None:
-            self.claude_oauth = APIProviderSettings(enabled=True)
+            self.claude_oauth = APIProviderSettings(enabled=False)
         if self.gemini is None:
             self.gemini = APIProviderSettings(enabled=False)
         if self.ollama_local is None:
@@ -157,7 +157,7 @@ class ConfigManager:
                 "priority": 1,
             },
             "claude_oauth": {
-                "enabled": True,
+                "enabled": False,
                 "timeout_seconds": 45,
                 "max_retries": 3,
                 "priority": 2,
