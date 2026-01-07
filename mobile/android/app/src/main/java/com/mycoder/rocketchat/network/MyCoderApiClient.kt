@@ -44,7 +44,7 @@ class MyCoderApiClient private constructor(private val context: Context) {
         })
         .build()
 
-    private var baseUrl: String = BuildConfig.MYCODER_API_URL
+    private var baseUrl: String = normalizeUrlProtocol(BuildConfig.MYCODER_API_URL)
     private var isInitialized = false
 
     suspend fun initialize() {
@@ -215,12 +215,49 @@ class MyCoderApiClient private constructor(private val context: Context) {
     }
 
     fun setBaseUrl(url: String) {
-        baseUrl = url
+        baseUrl = normalizeUrlProtocol(url)
         isInitialized = false
     }
 
     companion object {
         private const val TAG = "MyCoderApiClient"
+
+        /**
+         * Normalizes URL protocol to ensure HTTPS is used by default.
+         * HTTP is only allowed in DEBUG mode for development/testing purposes.
+         *
+         * @param url The URL to normalize
+         * @return URL with appropriate protocol (HTTPS in production, HTTP allowed in DEBUG)
+         */
+        private fun normalizeUrlProtocol(url: String): String {
+            val trimmedUrl = url.trim()
+
+            return when {
+                // URL already has HTTPS - keep it as is
+                trimmedUrl.startsWith("https://", ignoreCase = true) -> trimmedUrl
+
+                // URL has HTTP protocol
+                trimmedUrl.startsWith("http://", ignoreCase = true) -> {
+                    if (BuildConfig.DEBUG) {
+                        // Allow HTTP in DEBUG mode for local development
+                        android.util.Log.d(TAG, "Using HTTP protocol in DEBUG mode: $trimmedUrl")
+                        trimmedUrl
+                    } else {
+                        // Force HTTPS in production/release builds
+                        val httpsUrl = trimmedUrl.replaceFirst("http://", "https://", ignoreCase = true)
+                        android.util.Log.w(TAG, "HTTP not allowed in production. Converted to HTTPS: $httpsUrl")
+                        httpsUrl
+                    }
+                }
+
+                // No protocol specified - default to HTTPS
+                else -> {
+                    val httpsUrl = "https://$trimmedUrl"
+                    android.util.Log.d(TAG, "No protocol specified. Defaulting to HTTPS: $httpsUrl")
+                    httpsUrl
+                }
+            }
+        }
 
         @Volatile
         private var INSTANCE: MyCoderApiClient? = null
