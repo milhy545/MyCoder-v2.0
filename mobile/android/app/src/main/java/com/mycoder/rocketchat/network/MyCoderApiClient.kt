@@ -176,6 +176,44 @@ class MyCoderApiClient private constructor(private val context: Context) {
         }
     }
 
+    /**
+     * Connect to the specified URL and verify health.
+     * Returns Success(Unit) if successful, or Failure(Exception) with error details.
+     */
+    suspend fun connect(url: String): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                // Ensure URL has protocol
+                val targetUrl = if (!url.startsWith("http")) "http://$url" else url
+                baseUrl = targetUrl
+
+                // Test connection to MyCoder backend /health
+                val request = Request.Builder()
+                    .url("$baseUrl/health")
+                    .get()
+                    .build()
+
+                // Use a short timeout for the connection check if possible,
+                // but we reuse the shared client which has 30s timeout.
+                // We could create a new call.
+                val response = okHttpClient.newCall(request).execute()
+
+                if (response.isSuccessful) {
+                    isInitialized = true
+                    response.close()
+                    Result.success(Unit)
+                } else {
+                    val message = "HTTP ${response.code}: ${response.message}"
+                    response.close()
+                    Result.failure(Exception(message))
+                }
+            } catch (e: Exception) {
+                isInitialized = false
+                Result.failure(e)
+            }
+        }
+    }
+
     fun setBaseUrl(url: String) {
         baseUrl = url
         isInitialized = false
