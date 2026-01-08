@@ -62,7 +62,7 @@ class InteractiveCLI:
 ╔╦╗╦ ╦╔═╗╔═╗╔╦╗╔═╗╦═╗  ╦  ╦╔═╗
 ║║║╚╦╝║  ║ ║ ║║║╣ ╠╦╝  ╚╗╔╝╚═╗░
 ╩ ╩ ╩ ╚═╝╚═╝═╩╝╚═╝╩╚═   ╚╝ ╚═╝░
-      [ v2.5 - AI Powered ]
+      [ v2.1.0 - AI Powered ]
         """
         self.console.print(
             Panel(
