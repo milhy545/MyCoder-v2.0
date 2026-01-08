@@ -63,3 +63,4 @@ tmp/
 
 .gemini/
 gha-creds-*.json
+history.json
