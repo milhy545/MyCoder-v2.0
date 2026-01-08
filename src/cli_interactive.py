@@ -10,6 +10,7 @@ try:
     from rich.prompt import Prompt
     from rich.table import Table
     from rich.text import Text
+    from rich.align import Align
     from rich import box
 except ImportError:
     print("CRITICAL: 'rich' library not found. Please run: poetry add rich")
@@ -58,15 +59,18 @@ class InteractiveCLI:
         self.preferred_provider = self._map_provider(self.active_provider)
 
     def print_banner(self):
-        banner = """
-╔╦╗╦ ╦╔═╗╔═╗╔╦╗╔═╗╦═╗  ╦  ╦╔═╗
-║║║╚╦╝║  ║ ║ ║║║╣ ╠╦╝  ╚╗╔╝╚═╗░
-╩ ╩ ╩ ╚═╝╚═╝═╩╝╚═╝╩╚═   ╚╝ ╚═╝░
+        banner = r"""
+    __  ___        ______          __
+   /  |/  /_  __  / ____/___  ____/ /__  _____
+  / /|_/ / / / / / /   / __ \/ __  / _ \/ ___/
+ / /  / / /_/ / / /___/ /_/ / /_/ /  __/ /
+/_/  /_/\__, /  \____/\____/\__,_/\___/_/
+       /____/
       [ v2.1.0 - AI Powered ]
-        """
+"""
         self.console.print(
             Panel(
-                Text(banner, justify="center", style="bold cyan"),
+                Align(Text(banner, style="bold cyan"), align="center"),
                 border_style=COLOR_BORDER,
                 box=box.HEAVY,
             )
