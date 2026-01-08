@@ -59,17 +59,14 @@ class InteractiveCLI:
 
     def print_banner(self):
         banner = """
-███╗   ███╗██╗   ██╗ ██████╗ ██████╗ ██████╗ ███████╗██████╗ 
-████╗ ████║╚██╗ ██╔╝██╔════╝██╔═══██╗██╔══██╗██╔════╝██╔══██╗
-██╔████╔██║ ╚████╔╝ ██║     ██║   ██║██║  ██║█████╗  ██████╔╝
-██║╚██╔╝██║  ╚██╔╝  ██║     ██║   ██║██║  ██║██╔══╝  ██╔══██╗
-██║ ╚═╝ ██║   ██║   ╚██████╗╚██████╔╝██████╔╝███████╗██║  ██║
-╚═╝     ╚═╝   ╚═╝    ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝
-        v2.0 :: SYSTEM READY :: MERCURY ENGINE LINKED
+╔╦╗╦ ╦╔═╗╔═╗╔╦╗╔═╗╦═╗  ╦  ╦╔═╗
+║║║╚╦╝║  ║ ║ ║║║╣ ╠╦╝  ╚╗╔╝╚═╗░
+╩ ╩ ╩ ╚═╝╚═╝═╩╝╚═╝╩╚═   ╚╝ ╚═╝░
+      [ v2.5 - AI Powered ]
         """
         self.console.print(
             Panel(
-                Text(banner, justify="center", style="bold magenta"),
+                Text(banner, justify="center", style="bold cyan"),
                 border_style=COLOR_BORDER,
                 box=box.HEAVY,
             )
@@ -317,7 +314,9 @@ class InteractiveCLI:
         self.console.print(f"[italic]Registered Tools: {len(tools)}[/italic]")
 
     async def process_chat(self, user_input: str):
-        with self.console.status("[bold magenta]Processing...[/]", spinner="dots12"):
+        with self.console.status(
+            "[bold magenta]Přemýšlím a generuji kód...[/]", spinner="dots"
+        ):
             try:
                 response = await self.coder.process_request(
                     user_input,
@@ -333,7 +332,7 @@ class InteractiveCLI:
                 self.console.print(
                     Panel(
                         Markdown(content),
-                        title="MyCoder",
+                        title="MyCoder AI",
                         border_style="green",
                         box=box.ROUNDED,
                     )

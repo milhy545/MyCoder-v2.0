@@ -15,6 +15,7 @@ Features:
 """
 
 import asyncio
+import json
 import logging
 import os
 import socket
@@ -96,6 +97,8 @@ class EnhancedMyCoderV2:
         self.session_store: Dict[str, Dict] = {}
         self.thermal_monitor = None
         self._initialized = False
+        self.history_file = self.working_directory / "history.json"
+        self.history = self._load_history()
 
         # Initialize API provider router
         self.provider_router = None
@@ -114,6 +117,25 @@ class EnhancedMyCoderV2:
         logger.info(
             f"Enhanced MyCoder v2.0 initialized with working directory: {self.working_directory}"
         )
+
+    def _load_history(self) -> List[Dict[str, Any]]:
+        """Load conversation history from file"""
+        if not self.history_file.exists():
+            return []
+        try:
+            with open(self.history_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"Failed to load history: {e}")
+            return []
+
+    def _save_history(self):
+        """Save conversation history to file"""
+        try:
+            with open(self.history_file, "w", encoding="utf-8") as f:
+                json.dump(self.history, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"Failed to save history: {e}")
 
     async def initialize(self):
         """Initialize Enhanced MyCoder system with multi-API providers"""
@@ -481,6 +503,16 @@ class EnhancedMyCoderV2:
             if not api_response.success:
                 response["error"] = api_response.error
                 response["recovery_suggestions"] = self._get_recovery_suggestions()
+
+            # Append to history and save
+            self.history.append(
+                {
+                    "timestamp": time.time(),
+                    "prompt": prompt,
+                    "response": response,
+                }
+            )
+            self._save_history()
 
             logger.info(
                 f"Request completed in {duration:.1f}s using {api_response.provider.value}"
