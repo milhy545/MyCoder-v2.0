@@ -3,6 +3,7 @@ import os
 import shutil
 from src.utils.file_ops import read_file, write_file
 
+
 class TestFileOps(unittest.TestCase):
     def setUp(self):
         self.test_dir = "test_data"
@@ -37,5 +38,6 @@ class TestFileOps(unittest.TestCase):
         with self.assertRaises(IOError):
             write_file(file_path, "content")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
