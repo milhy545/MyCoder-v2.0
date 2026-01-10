@@ -1,5 +1,6 @@
 import os
 
+
 def read_file(path: str) -> str:
     """
     Reads the content of a file.
@@ -18,10 +19,11 @@ def read_file(path: str) -> str:
         raise FileNotFoundError(f"File not found: {path}")
 
     try:
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, "r", encoding="utf-8") as f:
             return f.read()
     except Exception as e:
         raise IOError(f"Error reading file {path}: {e}")
+
 
 def write_file(path: str, content: str) -> None:
     """
@@ -35,7 +37,7 @@ def write_file(path: str, content: str) -> None:
         IOError: If there is an error writing to the file.
     """
     try:
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(content)
     except Exception as e:
         raise IOError(f"Error writing to file {path}: {e}")

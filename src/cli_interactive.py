@@ -70,7 +70,7 @@ class ExecutionMonitor:
         """Add a timestamped entry and trim logs to the configured cap."""
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.logs.append((timestamp, action, resource))
-        self.logs = self.logs[-15 :]
+        self.logs = self.logs[-15:]
 
     def _render_bar(self, percent: float) -> str:
         """Return a 10-character ASCII bar for the provided percentage."""
@@ -164,8 +164,12 @@ class ExecutionMonitor:
         resource_width = max(12, int(remaining_width * 0.35))
 
         table.add_column("TIME", width=time_width, style="bold yellow", no_wrap=True)
-        table.add_column("ACTION FLOW", width=action_width, style="cyan", overflow="ellipsis")
-        table.add_column("RESOURCE", width=resource_width, style="dim white", overflow="ellipsis")
+        table.add_column(
+            "ACTION FLOW", width=action_width, style="cyan", overflow="ellipsis"
+        )
+        table.add_column(
+            "RESOURCE", width=resource_width, style="dim white", overflow="ellipsis"
+        )
 
         # Populate table with visible logs
         if not visible_logs:
@@ -367,9 +371,7 @@ class InteractiveCLI:
         self.coder = EnhancedMyCoderV2(config=self.config_manager.config)
         self.monitor.add_log("PROVIDER_SWITCH", self.active_provider)
 
-    async def _select_provider(
-        self, choices: List[str], default_choice: str
-    ) -> str:
+    async def _select_provider(self, choices: List[str], default_choice: str) -> str:
         """Prompt the user to select a provider, with optional tab cycling."""
         if not pt_prompt:
             return Prompt.ask(
@@ -556,7 +558,9 @@ class InteractiveCLI:
         layout["monitor"].update(self.monitor.render(self.console))
         return layout
 
-    def _estimate_message_height(self, entry: Dict[str, str], content_width: int) -> int:
+    def _estimate_message_height(
+        self, entry: Dict[str, str], content_width: int
+    ) -> int:
         """
         Conservatively estimate how many terminal lines this message will consume.
 
@@ -649,7 +653,9 @@ class InteractiveCLI:
         content_width = max(30, term_width - 10)  # Increased from 8 to 10
 
         # Separator configuration
-        separator_line = lambda: Text("─" * min(60, content_width), style="dim white")
+        def separator_line() -> Text:
+            """Return a horizontal separator line for chat messages."""
+            return Text("─" * min(60, content_width), style="dim white")
 
         # Handle empty history
         if not self.chat_history:
@@ -732,9 +738,7 @@ class InteractiveCLI:
                 body_renderable = Text(content, style="italic yellow")
 
             # Add message header
-            renderables.append(
-                Text(f"[{ts}] {header_label}:", style=header_style)
-            )
+            renderables.append(Text(f"[{ts}] {header_label}:", style=header_style))
 
             # Add message body
             renderables.append(body_renderable)
