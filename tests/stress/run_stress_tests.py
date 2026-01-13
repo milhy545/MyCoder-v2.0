@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Comprehensive Stress Test Runner for Enhanced MyCoder v2.0
+Comprehensive Stress Test Runner for Enhanced MyCoder v2.1.0
 
 This script orchestrates all stress tests and provides detailed reporting:
 - Concurrency stress tests
@@ -407,7 +407,7 @@ class StressTestRunner:
         # Generate report
         report = []
         report.append("=" * 80)
-        report.append("🔥 ENHANCED MYCODER V2.0 STRESS TEST REPORT")
+        report.append("🔥 ENHANCED MYCODER V2.1.0 STRESS TEST REPORT")
         report.append("=" * 80)
         report.append(f"📅 Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         report.append(f"⏱️  Total Duration: {total_time:.1f}s ({total_time/60:.1f}m)")
@@ -563,7 +563,7 @@ class StressTestRunner:
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(
-        description="Enhanced MyCoder v2.0 Stress Test Runner"
+        description="Enhanced MyCoder v2.1.0 Stress Test Runner"
     )
 
     parser.add_argument("--all", action="store_true", help="Run all stress test suites")

@@ -17,7 +17,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from api_providers import (
+from mycoder.api_providers import (
     APIProviderRouter,
     APIProviderConfig,
     APIProviderType,
@@ -26,7 +26,7 @@ from api_providers import (
     GeminiProvider,
     OllamaProvider,
 )
-from config_manager import ConfigManager, load_config
+from mycoder.config_manager import ConfigManager, load_config
 
 
 class TestMultiAPIConfigurationIntegration:
@@ -274,7 +274,7 @@ class TestProviderHealthIntegration:
             ) as mock_ollama_health,
         ):
 
-            from api_providers import APIProviderStatus
+            from mycoder.api_providers import APIProviderStatus
 
             # Set different health statuses
             mock_claude_health.return_value = APIProviderStatus.HEALTHY
@@ -321,7 +321,7 @@ class TestProviderHealthIntegration:
             patch.object(oauth_provider, "query") as mock_oauth_query,
         ):
 
-            from api_providers import APIResponse
+            from mycoder.api_providers import APIResponse
 
             # First provider is unhealthy, second is healthy
             mock_claude_can_handle.return_value = False
@@ -473,7 +473,7 @@ class TestProviderFallbackIntegration:
             patch.object(ollama_provider, "query") as mock_ollama,
         ):
 
-            from api_providers import APIResponse
+            from mycoder.api_providers import APIResponse
 
             # First three providers fail
             mock_claude.return_value = APIResponse(
@@ -556,7 +556,7 @@ class TestProviderFallbackIntegration:
             patch.object(ollama_provider, "query") as mock_ollama,
         ):
 
-            from api_providers import APIResponse
+            from mycoder.api_providers import APIResponse
 
             # Preferred provider (Gemini) fails
             mock_gemini.return_value = APIResponse(
@@ -665,7 +665,7 @@ class TestRemoteOllamaIntegration:
             patch.object(providers[1], "health_check") as mock_unhealthy,
         ):
 
-            from api_providers import APIProviderStatus
+            from mycoder.api_providers import APIProviderStatus
 
             mock_healthy.return_value = APIProviderStatus.HEALTHY
             mock_unhealthy.return_value = APIProviderStatus.UNAVAILABLE
@@ -753,7 +753,7 @@ class TestConfigurationPersistence:
         try:
             # Clear environment to test missing API keys
             with patch.dict(os.environ, {}, clear=True):
-                with patch("src.config_manager.logger") as mock_logger:
+                with patch("mycoder.config_manager.logger") as mock_logger:
                     config_manager = ConfigManager(config_file)
                     config = config_manager.load_config()
 

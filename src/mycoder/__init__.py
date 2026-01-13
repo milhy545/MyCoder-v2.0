@@ -1,4 +1,4 @@
-"""Enhanced MyCoder v2.0 - Multi-API AI Development Assistant.
+"""Enhanced MyCoder v2.1.0 - Multi-API AI Development Assistant.
 
 A comprehensive AI-powered development assistant with multi-provider fallback,
 Q9550 thermal management, and FEI-inspired architecture.
@@ -16,7 +16,7 @@ Example:
     Basic usage:
 
     ```python
-    from enhanced_mycoder_v2 import EnhancedMyCoderV2
+    from mycoder import EnhancedMyCoderV2
     from pathlib import Path
 
     config = {
@@ -43,8 +43,8 @@ Example:
     With advanced configuration:
 
     ```python
-    from config_manager import ConfigManager
-    from api_providers import APIProviderRouter
+    from mycoder.config_manager import ConfigManager
+    from mycoder.api_providers import APIProviderRouter
 
     # Load configuration from file
     config_manager = ConfigManager("mycoder_config.json")
@@ -60,7 +60,10 @@ Example:
 """
 
 # Core components
+from .adaptive_modes import AdaptiveModeManager, OperationalMode
+from .enhanced_mycoder import EnhancedMyCoder
 from .enhanced_mycoder_v2 import EnhancedMyCoderV2
+from .mycoder import MyCoder
 from .api_providers import (
     APIProviderRouter,
     APIProviderType,
@@ -97,6 +100,10 @@ __license__ = "MIT"
 # Public API
 __all__ = [
     # Core interface
+    "MyCoder",
+    "EnhancedMyCoder",
+    "AdaptiveModeManager",
+    "OperationalMode",
     "EnhancedMyCoderV2",
     # API Providers
     "APIProviderRouter",

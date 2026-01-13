@@ -1,5 +1,5 @@
 """
-Enhanced MyCoder v2.0 with Multi-API Architecture
+Enhanced MyCoder v2.1.0 with Multi-API Architecture
 
 This module provides the enhanced MyCoder class that integrates the new multi-API
 provider system with FEI-inspired architecture patterns for optimal performance
@@ -44,7 +44,7 @@ try:
     )
     from .adaptive_modes import AdaptiveModeManager, OperationalMode
 except ImportError:
-    from api_providers import (  # type: ignore
+    from mycoder.api_providers import (  # type: ignore
         APIProviderRouter,
         APIProviderConfig,
         APIProviderType,
@@ -54,7 +54,7 @@ except ImportError:
         GeminiProvider,
         OllamaProvider,
     )
-    from tool_registry import (  # type: ignore
+    from mycoder.tool_registry import (  # type: ignore
         get_tool_registry,
         ToolExecutionContext,
         ToolCategory,
@@ -67,7 +67,7 @@ logger = logging.getLogger(__name__)
 
 class EnhancedMyCoderV2:
     """
-    Enhanced MyCoder v2.0 with Multi-API Architecture
+    Enhanced MyCoder v2.1.0 with Multi-API Architecture
 
     Provides intelligent AI-powered development assistance with:
     - 5-tier API provider fallback system
@@ -83,7 +83,7 @@ class EnhancedMyCoderV2:
         config: Optional[Dict[str, Any]] = None,
     ):
         """
-        Initialize Enhanced MyCoder v2.0
+        Initialize Enhanced MyCoder v2.1.0
 
         Args:
             working_directory: Base directory for operations
@@ -115,7 +115,7 @@ class EnhancedMyCoderV2:
         )
 
         logger.info(
-            f"Enhanced MyCoder v2.0 initialized with working directory: {self.working_directory}"
+            f"Enhanced MyCoder v2.1.0 initialized with working directory: {self.working_directory}"
         )
 
     def _load_history(self) -> List[Dict[str, Any]]:
@@ -143,7 +143,7 @@ class EnhancedMyCoderV2:
             logger.debug("Enhanced MyCoder already initialized")
             return
 
-        logger.info("Initializing Enhanced MyCoder v2.0 with multi-API system...")
+        logger.info("Initializing Enhanced MyCoder v2.1.0 with multi-API system...")
 
         # Initialize API providers
         await self._initialize_api_providers()
@@ -159,7 +159,7 @@ class EnhancedMyCoderV2:
         await self._register_enhanced_tools()
 
         self._initialized = True
-        logger.info("Enhanced MyCoder v2.0 initialization complete")
+        logger.info("Enhanced MyCoder v2.1.0 initialization complete")
 
         # Log available providers
         available_providers = self.provider_router.get_available_providers()
@@ -394,9 +394,9 @@ class EnhancedMyCoderV2:
             self.thermal_monitor = {"enabled": True, "script_path": thermal_script}
 
     async def _register_enhanced_tools(self):
-        """Register enhanced tools for v2.0 functionality"""
+        """Register enhanced tools for v2.1.0 functionality"""
         # Tools are already registered in tool_registry initialization
-        # This method can be extended for additional v2.0 specific tools
+        # This method can be extended for additional v2.1.0 specific tools
 
         # Add event handlers for tool monitoring
         def tool_execution_handler(event_type, data):
@@ -884,7 +884,7 @@ class EnhancedMyCoderV2:
 
     async def shutdown(self):
         """Gracefully shutdown Enhanced MyCoder system"""
-        logger.info("Shutting down Enhanced MyCoder v2.0...")
+        logger.info("Shutting down Enhanced MyCoder v2.1.0...")
 
         # Stop adaptive mode monitoring
         if hasattr(self.mode_manager, "stop_monitoring"):
@@ -894,4 +894,4 @@ class EnhancedMyCoderV2:
         self.session_store.clear()
 
         self._initialized = False
-        logger.info("Enhanced MyCoder v2.0 shutdown complete")
+        logger.info("Enhanced MyCoder v2.1.0 shutdown complete")

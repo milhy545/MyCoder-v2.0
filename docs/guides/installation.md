@@ -1,6 +1,6 @@
 # Installation Guide
 
-Complete installation guide for Enhanced MyCoder v2.0.
+Complete installation guide for Enhanced MyCoder v2.1.0.
 
 ## System Requirements
 
@@ -11,6 +11,14 @@ Complete installation guide for Enhanced MyCoder v2.0.
 - **Hardware**: Q9550 processor for thermal management (optional)
 
 ## Installation Methods
+
+### MiniPC 32-bit (Intel Atom)
+
+If you are on a 32-bit system, follow the optimized profile:
+
+- Use `poetry install --extras http`
+- Copy `mycoder_config_minipc_32bit.json` to `mycoder_config.json`
+- See `docs/guides/minipc_32bit.md` for detailed guidance
 
 ### Method 1: Git Clone (Recommended)
 
@@ -23,7 +31,7 @@ cd MyCoder-v2.0
 pip install -r requirements.txt
 
 # Verify installation
-python -c "from enhanced_mycoder_v2 import EnhancedMyCoderV2; print('✅ Installation successful')"
+python -c "from mycoder import EnhancedMyCoderV2; print('✅ Installation successful')"
 ```
 
 ### Method 2: Development Installation
@@ -181,7 +189,7 @@ Configure remote Ollama instances in `mycoder_config.json`:
 ### Basic Functionality Test
 
 ```python
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
+from mycoder import EnhancedMyCoderV2
 from pathlib import Path
 import asyncio
 
@@ -228,7 +236,7 @@ python -m pytest tests/ -v --tb=short
 
 ### Common Issues
 
-1. **ImportError: No module named 'enhanced_mycoder_v2'**
+1. **ImportError: No module named 'mycoder'**
    ```bash
    pip install -r requirements.txt
    export PYTHONPATH="${PYTHONPATH}:$(pwd)/src"

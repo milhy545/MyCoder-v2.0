@@ -17,7 +17,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from tool_registry import (
+from mycoder.tool_registry import (
     ToolRegistry,
     BaseTool,
     FileOperationTool,
@@ -498,7 +498,7 @@ class TestMCPTool:
         assert is_valid is True  # Assumes network available if no status
 
     @pytest.mark.asyncio
-    @patch("src.tool_registry.MCPConnector")
+    @patch("mycoder.tool_registry.MCPConnector")
     async def test_execute_success(self, mock_mcp_connector_class):
         """Test successful MCP tool execution"""
         # Mock MCP connector
@@ -528,7 +528,7 @@ class TestMCPTool:
         )
 
     @pytest.mark.asyncio
-    @patch("src.tool_registry.MCPConnector")
+    @patch("mycoder.tool_registry.MCPConnector")
     async def test_execute_orchestrator_unavailable(self, mock_mcp_connector_class):
         """Test execution when MCP orchestrator is unavailable"""
         # Mock MCP connector with unavailable orchestrator
@@ -545,7 +545,7 @@ class TestMCPTool:
         assert "MCP orchestrator not available" in result.error
 
     @pytest.mark.asyncio
-    @patch("src.tool_registry.MCPConnector")
+    @patch("mycoder.tool_registry.MCPConnector")
     async def test_execute_mcp_error(self, mock_mcp_connector_class):
         """Test execution when MCP operation fails"""
         # Mock MCP connector with error

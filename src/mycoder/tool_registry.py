@@ -1,5 +1,5 @@
 """
-FEI-Inspired Tool Registry for MyCoder v2.0
+FEI-Inspired Tool Registry for MyCoder v2.1.0
 
 This module implements a centralized tool registry system inspired by the FEI project
 architecture for managing and routing tools across different operational modes.

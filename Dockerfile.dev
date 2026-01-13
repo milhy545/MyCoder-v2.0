@@ -90,7 +90,7 @@ CMD ["/app/docker-entrypoint.dev.sh"]
 # 🔧 DEBUGGING:
 # 
 # Remote debugging:
-#   debugpy --listen 0.0.0.0:5678 --wait-for-client src/mycoder.py
+#   debugpy --listen 0.0.0.0:5678 --wait-for-client src/mycoder/mycoder.py
 #   → Connect from VS Code/PyCharm to localhost:5678
 #
 # Interactive debugging:

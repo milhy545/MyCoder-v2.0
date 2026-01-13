@@ -10,7 +10,7 @@ import asyncio
 import time
 from pathlib import Path
 
-from claude_cli_auth import MyCoder, OperationalMode
+from . import MyCoder, OperationalMode
 
 
 async def demo_basic_usage():

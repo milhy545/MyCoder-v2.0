@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script for MyCoder v2.0 integration with claude-cli-auth module.
+Test script for MyCoder v2.1.0 integration with claude-cli-auth module.
 """
 
 import asyncio
@@ -71,11 +71,11 @@ async def test_basic_functionality():
         sys.exit(1)
 
 if __name__ == "__main__":
-    print("MyCoder v2.0 Integration Test")
+    print("MyCoder v2.1.0 Integration Test")
     print("=" * 50)
     
     # Run async test
     asyncio.run(test_basic_functionality())
     
     print("\n✅ Integration test completed successfully!")
-    print("MyCoder v2.0 is ready to use with claude-cli-auth dependency!")
+    print("MyCoder v2.1.0 is ready to use with claude-cli-auth dependency!")

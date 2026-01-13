@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# 🗑️ MyCoder v2.0 - Odinstalační script
+# 🗑️ MyCoder v2.1.0 - Odinstalační script
 # Použití: ./uninstall_mycoder.sh
 
 set -e
 
-echo "🗑️  MyCoder v2.0 - ODINSTALACE"
+echo "🗑️  MyCoder v2.1.0 - ODINSTALACE"
 echo "==============================="
 
 # Colors
@@ -31,7 +31,7 @@ ALIAS_SCRIPT="$HOME/.mycoder_aliases"
 
 # Check if installed
 if [ ! -d "$INSTALL_DIR" ]; then
-    print_error "MyCoder v2.0 není nainstalován v $INSTALL_DIR"
+    print_error "MyCoder v2.1.0 není nainstalován v $INSTALL_DIR"
     exit 1
 fi
 
@@ -118,7 +118,7 @@ fi
 echo
 echo "🎉 ODINSTALACE DOKONČENA!"
 echo "========================"
-print_status "MyCoder v2.0 byl úspěšně odstraněn"
+print_status "MyCoder v2.1.0 byl úspěšně odstraněn"
 print_status "Aliasy a shell konfigurace vyčištěny"
 
 echo

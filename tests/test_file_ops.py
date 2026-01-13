@@ -1,7 +1,7 @@
 import unittest
 import os
 import shutil
-from src.utils.file_ops import read_file, write_file
+from mycoder.utils.file_ops import read_file, write_file
 
 
 class TestFileOps(unittest.TestCase):

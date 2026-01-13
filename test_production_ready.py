@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Enhanced MyCoder v2.0 - Production Readiness Test
+Enhanced MyCoder v2.1.0 - Production Readiness Test
 
 Simple test script to verify production readiness without 
 complex import issues. Tests core functionality in a tmux-friendly format.
@@ -18,41 +18,24 @@ PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 # Set environment to avoid relative import issues
-os.environ['PYTHONPATH'] = str(PROJECT_ROOT / "src")
+os.environ["PYTHONPATH"] = str(PROJECT_ROOT / "src")
+
 
 def test_imports():
-    """Test that all core modules can be imported"""
+    """Test that all core modules can be imported."""
     print("🔍 Testing module imports...")
-    
+
     try:
-        # Test individual module imports without relative imports
-        import importlib.util
-        
-        modules_to_test = [
-            ("config_manager", "src/config_manager.py"),
-            ("tool_registry", "src/tool_registry.py"),
-            ("api_providers", "src/api_providers.py"),
-        ]
-        
-        loaded_modules = {}
-        
-        for module_name, module_path in modules_to_test:
-            try:
-                spec = importlib.util.spec_from_file_location(
-                    module_name,
-                    PROJECT_ROOT / module_path
-                )
-                module = importlib.util.module_from_spec(spec)
-                sys.modules[module_name] = module
-                spec.loader.exec_module(module)
-                loaded_modules[module_name] = module
-                print(f"   ✅ {module_name}: OK")
-            except Exception as e:
-                print(f"   ❌ {module_name}: {e}")
-                return False
-        
+        from mycoder import EnhancedMyCoderV2, MyCoder
+        from mycoder.api_providers import APIProviderRouter
+        from mycoder.config_manager import ConfigManager
+        from mycoder.tool_registry import ToolRegistry
+
+        if not all([EnhancedMyCoderV2, MyCoder, APIProviderRouter, ConfigManager, ToolRegistry]):
+            raise RuntimeError("Core modules resolved to empty values")
+
+        print("   ✅ Core module imports: OK")
         return True
-        
     except Exception as e:
         print(f"   ❌ Import test failed: {e}")
         return False
@@ -62,7 +45,7 @@ async def test_config_manager():
     print("\n🔧 Testing Configuration Manager...")
     
     try:
-        from config_manager import ConfigManager, MyCoderConfig
+        from mycoder.config_manager import ConfigManager, MyCoderConfig
         
         # Test basic config creation
         config_data = {
@@ -110,7 +93,7 @@ async def test_tool_registry():
     print("\n🛠️  Testing Tool Registry...")
     
     try:
-        from tool_registry import ToolRegistry, BaseTool
+        from mycoder.tool_registry import ToolRegistry, BaseTool
         
         # Test registry creation
         registry = ToolRegistry()
@@ -136,7 +119,7 @@ async def test_api_providers():
     print("\n🔌 Testing API Providers...")
     
     try:
-        from api_providers import APIProviderType, BaseAPIProvider
+        from mycoder.api_providers import APIProviderType, BaseAPIProvider
         
         # Test enum
         providers = list(APIProviderType)
@@ -170,9 +153,9 @@ async def test_basic_system():
     
     try:
         # Test that core components work together
-        from config_manager import ConfigManager, MyCoderConfig
-        from tool_registry import ToolRegistry
-        from api_providers import APIProviderType
+        from mycoder.config_manager import ConfigManager, MyCoderConfig
+        from mycoder.tool_registry import ToolRegistry
+        from mycoder.api_providers import APIProviderType
         from dataclasses import asdict
         
         # Create basic config
@@ -273,7 +256,7 @@ async def test_performance():
 
 async def run_production_readiness_tests():
     """Run all production readiness tests"""
-    print("🚀 Enhanced MyCoder v2.0 - Production Readiness Test")
+    print("🚀 Enhanced MyCoder v2.1.0 - Production Readiness Test")
     print("=" * 55)
     print(f"📍 Project Root: {PROJECT_ROOT}")
     print(f"🐍 Python Version: {sys.version}")

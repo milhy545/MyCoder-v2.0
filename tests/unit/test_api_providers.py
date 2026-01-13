@@ -17,7 +17,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from api_providers import (
+from mycoder.api_providers import (
     APIProviderRouter,
     APIProviderConfig,
     APIProviderType,
@@ -325,7 +325,7 @@ class TestClaudeOAuthProvider:
                 await provider._get_auth_manager()
 
     @pytest.mark.asyncio
-    @patch("src.api_providers.ClaudeAuthManager")
+    @patch("mycoder.api_providers.ClaudeAuthManager")
     async def test_query_success(self, mock_auth_manager_class):
         """Test successful OAuth query"""
         # Mock claude-cli-auth response
@@ -351,7 +351,7 @@ class TestClaudeOAuthProvider:
         assert response.session_id == "test_session"
 
     @pytest.mark.asyncio
-    @patch("src.api_providers.ClaudeAuthManager")
+    @patch("mycoder.api_providers.ClaudeAuthManager")
     async def test_query_error(self, mock_auth_manager_class):
         """Test OAuth query error handling"""
         mock_auth_manager = AsyncMock()

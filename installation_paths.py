@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Ukáže přesné cesty instalace MyCoder v2.0
+Ukáže přesné cesty instalace MyCoder v2.1.0
 """
 
 import os
 from pathlib import Path
 
 def show_installation_paths():
-    print("📁 MyCoder v2.0 - INSTALAČNÍ CESTY")
+    print("📁 MyCoder v2.1.0 - INSTALAČNÍ CESTY")
     print("=" * 60)
     
     home = Path.home()
@@ -70,7 +70,7 @@ def check_current_installation():
     mycoder_dir = home / "MyCoder-v2.0"
     
     if mycoder_dir.exists():
-        print(f"✅ MyCoder v2.0 nalezen v: {mycoder_dir}")
+        print(f"✅ MyCoder v2.1.0 nalezen v: {mycoder_dir}")
         
         # Check key files
         key_files = [
@@ -95,7 +95,7 @@ def check_current_installation():
             print(f"\n⏳ Aliasy nebyly vytvořeny")
             
     else:
-        print(f"❌ MyCoder v2.0 není nainstalován v: {mycoder_dir}")
+        print(f"❌ MyCoder v2.1.0 není nainstalován v: {mycoder_dir}")
         print("\n🚀 INSTALACE:")
         print("   curl -sSL https://raw.githubusercontent.com/milhy545/MyCoder-v2.0/main/install_mycoder.sh | bash")
 
@@ -105,7 +105,7 @@ def show_disk_usage():
     print("=" * 60)
     
     components = {
-        "MyCoder v2.0 zdrojový kód": "~2 MB",
+        "MyCoder v2.1.0 zdrojový kód": "~2 MB",
         "Poetry virtual environment": "~50-100 MB", 
         "Python závislosti": "~20-30 MB",
         "claude-cli-auth modul": "~1 MB",

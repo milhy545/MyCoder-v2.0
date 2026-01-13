@@ -38,7 +38,7 @@ docker-compose -f docker-compose.dev.yml up
 ### 2️⃣ Edit & Test (Bez Rebuildů!)
 ```bash
 # Edit soubor
-vim src/mycoder.py
+vim src/mycoder/mycoder.py
 
 # Změny se projeví OKAMŽITĚ! ⚡
 # Žádný rebuild nutný!

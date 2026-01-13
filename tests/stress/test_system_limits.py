@@ -1,5 +1,5 @@
 """
-System Limits and Edge Case Stress Tests for Enhanced MyCoder v2.0
+System Limits and Edge Case Stress Tests for Enhanced MyCoder v2.1.0
 
 These tests verify system behavior at operational boundaries:
 - Configuration edge cases
@@ -27,15 +27,15 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
-from api_providers import (
+from mycoder import EnhancedMyCoderV2
+from mycoder.api_providers import (
     APIProviderType,
     APIProviderConfig,
     APIResponse,
     APIProviderStatus,
 )
-from config_manager import ConfigManager
-from tool_registry import ToolExecutionContext
+from mycoder.config_manager import ConfigManager
+from mycoder.tool_registry import ToolExecutionContext
 
 
 class TestConfigurationLimits:
@@ -867,7 +867,7 @@ if __name__ == "__main__":
     """Run system limit tests directly"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="MyCoder v2.0 System Limits Tests")
+    parser = argparse.ArgumentParser(description="MyCoder v2.1.0 System Limits Tests")
     parser.add_argument("--test-class", "-c", type=str, help="Run specific test class")
     parser.add_argument(
         "--config", action="store_true", help="Run configuration limit tests"

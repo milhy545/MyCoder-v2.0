@@ -1,11 +1,11 @@
 # Basic Usage Examples
 
-This guide provides practical examples of using Enhanced MyCoder v2.0 in various scenarios.
+This guide provides practical examples of using Enhanced MyCoder v2.1.0 in various scenarios.
 
 ## Quick Start Example
 
 ```python
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
+from mycoder import EnhancedMyCoderV2
 from pathlib import Path
 import asyncio
 
@@ -47,7 +47,7 @@ if __name__ == "__main__":
 ## File Analysis Example
 
 ```python
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
+from mycoder import EnhancedMyCoderV2
 from pathlib import Path
 import asyncio
 
@@ -84,7 +84,7 @@ if __name__ == "__main__":
 ## Session Management Example
 
 ```python
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
+from mycoder import EnhancedMyCoderV2
 from pathlib import Path
 import asyncio
 
@@ -142,7 +142,7 @@ if __name__ == "__main__":
 
 ```python
 import os
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
+from mycoder import EnhancedMyCoderV2
 from pathlib import Path
 
 # Set environment variables
@@ -157,8 +157,8 @@ mycoder = EnhancedMyCoderV2(working_directory=Path("."))
 ### JSON Configuration File
 
 ```python
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
-from config_manager import ConfigManager
+from mycoder import EnhancedMyCoderV2
+from mycoder.config_manager import ConfigManager
 from pathlib import Path
 import asyncio
 
@@ -202,7 +202,7 @@ if __name__ == "__main__":
 ### Basic Error Handling
 
 ```python
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
+from mycoder import EnhancedMyCoderV2
 from pathlib import Path
 import asyncio
 
@@ -251,7 +251,7 @@ if __name__ == "__main__":
 ### Provider Fallback Example
 
 ```python
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
+from mycoder import EnhancedMyCoderV2
 from pathlib import Path
 import asyncio
 
@@ -298,7 +298,7 @@ if __name__ == "__main__":
 ## Thermal Management Example (Q9550)
 
 ```python
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
+from mycoder import EnhancedMyCoderV2
 from pathlib import Path
 import asyncio
 
@@ -350,7 +350,7 @@ if __name__ == "__main__":
 ## Batch Processing Example
 
 ```python
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
+from mycoder import EnhancedMyCoderV2
 from pathlib import Path
 import asyncio
 
@@ -425,7 +425,7 @@ if __name__ == "__main__":
 
 ```python
 from flask import Flask, request, jsonify
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
+from mycoder import EnhancedMyCoderV2
 from pathlib import Path
 import asyncio
 import threading
@@ -513,7 +513,7 @@ if __name__ == '__main__':
 ```python
 import pytest
 import asyncio
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
+from mycoder import EnhancedMyCoderV2
 from pathlib import Path
 
 @pytest.fixture
@@ -616,7 +616,7 @@ if os.getenv('MYCODER_PREFERRED_PROVIDER'):
     config['preferred_provider'] = os.getenv('MYCODER_PREFERRED_PROVIDER')
 
 # Override with file configuration
-from config_manager import ConfigManager
+from mycoder.config_manager import ConfigManager
 if Path('mycoder_config.json').exists():
     file_config = ConfigManager('mycoder_config.json').load_config()
     config.update(file_config.dict())
@@ -642,4 +642,4 @@ async def robust_request(mycoder, prompt, max_retries=3):
     return {'success': False, 'error': 'Max retries exceeded'}
 ```
 
-These examples demonstrate the key patterns and use cases for Enhanced MyCoder v2.0. For more advanced usage, see the [API documentation](../api/) and [advanced examples](../../examples/).
+These examples demonstrate the key patterns and use cases for Enhanced MyCoder v2.1.0. For more advanced usage, see the [API documentation](../api/) and [advanced examples](../../examples/).

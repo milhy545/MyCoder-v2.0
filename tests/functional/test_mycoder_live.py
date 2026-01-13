@@ -1,5 +1,5 @@
 """
-Functional Tests for Enhanced MyCoder v2.0 Live Testing
+Functional Tests for Enhanced MyCoder v2.1.0 Live Testing
 
 These tests are designed to be run in a tmux session for interactive
 verification of the complete MyCoder system functionality.
@@ -20,44 +20,9 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-# Fix for relative imports when running as script
-if __name__ == "__main__":
-    import importlib.util
-
-    # Load enhanced_mycoder_v2 module
-    spec = importlib.util.spec_from_file_location(
-        "enhanced_mycoder_v2",
-        Path(__file__).parent.parent.parent / "src" / "enhanced_mycoder_v2.py",
-    )
-    enhanced_mycoder_v2 = importlib.util.module_from_spec(spec)
-    sys.modules["enhanced_mycoder_v2"] = enhanced_mycoder_v2
-    spec.loader.exec_module(enhanced_mycoder_v2)
-
-    # Load config_manager module
-    spec = importlib.util.spec_from_file_location(
-        "config_manager",
-        Path(__file__).parent.parent.parent / "src" / "config_manager.py",
-    )
-    config_manager = importlib.util.module_from_spec(spec)
-    sys.modules["config_manager"] = config_manager
-    spec.loader.exec_module(config_manager)
-
-    # Load api_providers module
-    spec = importlib.util.spec_from_file_location(
-        "api_providers",
-        Path(__file__).parent.parent.parent / "src" / "api_providers.py",
-    )
-    api_providers = importlib.util.module_from_spec(spec)
-    sys.modules["api_providers"] = api_providers
-    spec.loader.exec_module(api_providers)
-
-    EnhancedMyCoderV2 = enhanced_mycoder_v2.EnhancedMyCoderV2
-    ConfigManager = config_manager.ConfigManager
-    APIProviderType = api_providers.APIProviderType
-else:
-    from enhanced_mycoder_v2 import EnhancedMyCoderV2
-    from config_manager import ConfigManager
-    from api_providers import APIProviderType
+from mycoder import EnhancedMyCoderV2
+from mycoder.config_manager import ConfigManager
+from mycoder.api_providers import APIProviderType
 
 
 class TestMyCoderLiveFunctionality:
@@ -112,7 +77,7 @@ class TestMyCoderLiveFunctionality:
             working_directory=self.working_dir, config=self.config
         )
 
-        print("⏳ Initializing Enhanced MyCoder v2.0...")
+        print("⏳ Initializing Enhanced MyCoder v2.1.0...")
         start_time = time.time()
 
         await mycoder.initialize()
@@ -251,9 +216,9 @@ if __name__ == "__main__":
 
         # Markdown documentation
         md_file = self.working_dir / "README.md"
-        md_content = """# MyCoder v2.0 Test Project
+        md_content = """# MyCoder v2.1.0 Test Project
 
-This is a test project for MyCoder v2.0 functionality.
+This is a test project for MyCoder v2.1.0 functionality.
 
 ## Features
 
@@ -559,9 +524,9 @@ await mycoder.initialize()
 
         # Create test file for operations
         test_file = self.working_dir / "tool_test.txt"
-        test_content = f"Tool registry test file\nCreated at: {datetime.now()}\nMyCoder v2.0 functional test"
+        test_content = f"Tool registry test file\nCreated at: {datetime.now()}\nMyCoder v2.1.0 functional test"
 
-        from tool_registry import ToolExecutionContext
+        from mycoder.tool_registry import ToolExecutionContext
 
         context = ToolExecutionContext(
             mode="FULL",
@@ -718,7 +683,7 @@ def interactive_menu():
     }
 
     print("\n" + "=" * 60)
-    print("🧪 MyCoder v2.0 Live Functional Tests")
+    print("🧪 MyCoder v2.1.0 Live Functional Tests")
     print("=" * 60)
     print("Choose a test to run:")
     print()
@@ -766,7 +731,7 @@ if __name__ == "__main__":
     """Run interactive test menu when called directly"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="MyCoder v2.0 Live Functional Tests")
+    parser = argparse.ArgumentParser(description="MyCoder v2.1.0 Live Functional Tests")
     parser.add_argument(
         "--interactive", "-i", action="store_true", help="Run in interactive mode"
     )
@@ -788,7 +753,7 @@ if __name__ == "__main__":
         finally:
             tester.teardown_method()
     else:
-        print("🧪 MyCoder v2.0 Live Functional Tests")
+        print("🧪 MyCoder v2.1.0 Live Functional Tests")
         print("Use --interactive or -i for interactive mode")
         print("Use --test <method_name> to run specific test")
         print("Or run with pytest: pytest tests/functional/test_mycoder_live.py -v -s")

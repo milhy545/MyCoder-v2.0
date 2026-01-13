@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Ostrý test MyCoder v2.0 s reálným dotazem na programování
+Ostrý test MyCoder v2.1.0 s reálným dotazem na programování
 """
 
 import asyncio
@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 async def sharp_test():
-    print("🔥 MyCoder v2.0 - OSTRÝ TEST")
+    print("🔥 MyCoder v2.1.0 - OSTRÝ TEST")
     print("=" * 60)
     
     try:
@@ -33,7 +33,7 @@ async def sharp_test():
         Použij moderní Python s type hints a error handling.
         """
         
-        print("🚀 Odesílám dotaz do MyCoder v2.0...")
+        print("🚀 Odesílám dotaz do MyCoder v2.1.0...")
         print("⏳ Čekám na odpověď...")
         
         # Pokus o zpracování dotazu
@@ -45,14 +45,14 @@ async def sharp_test():
             )
             
             print("\n" + "="*60)
-            print("🎯 ODPOVĚĎ MYCODERA v2.0:")
+            print("🎯 ODPOVĚĎ MYCODERA v2.1.0:")
             print("="*60)
             print(result.get('content', 'No content returned'))
             print("\n" + "="*60)
             
             # Check if we got a valid response
             if result.get('content'):
-                print("✅ TEST ÚSPĚŠNÝ - MyCoder v2.0 odpověděl!")
+                print("✅ TEST ÚSPĚŠNÝ - MyCoder v2.1.0 odpověděl!")
                 print(f"📊 Status: {result.get('status', 'unknown')}")
                 print(f"🔧 Použitý režim: {result.get('mode', 'unknown')}")
             else:

@@ -1,9 +1,9 @@
-# 🤖 MyCoder v2.0 - Instalační Návod
+# 🤖 MyCoder v2.1.0 - Instalační Návod
 
 ## 📋 Rychlá instalace (doporučeno)
 
 ```bash
-# 1. Naklonuj MyCoder v2.0
+# 1. Naklonuj MyCoder v2.1.0
 git clone https://github.com/milhy545/MyCoder-v2.0.git
 cd MyCoder-v2.0
 
@@ -17,7 +17,7 @@ poetry install
 poetry shell
 
 # 5. Test instalace
-python -c "from mycoder import MyCoder; print('✅ MyCoder v2.0 nainstalován!')"
+python -c "from mycoder import MyCoder; print('✅ MyCoder v2.1.0 nainstalován!')"
 ```
 
 ## 🔧 Krok za krokem setup
@@ -114,7 +114,7 @@ await manager.transition_to_mode(OperationalMode.AUTONOMOUS, "offline work")
 
 ### Claude CLI není potřeba!
 ```bash
-# MyCoder v2.0 funguje i bez Claude CLI
+# MyCoder v2.1.0 funguje i bez Claude CLI
 # V AUTONOMOUS režimu používá lokální templates
 ```
 
