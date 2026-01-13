@@ -4050,4 +4050,4 @@ speech = ["PyQt5", "numpy", "openai", "openai-whisper", "pynput", "pyperclip", "
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.14"
-content-hash = "2c8baf635ae8e00bd9da12f6def0761ba74eb841382dd33551c26ae40a74db20"
+content-hash = "573b517aeb4f1aedc14a17ef0e6de6a6aa460f1e040a5200844b387a529dd1c5"
