@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# 🤖 MyCoder v2.0 - Automatický instalátor
+# 🤖 MyCoder v2.1.0 - Automatický instalátor
 # Použití: curl -sSL https://raw.githubusercontent.com/milhy545/MyCoder-v2.0/main/install_mycoder.sh | bash
 
 set -e
 
-echo "🤖 MyCoder v2.0 - Automatická instalace"
+echo "🤖 MyCoder v2.1.0 - Automatická instalace"
 echo "========================================="
 
 # Colors for output
@@ -88,9 +88,9 @@ if [ -d "$INSTALL_DIR" ]; then
     fi
 fi
 
-# Clone MyCoder v2.0
+# Clone MyCoder v2.1.0
 if [ ! -d "$INSTALL_DIR" ]; then
-    print_status "Stahuji MyCoder v2.0..."
+    print_status "Stahuji MyCoder v2.1.0..."
     git clone https://github.com/milhy545/MyCoder-v2.0.git "$INSTALL_DIR"
 fi
 
@@ -114,7 +114,7 @@ fi
 ALIAS_SCRIPT="$HOME/.mycoder_aliases"
 cat > "$ALIAS_SCRIPT" << 'EOF'
 #!/bin/bash
-# MyCoder v2.0 aliases
+# MyCoder v2.1.0 aliases
 
 alias mycoder-shell="cd ~/MyCoder-v2.0 && poetry shell"
 alias mycoder-test="cd ~/MyCoder-v2.0 && poetry run python test_integration.py"
@@ -154,7 +154,7 @@ fi
 echo
 echo "🎉 INSTALACE DOKONČENA!"
 echo "======================"
-print_status "MyCoder v2.0 nainstalován do: $INSTALL_DIR"
+print_status "MyCoder v2.1.0 nainstalován do: $INSTALL_DIR"
 print_status "Aliasy vytvořeny v: $ALIAS_SCRIPT"
 
 echo

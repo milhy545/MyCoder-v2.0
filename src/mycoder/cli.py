@@ -1,4 +1,4 @@
-"""Command-line interface for MyCoder v2.0.
+"""Command-line interface for MyCoder v2.1.0.
 
 Provides a CLI for testing and operations with MyCoder and its adaptive modes.
 """

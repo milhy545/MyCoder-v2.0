@@ -1,0 +1,43 @@
+{
+  "claude_anthropic": {
+    "enabled": false
+  },
+  "claude_oauth": {
+    "enabled": true,
+    "timeout_seconds": 60,
+    "max_retries": 2,
+    "priority": 1
+  },
+  "gemini": {
+    "enabled": true,
+    "timeout_seconds": 60,
+    "max_retries": 2,
+    "priority": 2
+  },
+  "ollama_local": {
+    "enabled": false,
+    "base_url": "http://localhost:11434"
+  },
+  "ollama_remote_urls": [],
+  "inception_mercury": {
+    "enabled": false
+  },
+  "thermal": {
+    "enabled": false,
+    "max_temp": 75,
+    "critical_temp": 85,
+    "check_interval": 60,
+    "throttle_on_high": false,
+    "emergency_shutdown": false
+  },
+  "system": {
+    "log_level": "WARNING",
+    "session_timeout_hours": 6,
+    "max_concurrent_requests": 2,
+    "enable_tool_registry": true,
+    "enable_mcp_integration": false
+  },
+  "preferred_provider": "claude_oauth",
+  "fallback_enabled": true,
+  "debug_mode": false
+}

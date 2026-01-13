@@ -1,5 +1,5 @@
 """
-MyCoder v2.5 Interactive CLI
+MyCoder v2.1.0 Interactive CLI
 Architecture: Split-screen UI using rich.Live.
 Left: Chat History (Auto-scrolling Markdown). Right: Execution Monitor (Logs + Sys Metrics).
 """
@@ -41,14 +41,14 @@ except ImportError:
 
 # Import Core
 try:
-    from src.enhanced_mycoder_v2 import EnhancedMyCoderV2
-    from src.config_manager import ConfigManager
-    from src.api_providers import APIProviderType
+    from .enhanced_mycoder_v2 import EnhancedMyCoderV2
+    from .config_manager import ConfigManager
+    from .api_providers import APIProviderType
 except ImportError:
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-    from src.enhanced_mycoder_v2 import EnhancedMyCoderV2
-    from src.config_manager import ConfigManager
-    from src.api_providers import APIProviderType
+    from mycoder.enhanced_mycoder_v2 import EnhancedMyCoderV2
+    from mycoder.config_manager import ConfigManager
+    from mycoder.api_providers import APIProviderType
 
 # CYBERPUNK PALETTE
 COLOR_SYSTEM = "bold cyan"

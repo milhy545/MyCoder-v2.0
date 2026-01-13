@@ -7,13 +7,13 @@ import asyncio
 # Ensure the root directory is in sys.path
 sys.path.append(os.getcwd())
 
-from src.enhanced_mycoder_v2 import EnhancedMyCoderV2
+from mycoder import EnhancedMyCoderV2
 
 
 class TestEnhancedMyCoderNetwork(unittest.TestCase):
     def setUp(self):
         # We need to mock get_tool_registry to avoid issues during init
-        self.patcher = patch("src.enhanced_mycoder_v2.get_tool_registry")
+        self.patcher = patch("mycoder.enhanced_mycoder_v2.get_tool_registry")
         self.mock_registry = self.patcher.start()
 
     def tearDown(self):

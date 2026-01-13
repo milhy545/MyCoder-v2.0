@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Příklad kódu vygenerovaného MyCoder v2.0
+Příklad kódu vygenerovaného MyCoder v2.1.0
 Log Analyzer - Analýza log souborů s pokročilými funkcemi
 """
 

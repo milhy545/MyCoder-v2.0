@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Demo: MyCoder v2.0 generování kódu v AUTONOMOUS režimu
+Demo: MyCoder v2.1.0 generování kódu v AUTONOMOUS režimu
 """
 
 import asyncio
 from mycoder import MyCoder
 
 async def code_demo():
-    print("💻 MyCoder v2.0 - GENEROVÁNÍ KÓDU DEMO")
+    print("💻 MyCoder v2.1.0 - GENEROVÁNÍ KÓDU DEMO")
     print("=" * 60)
     
     mycoder = MyCoder()

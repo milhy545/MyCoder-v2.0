@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Demonstrace adaptivních režimů MyCoder v2.0 podle síťových podmínek
+Demonstrace adaptivních režimů MyCoder v2.1.0 podle síťových podmínek
 """
 
 import asyncio
 from mycoder import AdaptiveModeManager, OperationalMode
 
 async def network_demo():
-    print("🌐 MyCoder v2.0 - ADAPTIVNÍ REŽIMY DEMO")
+    print("🌐 MyCoder v2.1.0 - ADAPTIVNÍ REŽIMY DEMO")
     print("=" * 60)
     
     manager = AdaptiveModeManager()
@@ -111,7 +111,7 @@ async def network_demo():
         await manager.transition_to_mode(optimal_mode, "Network conditions optimization")
         print(f"✅ Přepnuto na: {manager.current_mode.value}")
     
-    print(f"\n🏆 MyCoder v2.0 je nyní v režimu: {manager.current_mode.value}")
+    print(f"\n🏆 MyCoder v2.1.0 je nyní v režimu: {manager.current_mode.value}")
     print("💡 V tomto režimu jsou k dispozici funkce uvedené výše.")
 
 if __name__ == "__main__":

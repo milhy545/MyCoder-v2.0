@@ -1,5 +1,5 @@
 """
-Multi-API Provider System for MyCoder v2.0
+Multi-API Provider System for MyCoder v2.1.0
 
 This module implements a 5-tier API provider system with intelligent fallbacks:
 1. Claude Anthropic API (direct API key)

@@ -13,7 +13,10 @@ homepage = "https://github.com/milhy545/MyCoder-v2.0"
 repository = "https://github.com/milhy545/MyCoder-v2.0"
 documentation = "https://github.com/milhy545/MyCoder-v2.0/blob/main/docs"
 keywords = ["ai", "development", "assistant", "claude", "adaptive", "mcp", "orchestration", "coding"]
-packages = [{include = "speech_recognition", from = "src"}]
+packages = [
+    {include = "mycoder", from = "src"},
+    {include = "speech_recognition", from = "src"},
+]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -72,8 +75,8 @@ sphinx = "^7.3.7"
 sphinx-rtd-theme = "^3.0.2"
 
 [tool.poetry.scripts]
-mycoder = "cli_interactive:main"
-mycoder-demo = "demo_mycoder:main"
+mycoder = "mycoder.cli_interactive:main"
+mycoder-demo = "mycoder.demo_mycoder:main"
 dictation = "speech_recognition.cli:main"
 
 [tool.black]

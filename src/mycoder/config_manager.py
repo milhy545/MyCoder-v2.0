@@ -1,5 +1,5 @@
 """
-Configuration Manager for Enhanced MyCoder v2.0
+Configuration Manager for Enhanced MyCoder v2.1.0
 
 Manages configuration for multi-API providers, thermal management,
 and system settings with support for multiple configuration sources.
@@ -61,7 +61,7 @@ class SystemSettings:
 
 @dataclass
 class MyCoderConfig:
-    """Complete MyCoder v2.0 configuration"""
+    """Complete MyCoder v2.1.0 configuration"""
 
     # API Provider Settings
     claude_anthropic: APIProviderSettings = None
@@ -120,7 +120,7 @@ class ConfigManager:
 
     def load_config(self) -> MyCoderConfig:
         """Load configuration from all available sources"""
-        logger.info("Loading MyCoder v2.0 configuration...")
+        logger.info("Loading MyCoder v2.1.0 configuration...")
 
         # Start with default configuration
         config_dict = self._get_default_config()

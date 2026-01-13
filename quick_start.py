@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-🚀 MyCoder v2.0 - Quick Start
-Spusť tento script pro okamžité vyzkoušení MyCoder v2.0
+🚀 MyCoder v2.1.0 - Quick Start
+Spusť tento script pro okamžité vyzkoušení MyCoder v2.1.0
 """
 
 import asyncio
@@ -9,16 +9,21 @@ import sys
 from pathlib import Path
 
 def print_header():
-    print("🤖 MyCoder v2.0 - QUICK START")
+    print("🤖 MyCoder v2.1.0 - QUICK START")
     print("=" * 50)
-    print("Vítej v MyCoder v2.0! Zkusme základní funkce...")
+    print("Vítej v MyCoder v2.1.0! Zkusme základní funkce...")
     print()
 
 async def quick_demo():
     try:
         # Import test
         print("📦 1. Test importů...")
-        from mycoder import MyCoder, EnhancedMyCoder, AdaptiveModeManager, OperationalMode
+        from mycoder import (
+            MyCoder,
+            AdaptiveModeManager,
+            OperationalMode,
+            EnhancedMyCoder,
+        )
         print("   ✅ Všechny moduly nalezeny")
         
         # Initialization test  
@@ -107,7 +112,7 @@ def main():
     success = asyncio.run(quick_demo())
     
     if success:
-        print("\n✅ MyCoder v2.0 je připraven k použití!")
+        print("\n✅ MyCoder v2.1.0 je připraven k použití!")
         print("🚀 Happy coding! 🤖")
     else:
         print("\n❌ Problém s instalací. Zkontroluj dokumentaci.")

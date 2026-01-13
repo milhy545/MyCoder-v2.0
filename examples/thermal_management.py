@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Enhanced MyCoder v2.0 - Thermal Management Example
+Enhanced MyCoder v2.1.0 - Thermal Management Example
 
 This example demonstrates the Q9550 thermal management capabilities
-of Enhanced MyCoder v2.0, including temperature monitoring, 
+of Enhanced MyCoder v2.1.0, including temperature monitoring, 
 throttling, and emergency protection.
 """
 
@@ -16,12 +16,12 @@ import json
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
+from mycoder import EnhancedMyCoderV2
 
 async def thermal_monitoring_example():
     """Demonstrate thermal monitoring capabilities"""
     
-    print("🌡️  Enhanced MyCoder v2.0 - Thermal Management")
+    print("🌡️  Enhanced MyCoder v2.1.0 - Thermal Management")
     print("=" * 50)
     
     # Configuration with thermal management enabled

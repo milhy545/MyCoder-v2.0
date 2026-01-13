@@ -8,8 +8,8 @@ import pytest
 import pytest_asyncio
 import os
 from pathlib import Path
-from src.enhanced_mycoder_v2 import EnhancedMyCoderV2
-from src.api_providers import APIProviderType
+from mycoder import EnhancedMyCoderV2
+from mycoder.api_providers import APIProviderType
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

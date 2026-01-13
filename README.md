@@ -1,4 +1,4 @@
-# Enhanced MyCoder v2.0
+# Enhanced MyCoder v2.1.0
 
 > **Multi-API AI Development Assistant with Q9550 Thermal Management**
 
@@ -7,7 +7,7 @@
 [![Test Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](#testing)
 [![Q9550 Compatible](https://img.shields.io/badge/Q9550-thermal%20managed-orange.svg)](#thermal-management)
 
-Enhanced MyCoder v2.0 is a comprehensive AI development assistant featuring **5-tier API provider fallback**, **Q9550 thermal management**, and **FEI-inspired architecture**. Built for production environments requiring high availability and thermal safety.
+Enhanced MyCoder v2.1.0 is a comprehensive AI development assistant featuring **5-tier API provider fallback**, **Q9550 thermal management**, and **FEI-inspired architecture**. Built for production environments requiring high availability and thermal safety.
 
 ## 🚀 Quick Start
 
@@ -22,7 +22,7 @@ pip install -r requirements.txt
 ### Basic Usage
 
 ```python
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
+from mycoder import EnhancedMyCoderV2
 from pathlib import Path
 
 # Basic configuration
@@ -61,8 +61,19 @@ python tests/functional/test_mycoder_live.py --interactive
 python tests/stress/run_stress_tests.py --quick
 
 # Check system status
-python -c "from enhanced_mycoder_v2 import EnhancedMyCoderV2; import asyncio; asyncio.run(EnhancedMyCoderV2().get_system_status())"
+python -c "from mycoder import EnhancedMyCoderV2; import asyncio; asyncio.run(EnhancedMyCoderV2().get_system_status())"
 ```
+
+### MiniPC 32-bit Profile (Intel Atom)
+
+For older 32-bit systems, use the optimized profile:
+
+```bash
+poetry install --extras http
+cp mycoder_config_minipc_32bit.json mycoder_config.json
+```
+
+See `docs/guides/minipc_32bit.md` for full guidance.
 
 ## 🏗️ Architecture
 
@@ -152,7 +163,7 @@ Create `mycoder_config.json`:
 ### Advanced Configuration
 
 ```python
-from config_manager import ConfigManager
+from mycoder.config_manager import ConfigManager
 
 # Load from file
 config_manager = ConfigManager("mycoder_config.json")
@@ -281,11 +292,13 @@ python tests/functional/test_mycoder_live.py --interactive
 ```
 MyCoder-v2.0/
 ├── src/                          # Source code
-│   ├── enhanced_mycoder_v2.py   # Main MyCoder class
-│   ├── api_providers.py         # API provider implementations
-│   ├── config_manager.py        # Configuration management
-│   ├── tool_registry.py         # Tool registry system
-│   └── __init__.py              # Package initialization
+│   ├── mycoder/                 # Core package
+│   │   ├── enhanced_mycoder_v2.py   # Main MyCoder class
+│   │   ├── api_providers.py         # API provider implementations
+│   │   ├── config_manager.py        # Configuration management
+│   │   ├── tool_registry.py         # Tool registry system
+│   │   └── __init__.py              # Package initialization
+│   └── speech_recognition/      # Dictation module
 ├── tests/                       # Test suites
 │   ├── unit/                    # Unit tests
 │   ├── integration/             # Integration tests
@@ -308,7 +321,7 @@ MyCoder-v2.0/
 ### MCP (Model Context Protocol)
 
 ```python
-from mcp_connector import MCPConnector
+from mycoder.mcp_connector import MCPConnector
 
 # Initialize MCP connection
 mcp = MCPConnector(server_url="http://localhost:8000")
@@ -334,7 +347,7 @@ RUN pip install -r requirements.txt
 RUN apt-get update && apt-get install -y lm-sensors
 
 ENV MYCODER_THERMAL_ENABLED=false  # Disable in containers
-CMD ["python", "-m", "enhanced_mycoder_v2"]
+CMD ["python", "-m", "mycoder.enhanced_mycoder_v2"]
 ```
 
 ### CI/CD Integration
@@ -418,4 +431,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ for the AI development community**
 
-*Enhanced MyCoder v2.0 - Where AI meets thermal responsibility*
+*Enhanced MyCoder v2.1.0 - Where AI meets thermal responsibility*

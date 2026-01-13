@@ -1,5 +1,5 @@
 """
-Integration Tests for Enhanced MyCoder v2.0
+Integration Tests for Enhanced MyCoder v2.1.0
 
 Tests complete system integration with real-world scenarios including:
 - Multi-API provider fallback chains
@@ -22,10 +22,10 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
-from api_providers import APIProviderType, APIProviderConfig
-from config_manager import ConfigManager, MyCoderConfig
-from tool_registry import get_tool_registry, ToolExecutionContext
+from mycoder import EnhancedMyCoderV2
+from mycoder.api_providers import APIProviderType, APIProviderConfig
+from mycoder.config_manager import ConfigManager, MyCoderConfig
+from mycoder.tool_registry import get_tool_registry, ToolExecutionContext
 
 
 class TestEnhancedMyCoderIntegration:
@@ -82,7 +82,7 @@ class TestEnhancedMyCoderIntegration:
             # Mock all providers to simulate failures except last one
             with patch.object(mycoder.provider_router, "query") as mock_query:
                 # Simulate fallback chain where first providers fail
-                from api_providers import APIResponse
+                from mycoder.api_providers import APIResponse
 
                 mock_query.return_value = APIResponse(
                     success=True,
@@ -123,7 +123,7 @@ class TestEnhancedMyCoderIntegration:
                 }
 
                 with patch.object(mycoder.provider_router, "query") as mock_query:
-                    from api_providers import APIResponse
+                    from mycoder.api_providers import APIResponse
 
                     mock_query.return_value = APIResponse(
                         success=True,
@@ -167,7 +167,7 @@ class TestEnhancedMyCoderIntegration:
                 }
 
                 with patch.object(mycoder.provider_router, "query") as mock_query:
-                    from api_providers import APIResponse
+                    from mycoder.api_providers import APIResponse
 
                     mock_query.return_value = APIResponse(
                         success=True,
@@ -210,7 +210,7 @@ class TestEnhancedMyCoderIntegration:
             # Mock the provider to simulate AI requesting file operations
             with patch.object(mycoder.provider_router, "query") as mock_query:
                 # First response asks for file reading
-                from api_providers import APIResponse
+                from mycoder.api_providers import APIResponse
 
                 mock_query.return_value = APIResponse(
                     success=True,
@@ -249,7 +249,7 @@ class TestEnhancedMyCoderIntegration:
 
             # First request with one provider
             with patch.object(mycoder.provider_router, "query") as mock_query1:
-                from api_providers import APIResponse
+                from mycoder.api_providers import APIResponse
 
                 mock_query1.return_value = APIResponse(
                     success=True,
@@ -373,7 +373,7 @@ class TestEnhancedMyCoderIntegration:
 
             # Test scenario where all providers fail
             with patch.object(mycoder.provider_router, "query") as mock_query:
-                from api_providers import APIResponse
+                from mycoder.api_providers import APIResponse
 
                 mock_query.return_value = APIResponse(
                     success=False,
@@ -464,7 +464,7 @@ class TestEnhancedMyCoderIntegration:
 
             # Mock provider responses
             with patch.object(mycoder.provider_router, "query") as mock_query:
-                from api_providers import APIResponse
+                from mycoder.api_providers import APIResponse
 
                 def mock_response(prompt, **kwargs):
                     # Simulate different response times
@@ -519,7 +519,7 @@ class TestEnhancedMyCoderIntegration:
             )
 
             with patch.object(mycoder.provider_router, "query") as mock_query:
-                from api_providers import APIResponse
+                from mycoder.api_providers import APIResponse
 
                 mock_query.return_value = APIResponse(
                     success=True,
@@ -595,7 +595,7 @@ class TestMain(unittest.TestCase):
 
             # Simulate development workflow
             with patch.object(mycoder.provider_router, "query") as mock_query:
-                from api_providers import APIResponse
+                from mycoder.api_providers import APIResponse
 
                 responses = [
                     "I can see your Python project structure. The main.py file contains a simple hello_world function.",
@@ -689,7 +689,7 @@ class TestMain(unittest.TestCase):
 
             # Test thermal-aware operation
             with patch.object(mycoder.provider_router, "query") as mock_query:
-                from api_providers import APIResponse
+                from mycoder.api_providers import APIResponse
 
                 mock_query.return_value = APIResponse(
                     success=True,
@@ -736,7 +736,7 @@ class TestMain(unittest.TestCase):
 
             # Simulate provider switching during conversation
             with patch.object(mycoder.provider_router, "query") as mock_query:
-                from api_providers import APIResponse
+                from mycoder.api_providers import APIResponse
 
                 providers = [
                     APIProviderType.CLAUDE_ANTHROPIC,
@@ -827,7 +827,7 @@ class TestMain(unittest.TestCase):
             await mycoder.initialize()
 
             with patch.object(mycoder.provider_router, "query") as mock_query:
-                from api_providers import APIResponse
+                from mycoder.api_providers import APIResponse
 
                 mock_query.return_value = APIResponse(
                     success=True,
@@ -894,7 +894,7 @@ class TestPerformanceIntegration:
             await mycoder.initialize()
 
             with patch.object(mycoder.provider_router, "query") as mock_query:
-                from api_providers import APIResponse
+                from mycoder.api_providers import APIResponse
 
                 mock_query.return_value = APIResponse(
                     success=True,
@@ -934,7 +934,7 @@ class TestPerformanceIntegration:
             await mycoder.initialize()
 
             with patch.object(mycoder.provider_router, "query") as mock_query:
-                from api_providers import APIResponse
+                from mycoder.api_providers import APIResponse
 
                 mock_query.return_value = APIResponse(
                     success=True,

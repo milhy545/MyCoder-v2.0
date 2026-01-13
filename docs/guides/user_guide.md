@@ -1,6 +1,6 @@
 # User Guide
 
-Comprehensive user guide for Enhanced MyCoder v2.0.
+Comprehensive user guide for Enhanced MyCoder v2.1.0.
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@ Comprehensive user guide for Enhanced MyCoder v2.0.
 ### First Steps
 
 ```python
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
+from mycoder import EnhancedMyCoderV2
 from pathlib import Path
 import asyncio
 
@@ -51,7 +51,7 @@ asyncio.run(main())
 
 ### 5-Tier API Provider System
 
-Enhanced MyCoder v2.0 uses a sophisticated fallback system:
+Enhanced MyCoder v2.1.0 uses a sophisticated fallback system:
 
 1. **Claude Anthropic API** (Premium)
    - Highest quality responses
@@ -183,7 +183,7 @@ Create `mycoder_config.json`:
 ### Runtime Configuration
 
 ```python
-from config_manager import ConfigManager
+from mycoder.config_manager import ConfigManager
 
 # Load configuration
 config_manager = ConfigManager("mycoder_config.json")
@@ -298,7 +298,7 @@ response = await mycoder.process_request(
 
 ### Q9550 Integration
 
-Enhanced MyCoder v2.0 includes special support for Intel Q9550 processors:
+Enhanced MyCoder v2.1.0 includes special support for Intel Q9550 processors:
 
 ```python
 # Enable thermal management
@@ -551,7 +551,7 @@ for provider in ['claude_oauth', 'ollama_local']:
 
 ```python
 # Test configuration loading
-from config_manager import ConfigManager
+from mycoder.config_manager import ConfigManager
 config_manager = ConfigManager("mycoder_config.json")
 config = config_manager.load_config()
 print("Configuration loaded successfully")

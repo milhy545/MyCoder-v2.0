@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Enhanced MyCoder v2.0 - Quick Start Example
+Enhanced MyCoder v2.1.0 - Quick Start Example
 
-This example demonstrates basic usage of Enhanced MyCoder v2.0
+This example demonstrates basic usage of Enhanced MyCoder v2.1.0
 with the 5-tier API provider fallback system.
 """
 
@@ -14,13 +14,13 @@ import os
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
-from config_manager import ConfigManager
+from mycoder import EnhancedMyCoderV2
+from mycoder.config_manager import ConfigManager
 
 async def quick_start_example():
-    """Basic usage example of Enhanced MyCoder v2.0"""
+    """Basic usage example of Enhanced MyCoder v2.1.0"""
     
-    print("🚀 Enhanced MyCoder v2.0 - Quick Start")
+    print("🚀 Enhanced MyCoder v2.1.0 - Quick Start")
     print("=" * 50)
     
     # Basic configuration
@@ -47,7 +47,7 @@ async def quick_start_example():
     }
     
     # Initialize MyCoder
-    print("🔧 Initializing Enhanced MyCoder v2.0...")
+    print("🔧 Initializing Enhanced MyCoder v2.1.0...")
     mycoder = EnhancedMyCoderV2(
         working_directory=Path("."),
         config=config

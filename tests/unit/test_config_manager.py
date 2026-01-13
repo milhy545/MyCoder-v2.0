@@ -16,7 +16,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from config_manager import (
+from mycoder.config_manager import (
     ConfigManager,
     MyCoderConfig,
     APIProviderSettings,
@@ -462,7 +462,7 @@ INVALID_LINE_WITHOUT_EQUALS
 
         manager.config = manager._dict_to_config(config_dict)
 
-        with patch("src.config_manager.logger") as mock_logger:
+        with patch("mycoder.config_manager.logger") as mock_logger:
             manager._validate_config()
 
             # Should have warning calls for missing API keys
@@ -481,7 +481,7 @@ INVALID_LINE_WITHOUT_EQUALS
         config_dict = manager._get_default_config()
         manager.config = manager._dict_to_config(config_dict)
 
-        with patch("src.config_manager.logger") as mock_logger:
+        with patch("mycoder.config_manager.logger") as mock_logger:
             manager._validate_config()
 
             # Should warn about missing thermal script
@@ -502,7 +502,7 @@ INVALID_LINE_WITHOUT_EQUALS
 
         manager.config = manager._dict_to_config(config_dict)
 
-        with patch("src.config_manager.logger") as mock_logger:
+        with patch("mycoder.config_manager.logger") as mock_logger:
             manager._validate_config()
 
             # Should warn about invalid timeout values
@@ -642,7 +642,7 @@ INVALID_LINE_WITHOUT_EQUALS
         manager = self.create_manager()
         manager.config = manager._dict_to_config(manager._get_default_config())
 
-        with patch("src.config_manager.logger") as mock_logger:
+        with patch("mycoder.config_manager.logger") as mock_logger:
             success = manager.update_provider_config(
                 "claude_anthropic", {"enabled": False, "invalid_field": "value"}
             )

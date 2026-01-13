@@ -1,6 +1,6 @@
 # MyCoder RocketChat - Android Mobile App
 
-Production-ready Android application for RocketChat with MyCoder v2.0 AI integration.
+Production-ready Android application for RocketChat with MyCoder v2.1.0 AI integration.
 
 ## Features
 
@@ -10,7 +10,7 @@ Production-ready Android application for RocketChat with MyCoder v2.0 AI integra
 
 ### Core Functionality
 - **RocketChat Integration**: Real-time messaging via WebSocket
-- **MyCoder v2.0 AI**: 5-tier API provider system integration
+- **MyCoder v2.1.0 AI**: 5-tier API provider system integration
   - Claude Anthropic API
   - Claude OAuth
   - Gemini
@@ -186,9 +186,9 @@ Falls back to power save mode detection:
 - Normal mode → All providers available
 - Power save mode → Prefer local providers
 
-## Integration with MyCoder v2.0
+## Integration with MyCoder v2.1.0
 
-The app communicates with MyCoder v2.0 backend via:
+The app communicates with MyCoder v2.1.0 backend via:
 
 1. **REST API** (`MyCoderApiClient`):
    - `/api/v2/query` - AI queries

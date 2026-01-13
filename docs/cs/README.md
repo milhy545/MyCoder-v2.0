@@ -1,11 +1,11 @@
-# Enhanced MyCoder v2.0 - Česká příručka
+# Enhanced MyCoder v2.1.0 - Česká příručka
 
 [![Python 3.10-3.13](https://img.shields.io/badge/python-3.10--3.13-blue.svg)](https://www.python.org/downloads/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](../../LICENSE)
 [![Test Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](#testovani)
 [![Q9550 Compatible](https://img.shields.io/badge/Q9550-thermal%20managed-orange.svg)](#tepelni-management)
 
-Enhanced MyCoder v2.0 je komplexní AI vývojářský asistent s **5-stupňovou fallback architekturou API poskytovatelů**, **Q9550 tepelným managementem** a **FEI-inspirovanou architekturou**. Navržený pro produkční prostředí vyžadující vysokou dostupnost a tepelnou bezpečnost.
+Enhanced MyCoder v2.1.0 je komplexní AI vývojářský asistent s **5-stupňovou fallback architekturou API poskytovatelů**, **Q9550 tepelným managementem** a **FEI-inspirovanou architekturou**. Navržený pro produkční prostředí vyžadující vysokou dostupnost a tepelnou bezpečnost.
 
 ## 🎯 Klíčové vlastnosti
 
@@ -29,7 +29,7 @@ pip install -r requirements.txt
 ### Základní použití
 
 ```python
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
+from mycoder import EnhancedMyCoderV2
 from pathlib import Path
 
 # Základní konfigurace
@@ -68,8 +68,19 @@ python tests/functional/test_mycoder_live.py --interactive
 python tests/stress/run_stress_tests.py --quick
 
 # Kontrola stavu systému
-python -c "from enhanced_mycoder_v2 import EnhancedMyCoderV2; import asyncio; asyncio.run(EnhancedMyCoderV2().get_system_status())"
+python -c "from mycoder import EnhancedMyCoderV2; import asyncio; asyncio.run(EnhancedMyCoderV2().get_system_status())"
 ```
+
+### MiniPC 32-bit profil (Intel Atom)
+
+Pro starší 32-bit stroje použijte optimalizovaný profil:
+
+```bash
+poetry install --extras http
+cp mycoder_config_minipc_32bit.json mycoder_config.json
+```
+
+Podrobný návod: `docs/guides/minipc_32bit.md`
 
 ## 🏗️ Architektura
 
@@ -159,7 +170,7 @@ Vytvořte `mycoder_config.json`:
 ### Pokročilá Konfigurace
 
 ```python
-from config_manager import ConfigManager
+from mycoder.config_manager import ConfigManager
 
 # Načtení ze souboru
 config_manager = ConfigManager("mycoder_config.json")
@@ -290,11 +301,13 @@ except ClaudeTimeoutError as e:
 ```
 MyCoder-v2.0/
 ├── src/                          # Zdrojový kód
-│   ├── enhanced_mycoder_v2.py   # Hlavní MyCoder třída
-│   ├── api_providers.py         # Implementace API poskytovatelů
-│   ├── config_manager.py        # Správa konfigurace
-│   ├── tool_registry.py         # Tool registry systém
-│   └── __init__.py              # Inicializace balíčku
+│   ├── mycoder/                 # Hlavní balíček
+│   │   ├── enhanced_mycoder_v2.py   # Hlavní MyCoder třída
+│   │   ├── api_providers.py         # Implementace API poskytovatelů
+│   │   ├── config_manager.py        # Správa konfigurace
+│   │   ├── tool_registry.py         # Tool registry systém
+│   │   └── __init__.py              # Inicializace balíčku
+│   └── speech_recognition/      # Dictation modul
 ├── tests/                       # Testovací sady
 │   ├── unit/                    # Unit testy
 │   ├── integration/             # Integrační testy
@@ -318,7 +331,7 @@ MyCoder-v2.0/
 ### MCP (Model Context Protocol)
 
 ```python
-from mcp_connector import MCPConnector
+from mycoder.mcp_connector import MCPConnector
 
 # Inicializace MCP připojení
 mcp = MCPConnector(server_url="http://localhost:8000")
@@ -344,7 +357,7 @@ RUN pip install -r requirements.txt
 RUN apt-get update && apt-get install -y lm-sensors
 
 ENV MYCODER_THERMAL_ENABLED=false  # Vypnout v kontejnerech
-CMD ["python", "-m", "enhanced_mycoder_v2"]
+CMD ["python", "-m", "mycoder.enhanced_mycoder_v2"]
 ```
 
 ### CI/CD Integrace
@@ -428,4 +441,4 @@ Tento projekt je licencován pod MIT License - viz [LICENSE](../../LICENSE) pro 
 
 **Vytvořeno s ❤️ pro AI vývojářskou komunitu**
 
-*Enhanced MyCoder v2.0 - Kde AI potkává tepelnou zodpovědnost*
+*Enhanced MyCoder v2.1.0 - Kde AI potkává tepelnou zodpovědnost*

@@ -1,5 +1,5 @@
 """
-Stress Tests for Enhanced MyCoder v2.0
+Stress Tests for Enhanced MyCoder v2.1.0
 
 These tests push the system to its limits to verify robustness under:
 - High concurrent load
@@ -27,9 +27,9 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
-from api_providers import APIProviderType, APIProviderConfig, APIResponse
-from config_manager import ConfigManager
+from mycoder import EnhancedMyCoderV2
+from mycoder.api_providers import APIProviderType, APIProviderConfig, APIResponse
+from mycoder.config_manager import ConfigManager
 
 
 class TestConcurrencyStress:
@@ -305,7 +305,7 @@ class Class_{i}:
             txt_content = ""
             for i in range(2000):
                 txt_content += (
-                    f"Paragraph {i}: This is a large text document created for stress testing the MyCoder v2.0 system. "
+                    f"Paragraph {i}: This is a large text document created for stress testing the MyCoder v2.1.0 system. "
                     f"It contains {i} paragraphs of repetitive content to simulate processing large documents. "
                     f"The system should handle this efficiently without memory issues. Line {i} of many.\n"
                 )
@@ -981,7 +981,7 @@ if __name__ == "__main__":
     """Run stress tests directly"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="MyCoder v2.0 Stress Tests")
+    parser = argparse.ArgumentParser(description="MyCoder v2.1.0 Stress Tests")
     parser.add_argument("--test-class", "-c", type=str, help="Run specific test class")
     parser.add_argument(
         "--quick", "-q", action="store_true", help="Run quick stress tests only"

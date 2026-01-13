@@ -2,7 +2,7 @@
 
 ## Overview
 
-The MyCoder RocketChat mobile app implements a production-ready Android application with dual API level support, integrating RocketChat messaging with MyCoder v2.0's 5-tier AI provider system.
+The MyCoder RocketChat mobile app implements a production-ready Android application with dual API level support, integrating RocketChat messaging with MyCoder v2.1.0's 5-tier AI provider system.
 
 ## Dual Build System
 
@@ -166,7 +166,7 @@ abstract class MyCoderDatabase : RoomDatabase {
 
 #### Network Layer
 
-**MyCoderApiClient.kt** - MyCoder v2.0 Integration
+**MyCoderApiClient.kt** - MyCoder v2.1.0 Integration
 ```kotlin
 class MyCoderApiClient {
     suspend fun query(
@@ -274,7 +274,7 @@ fun MyCoderApp(viewModel: ChatViewModel) {
 - `RoomsAdapter`: Binds Room data to views
 - `MessagesAdapter`: Binds Message data to views
 
-## MyCoder v2.0 Integration
+## MyCoder v2.1.0 Integration
 
 ### AI Provider System
 
@@ -499,5 +499,5 @@ This architecture provides:
 - **Scalability**: Clean separation of concerns via MVVM + Repository
 - **Performance**: Offline-first with optimized data flows
 - **Maintainability**: Shared codebase with variant-specific overrides
-- **Integration**: Seamless connection to MyCoder v2.0 backend
+- **Integration**: Seamless connection to MyCoder v2.1.0 backend
 - **Production-Ready**: Comprehensive error handling, testing, and monitoring

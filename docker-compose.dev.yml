@@ -103,7 +103,7 @@ networks:
 #   → Navíc sledování změn souborů
 #
 # Debugging:
-#   docker-compose -f docker-compose.dev.yml exec mycoder-dev python -m debugpy --listen 0.0.0.0:5678 src/mycoder.py
+#   docker-compose -f docker-compose.dev.yml exec mycoder-dev python -m debugpy --listen 0.0.0.0:5678 src/mycoder/mycoder.py
 #   → Připoj debugger na localhost:5678
 #
 # Logs:

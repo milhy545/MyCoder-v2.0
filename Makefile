@@ -48,7 +48,7 @@ dev-python: ## 🐍 Spustí Python shell v dev prostředí
 	$(DOCKER_COMPOSE) -f docker-compose.dev.yml exec mycoder-dev python -c "\
 		import sys; sys.path.insert(0, '/app/src'); \
 		print('🎯 MyCoder Python Shell'); \
-		print('Import: from src.mycoder import MyCoder'); \
+		print('Import: from mycoder import MyCoder'); \
 		exec(open('/usr/lib/python3.11/code.py').read())"
 
 debug: ## 🐛 Spustí s debugger portem (5678)
@@ -129,7 +129,7 @@ test-quick: ## ⚡ Rychlé testy (jen základní)
 	@echo "$(GREEN)⚡ Quick tests...$(RESET)"
 	$(DOCKER_COMPOSE) -f docker-compose.dev.yml exec -T mycoder-dev python -c "\
 		import sys; sys.path.insert(0, '/app/src'); \
-		from src.ollama_integration import OllamaClient; \
+		from mycoder.ollama_integration import OllamaClient; \
 		import asyncio; \
 		asyncio.run(OllamaClient().is_available()) and print('✅ OK') or print('❌ FAIL')"
 
@@ -238,7 +238,7 @@ demo: ## 🎬 Demo MyCoder funkcionality
 		print('🎯 MyCoder Demo'); \
 		print('Testing DeepSeek integration...'); \
 		import asyncio; \
-		from src.ollama_integration import OllamaClient, CodeGenerationProvider; \
+		from mycoder.ollama_integration import OllamaClient, CodeGenerationProvider; \
 		async def demo(): \
 			async with OllamaClient() as client: \
 				if await client.is_available(): \

@@ -83,7 +83,7 @@ fi
 
 # Python path info  
 echo "   🐍 Python path: $PYTHONPATH"
-echo "   🔍 Can import mycoder: $(python -c 'import src.mycoder; print("✅ YES")' 2>/dev/null || echo '❌ NO')"
+echo "   🔍 Can import mycoder: $(python -c 'import mycoder; print("✅ YES")' 2>/dev/null || echo '❌ NO')"
 
 # Start development server
 echo ""
@@ -109,13 +109,13 @@ sys.path.insert(0, '/app/src')
 print('🎯 MyCoder Development Session')
 print('Available modules:')
 try:
-    from src.mycoder import MyCoder
+    from mycoder import MyCoder
     print('  • MyCoder ✅')
 except ImportError as e:
     print(f'  • MyCoder ❌ ({e})')
 
 try:
-    from src.ollama_integration import OllamaClient, CodeGenerationProvider
+    from mycoder.ollama_integration import OllamaClient, CodeGenerationProvider
     print('  • Ollama Integration ✅')
 except ImportError as e:
     print(f'  • Ollama Integration ❌ ({e})')
@@ -124,7 +124,7 @@ print('\\nQuick test:')
 import asyncio
 
 async def test():
-    from src.ollama_integration import OllamaClient
+    from mycoder.ollama_integration import OllamaClient
     async with OllamaClient() as client:
         available = await client.is_available()
         print(f'Ollama connection: {\"✅ OK\" if available else \"❌ FAILED\"}')
@@ -193,7 +193,7 @@ elif [ "$1" = "test" ]; then
         python -c "
 import sys
 sys.path.insert(0, '/app/src')
-from src.ollama_integration import OllamaClient
+from mycoder.ollama_integration import OllamaClient
 import asyncio
 
 async def quick_test():
@@ -238,7 +238,7 @@ import signal
 
 async def run_mycoder():
     try:
-        from src.mycoder import MyCoder
+        from mycoder import MyCoder
         print('🎯 Starting MyCoder service...')
         mycoder = MyCoder()
         print(f'✅ MyCoder ready in mode: {getattr(mycoder.mode_manager.current_mode, \"value\", \"unknown\")}')

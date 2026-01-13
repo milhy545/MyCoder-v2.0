@@ -1,4 +1,4 @@
-"""Pytest configuration and fixtures for Enhanced MyCoder v2.0 tests.
+"""Pytest configuration and fixtures for Enhanced MyCoder v2.1.0 tests.
 
 Provides common fixtures and configuration for all test modules.
 """
@@ -19,25 +19,6 @@ sys.path.insert(0, str(repo_root))
 sys.path.insert(0, str(repo_root / "src"))
 
 
-def _alias_module(module_name: str) -> None:
-    """Ensure src.* module aliases resolve to the same module."""
-    try:
-        module = __import__(module_name)
-    except Exception:
-        return
-    sys.modules.setdefault(f"src.{module_name}", module)
-
-
-for _module_name in [
-    "api_providers",
-    "config_manager",
-    "tool_registry",
-    "enhanced_mycoder_v2",
-    "mcp_connector",
-]:
-    _alias_module(_module_name)
-
-
 @pytest.fixture(scope="session")
 def event_loop():
     """Create an instance of the default event loop for the test session."""
@@ -55,7 +36,7 @@ def temp_dir() -> Generator[Path, None, None]:
 
 @pytest.fixture
 def test_config(temp_dir: Path) -> dict:
-    """Create a test configuration for MyCoder v2.0."""
+    """Create a test configuration for MyCoder v2.1.0."""
     return {
         "claude_anthropic": {
             "enabled": False,  # Disable by default for tests
@@ -83,15 +64,15 @@ def test_config(temp_dir: Path) -> dict:
 
 @pytest.fixture
 def enhanced_mycoder(temp_dir: Path, test_config: dict):
-    """Create an Enhanced MyCoder v2.0 instance for testing."""
-    from enhanced_mycoder_v2 import EnhancedMyCoderV2
+    """Create an Enhanced MyCoder v2.1.0 instance for testing."""
+    from mycoder import EnhancedMyCoderV2
 
     return EnhancedMyCoderV2(working_directory=temp_dir, config=test_config)
 
 
 @pytest.fixture
 async def initialized_mycoder(enhanced_mycoder):
-    """Create and initialize Enhanced MyCoder v2.0 instance."""
+    """Create and initialize Enhanced MyCoder v2.1.0 instance."""
     await enhanced_mycoder.initialize()
     yield enhanced_mycoder
     await enhanced_mycoder.shutdown()
@@ -100,7 +81,7 @@ async def initialized_mycoder(enhanced_mycoder):
 @pytest.fixture
 def mock_api_response():
     """Mock successful API response."""
-    from api_providers import APIResponse, APIProviderType
+    from mycoder.api_providers import APIResponse, APIProviderType
 
     return APIResponse(
         success=True,
@@ -114,7 +95,7 @@ def mock_api_response():
 @pytest.fixture
 def mock_failed_response():
     """Mock failed API response."""
-    from api_providers import APIResponse, APIProviderType
+    from mycoder.api_providers import APIResponse, APIProviderType
 
     return APIResponse(
         success=False,
@@ -144,7 +125,7 @@ if __name__ == "__main__":
 
     # Text file
     txt_file = temp_dir / "test_doc.txt"
-    txt_file.write_text("This is a test document for MyCoder v2.0 testing.")
+    txt_file.write_text("This is a test document for MyCoder v2.1.0 testing.")
     files.append(txt_file)
 
     # JSON file
@@ -169,7 +150,7 @@ def mock_thermal_status():
 @pytest.fixture
 def mock_tool_execution_context(temp_dir: Path):
     """Mock tool execution context."""
-    from tool_registry import ToolExecutionContext
+    from mycoder.tool_registry import ToolExecutionContext
 
     return ToolExecutionContext(
         mode="FULL", working_directory=temp_dir, session_id="test_session"

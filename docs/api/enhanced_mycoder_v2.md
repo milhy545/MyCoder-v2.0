@@ -1,8 +1,8 @@
-# Enhanced MyCoder v2.0 API Reference
+# Enhanced MyCoder v2.1.0 API Reference
 
 ## EnhancedMyCoderV2 Class
 
-The main interface for Enhanced MyCoder v2.0 functionality.
+The main interface for Enhanced MyCoder v2.1.0 functionality.
 
 ### Constructor
 
@@ -21,7 +21,7 @@ EnhancedMyCoderV2(
 
 **Example:**
 ```python
-from enhanced_mycoder_v2 import EnhancedMyCoderV2
+from mycoder import EnhancedMyCoderV2
 from pathlib import Path
 
 mycoder = EnhancedMyCoderV2(

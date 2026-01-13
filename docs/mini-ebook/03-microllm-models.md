@@ -654,7 +654,7 @@ sudo systemctl start llm-api
 ### Ollama jako fallback provider
 
 ```python
-# src/api_providers.py (doplněk)
+# src/mycoder/api_providers.py (doplněk)
 
 class OllamaLocalProvider(BaseProvider):
     """MicroLLM via Ollama on localhost"""
