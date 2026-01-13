@@ -7,6 +7,8 @@
 - 2026-01-08: Claude Code - Expanded AGENTS.md to serve as comprehensive shared context for all AI agents
 - 2026-01-08: Claude Code - Created CLAUDE.md with detailed Claude Code-specific workflows
 - 2026-01-08: Claude Code - Updated GEMINI.md with reference to AGENTS.md
+- 2026-01-13: Codex - Fixed GitHub Actions workflow credential gating to avoid workflow file errors
+- 2026-01-13: Codex - Updated filelock and virtualenv to address open Dependabot alerts
 - 2026-01-13: Codex - Moved core modules into `src/mycoder`, updated imports/entrypoints/docs, added MiniPC 32-bit profile config+guide, and added public API unit test
 
 ## Project Overview
