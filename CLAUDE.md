@@ -6,309 +6,169 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MyCoder v2.1.0 is a production-ready AI development assistant with a 5-tier API provider fallback system, Intel Q9550 thermal management, FEI-inspired architecture, and integrated speech recognition/dictation capabilities (repo: MyCoder-v2.0). This is a Poetry-managed Python project with comprehensive testing and Docker support.
+MyCoder v2.1.0 is a production-ready AI development assistant featuring **5-tier API provider fallback** (Claude Anthropic → Claude OAuth → Gemini → Ollama Local → Ollama Remote), **Q9550 thermal management**, and **FEI-inspired architecture**. Built with Python 3.10-3.13, managed via Poetry.
 
 ## Core Architecture
 
-### Multi-API Provider System
-- **5-tier fallback**: Claude Anthropic API → Claude OAuth → Gemini → Ollama Local → Ollama Remote
-- **Mercury Provider**: Alternative provider for fallback scenarios
-- **Provider router**: `src/mycoder/api_providers.py` (1271 lines) handles intelligent provider selection
-- **Thermal awareness**: Integrated Q9550 temperature monitoring affects provider selection
+### Multi-API Provider System with Thermal Awareness
 
-### Key Components
-- **`src/mycoder/enhanced_mycoder_v2.py`** (897 lines): Main EnhancedMyCoderV2 class with multi-API integration
-- **`src/mycoder/api_providers.py`** (1271 lines): All API provider implementations and routing logic
-- **`src/mycoder/tool_registry.py`** (707 lines): FEI-inspired tool registry with execution contexts
-- **`src/mycoder/adaptive_modes.py`** (671 lines): Thermal-aware operational mode management
-- **`src/mycoder/config_manager.py`** (602 lines): Configuration management across providers
-- **`src/speech_recognition/`**: Complete speech recognition and dictation system with Whisper/Gemini transcription
+The system intelligently routes requests through a 5-tier fallback chain based on:
+1. **Thermal conditions** - CPU temp > 70°C → prefer local inference (Ollama); 85°C → emergency shutdown
+2. **Request complexity** - Complex tasks → more capable providers (Claude/Gemini)
+3. **Provider health** - Real-time health checks skip unhealthy providers
+4. **Cost optimization** - Prefer free/cheaper options when appropriate
+5. **Performance requirements** - Balance speed vs quality based on context
+
+**Request Flow:**
+`EnhancedMyCoderV2.process_request()` → `APIProviderRouter.select_provider()` (analyzes thermal + complexity + health) → Attempt providers in priority order with automatic fallback → Thermal monitoring can force local-only or emergency shutdown
+
+### Key Components & Patterns
+
+- **`src/mycoder/enhanced_mycoder_v2.py`** (897 lines) - Main orchestrator managing provider selection and request processing
+- **`src/mycoder/api_providers.py`** (1271 lines) - All provider implementations + APIProviderRouter with health checks and thermal integration
+- **`src/mycoder/tool_registry.py`** (707 lines) - FEI-inspired: centralized tool management with execution contexts, permissions, sandboxing
+- **`src/mycoder/adaptive_modes.py`** (671 lines) - Thermal-aware modes that adjust behavior to protect Q9550 hardware
+- **`src/mycoder/config_manager.py`** (602 lines) - Unified configuration across all providers with validation
+- **`src/speech_recognition/`** - Complete dictation module with Whisper/Gemini transcription, hotkey management, audio recording
+
+**FEI-Inspired Patterns:**
+- Tool Registry Pattern (centralized tool management with execution contexts)
+- Service Layer Pattern (clean separation: API providers vs business logic)
+- Event-Based Architecture (reactive system with health monitoring and thermal hooks)
 
 ## Development Commands
 
 ### Project Setup
 ```bash
-# Install dependencies (recommended)
-poetry install
-
-# Install with extras for HTTP features
-poetry install --extras http
-
-# Install with speech recognition support
-poetry install --extras speech
-
-# Without Poetry (fallback)
-pip install -r requirements.txt
+poetry install                    # Basic install
+poetry install --extras http     # With HTTP features
+poetry install --extras speech   # With speech recognition
+pip install -r requirements.txt  # Fallback without Poetry
 ```
 
-### CLI Commands (Poetry Scripts)
+### CLI Commands
 ```bash
-# Interactive MyCoder CLI
-poetry run mycoder
-
-# Run demo
-poetry run mycoder-demo
-
-# Launch dictation/speech recognition
-poetry run dictation
+poetry run mycoder        # Interactive CLI
+poetry run mycoder-demo   # Run demo
+poetry run dictation      # Launch speech recognition
 ```
 
-### Testing Framework
+### Testing
 ```bash
-# Unit tests (core functionality)
-poetry run pytest tests/unit/ -v
+# By test category
+poetry run pytest tests/unit/ -v          # Unit tests
+poetry run pytest tests/integration/ -v   # Integration tests
+poetry run pytest tests/functional/ -v    # Functional tests
+poetry run pytest tests/e2e/ -v           # E2E tests
 
-# Integration tests (API interactions)
-poetry run pytest tests/integration/ -v
-
-# Functional tests (end-to-end workflows)
-poetry run pytest tests/functional/ -v
-
-# E2E tests (simulation-based end-to-end)
-poetry run pytest tests/e2e/ -v
-
-# Stress tests (system limits and Q9550 thermal)
+# Stress tests (system limits and thermal)
 python tests/stress/run_stress_tests.py --all
-python tests/stress/run_stress_tests.py --quick     # Fast suites only
+python tests/stress/run_stress_tests.py --quick
 python tests/stress/run_stress_tests.py --suite thermal  # Requires Q9550
 
-# Run tests by marker
+# By marker
 poetry run pytest -m unit
-poetry run pytest -m integration
-poetry run pytest -m thermal      # Requires Q9550 system
-poetry run pytest -m network      # Requires network access
-poetry run pytest -m auth         # Requires Claude CLI auth
+poetry run pytest -m thermal           # Q9550 only
+poetry run pytest -m "not thermal"     # Skip thermal tests
 ```
 
 ### Code Quality
 ```bash
-# Format code (Black + isort)
-poetry run black . && poetry run isort .
-
-# Linting
-poetry run flake8 src/ tests/
-
-# Type checking (strict mode enabled in pyproject.toml)
-poetry run mypy src/
+poetry run black . && poetry run isort .  # Format
+poetry run flake8 src/ tests/             # Lint
+poetry run mypy src/                      # Type check (strict mode)
 ```
 
 ### Docker Development (Czech Makefile)
-The project includes a comprehensive Czech-language Makefile with extensive Docker automation:
+
+**Important:** Development mode uses bind mounts for live reload - code changes in `src/` appear instantly without container rebuild. Only rebuild when modifying `pyproject.toml`, Dockerfile, or system dependencies.
 
 ```bash
-# Development with live reload
-make dev              # Start development server with live reload
-make dev-detached     # Start dev server in background
-make dev-shell        # Open shell in development container
-make dev-python       # Start Python shell in dev environment
+# Development with live reload (NO REBUILDS for code changes)
+make dev / make dev-detached    # Start dev server (foreground/background)
+make dev-shell / make dev-python # Open bash/Python shell in container
 
-# Production deployment
-make prod             # Start production server
-make prod-detached    # Start production in background
+# Production and lightweight deployments
+make prod / make prod-detached  # Production server
+make light / make light-detached # Lightweight (2-4GB RAM, TinyLlama)
 
-# Lightweight version (for limited resources: 2-4GB RAM, TinyLlama)
-make light            # Ultra-lightweight version
-make light-detached   # Lightweight in background
-
-# Testing and debugging
-make test             # Run tests in Docker
-make test-integration # Run integration tests
-make test-quick       # Quick smoke tests
-make lint             # Run linting in Docker
-make format           # Format code in Docker
+# Testing and quality in Docker
+make test / make test-integration / make test-quick
+make lint / make format
 
 # Container management
-make logs             # View development logs
-make logs-prod        # View production logs
-make logs-light       # View lightweight logs
-make status           # Show service status
-make health           # Health check all services
-make stop             # Stop all services
-make restart          # Restart development server
-make clean            # Clean Docker cache
+make logs / make logs-prod / make status / make health
+make stop / make restart / make clean
 
-# Build commands
-make build-dev        # Rebuild development image
-make build-prod       # Rebuild production image
-make rebuild          # Rebuild all images
-
-# Local Python development (without Docker)
-make venv             # Create local venv and install dependencies via Poetry
-make test-local       # Run tests locally
-make lint-local       # Lint locally
-make format-local     # Format locally
+# Build and local development
+make build-dev / make build-prod / make rebuild
+make venv / make test-local / make lint-local / make format-local
 ```
 
-## Test Structure and Markers
+## Test Structure
 
-### Test Categories
-- **Unit tests** (`tests/unit/`): Core component functionality
-- **Integration tests** (`tests/integration/`): Real API interactions
-- **Functional tests** (`tests/functional/`): End-to-end workflows
-- **E2E tests** (`tests/e2e/`): Simulation-based end-to-end scenarios
-- **Stress tests** (`tests/stress/`): System limits and thermal management
+**Categories:** `tests/unit/` (core functionality), `tests/integration/` (API interactions), `tests/functional/` (end-to-end), `tests/e2e/` (simulation-based), `tests/stress/` (system limits + thermal)
 
-### Test Markers (defined in pyproject.toml)
-- `unit`: Unit tests
-- `integration`: Integration tests
-- `functional`: Functional tests
-- `stress`: Stress tests
-- `performance`: Performance tests
-- `slow`: Slow running tests
-- `network`: Tests requiring network access
-- `thermal`: Tests requiring Q9550 thermal system
-- `auth`: Tests requiring Claude CLI authentication
+**Markers:** `unit`, `integration`, `functional`, `stress`, `performance`, `slow`, `network`, `thermal` (Q9550 required), `auth` (Claude CLI auth required)
 
-## Configuration Management
+## Configuration
 
 ### Environment Variables
 ```bash
-export ANTHROPIC_API_KEY="your_anthropic_key"
-export GEMINI_API_KEY="your_gemini_key"
+export ANTHROPIC_API_KEY="your_key"
+export GEMINI_API_KEY="your_key"
 export MYCODER_DEBUG=1
 export MYCODER_THERMAL_MAX_TEMP=75
 export MYCODER_PREFERRED_PROVIDER=claude_oauth
 ```
 
-### Configuration Files
-- **`mycoder_config.json`**: Main configuration for all providers
-- **`pyproject.toml`**: Project settings, dependencies, tool configurations (Black, isort, mypy, pytest)
-- **`docker-compose*.yml`**: Three deployment modes (dev, prod, lightweight)
-- **`dictation_config_local.json`**: Speech recognition configuration
+### Key Files
+- `mycoder_config.json` - Main configuration for all providers
+- `mycoder_config_minipc_32bit.json` - Optimized for Intel Atom 32-bit systems
+- `pyproject.toml` - Project settings, dependencies, tool configs
+- `docker-compose*.yml` - Three deployment modes (dev, prod, lightweight)
+- `dictation_config_local.json` - Speech recognition configuration
 
-## Thermal Management Integration
+## Q9550 Thermal Management
 
-### Q9550 Specific Features
-- **Temperature monitoring**: Real-time CPU temperature tracking
-- **Automatic throttling**: Reduces AI workload when temperature exceeds 75°C
-- **Emergency protection**: Hard shutdown at 85°C
-- **PowerManagement integration**: Uses existing thermal scripts at `/home/milhy777/Develop/Production/PowerManagement/`
+Real-time CPU temperature tracking with automatic throttling (>75°C reduces workload, 85°C emergency shutdown). Integrates with PowerManagement scripts at `/home/milhy777/Develop/Production/PowerManagement/`.
 
-### Thermal Testing
-```bash
-# Full thermal stress testing (requires Q9550)
-python tests/stress/run_stress_tests.py --suite thermal
+**Testing:** `python tests/stress/run_stress_tests.py --suite thermal` (requires Q9550 hardware)
 
-# Skip thermal tests on non-Q9550 systems
-poetry run pytest -m "not thermal"
-```
+## Hardware Profiles
 
-## Speech Recognition Module
+### MiniPC (ssh `MiniPC`)
+Debian 12 (32-bit i686), Intel Atom N280 @ 1.66 GHz (1 core/2 threads), 2GB RAM, 3GB swap, 62GB free storage. Use `mycoder_config_minipc_32bit.json`, run `poetry install --extras http`, avoid Docker, skip thermal/stress tests.
 
-The `src/speech_recognition/` module provides comprehensive dictation and voice command capabilities:
+### Q9550 Development System
+Intel Core 2 Quad Q9550 @ 2.83GHz (4 cores), thermal monitoring enabled (max 75°C, critical 85°C), 4GB+ RAM recommended. Use for thermal testing, stress testing, full development workflow.
 
-### Components
-- **`cli.py`**: Command-line interface for dictation (accessible via `poetry run dictation`)
-- **`dictation_app.py`**: Main dictation application
-- **`whisper_transcriber.py`**: OpenAI Whisper-based transcription
-- **`gemini_transcriber.py`**: Google Gemini-based transcription
-- **`audio_recorder.py`**: Audio capture and processing
-- **`hotkey_manager.py`**: Keyboard shortcut management
-- **`text_injector.py`**: Text insertion into applications
-- **`overlay_button.py`**: UI overlay for dictation control
-- **`setup_wizard.py`**: Initial configuration wizard
+## Performance Benchmarks (Q9550 @ 2.83GHz)
+- Simple Query: 0.5-2.0s (Claude OAuth, cached auth)
+- File Analysis: 2.0-5.0s (Ollama Local inference)
+- Complex Task: 5.0-15.0s (Claude Anthropic API)
+- Thermal Check: <0.1s (Q9550 sensors, hardware direct)
 
-### Usage
-```bash
-# Launch dictation system
-poetry run dictation
+## Adding API Providers
 
-# Install with speech dependencies
-poetry install --extras speech
-```
-
-## Package Structure
-
-```
-MyCoder-v2.0/
-├── src/
-│   ├── mycoder/                   # Core package
-│   │   ├── enhanced_mycoder_v2.py     # Main class with 5-tier API system
-│   │   ├── api_providers.py           # Provider implementations and router
-│   │   ├── tool_registry.py           # FEI-inspired tool system
-│   │   ├── adaptive_modes.py          # Thermal-aware modes
-│   │   ├── config_manager.py          # Configuration management
-│   │   └── cli.py                     # Main CLI interface
-│   └── speech_recognition/        # Speech recognition and dictation module
-│       ├── cli.py                 # Dictation CLI
-│       ├── dictation_app.py       # Main dictation app
-│       ├── whisper_transcriber.py # Whisper transcription
-│       └── gemini_transcriber.py  # Gemini transcription
-├── tests/
-│   ├── unit/                      # Unit tests
-│   ├── integration/               # API integration tests
-│   ├── functional/                # End-to-end tests
-│   ├── e2e/                       # Simulation-based E2E tests
-│   ├── stress/                    # Stress and thermal tests
-│   └── conftest.py                # Pytest configuration and fixtures
-├── docs/                          # API documentation and guides
-├── examples/                      # Usage examples and demos
-└── Makefile                       # Development automation (Czech)
-```
-
-## Development Workflow
-
-### Making Changes
-1. **Run existing tests**: `poetry run pytest tests/unit/ -v`
-2. **Code with style**: `poetry run black . && poetry run isort .`
-3. **Type check**: `poetry run mypy src/`
-4. **Add tests**: Follow existing test patterns in appropriate test category
-5. **Verify coverage**: `poetry run pytest --cov=src --cov-report=html`
-
-### Adding API Providers
-1. **Implement provider**: Extend `BaseAPIProvider` class in `src/mycoder/api_providers.py`
-2. **Update router**: Add provider to `APIProviderRouter` routing logic
-3. **Add tests**: Create unit and integration tests
-4. **Update config**: Add provider configuration schema
-
-### Performance Benchmarks (Q9550 @ 2.83GHz)
-- **Simple Query**: 0.5-2.0s (Claude OAuth, cached auth)
-- **File Analysis**: 2.0-5.0s (Ollama Local inference)
-- **Complex Task**: 5.0-15.0s (Claude Anthropic API)
-- **Thermal Check**: <0.1s (Q9550 sensors, hardware direct)
-
-## Tool Registry System
-
-### Adding Tools
-1. **Implement tool**: Create tool class extending base tool interface
-2. **Register tool**: Add to tool registry in `src/mycoder/tool_registry.py`
-3. **Set permissions**: Configure execution context and permissions
-4. **Add tests**: Unit tests for tool functionality
-
-### Tool Categories
-- **File Operations**: Read, write, analyze files
-- **MCP Integration**: Model Context Protocol tools
-- **Thermal Monitoring**: Q9550 temperature tools
-- **System Tools**: Performance and resource monitoring
-
-## API Provider Priority Logic
-
-The system intelligently selects providers based on:
-1. **Thermal conditions**: Prefer local inference when CPU temp > 70°C
-2. **Request complexity**: Route complex tasks to more capable providers
-3. **Provider health**: Skip unhealthy providers in fallback chain
-4. **Cost optimization**: Prefer free/cheaper options when appropriate
-5. **Performance requirements**: Balance speed vs quality based on context
+1. Extend `BaseAPIProvider` class in `src/mycoder/api_providers.py`
+2. Add provider to `APIProviderRouter` routing logic
+3. Create unit and integration tests
+4. Add provider configuration schema to config system
 
 ## Troubleshooting
 
-### Common Issues
-- **Thermal tests failing**: Ensure Q9550 system with PowerManagement scripts
-- **Provider timeouts**: Check API keys and network connectivity
-- **Memory errors**: Ensure 4GB+ RAM for full test suite
-- **Docker build issues**: Use `make clean` then rebuild
+**Common Issues:**
+- Thermal tests failing → Ensure Q9550 system with PowerManagement scripts at `/home/milhy777/Develop/Production/PowerManagement/`
+- Provider timeouts → Check API keys (`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) and network connectivity
+- Memory errors → Ensure 4GB+ RAM for full test suite; use lightweight profile for constrained systems
+- Docker build issues → Run `make clean` then rebuild
+- Live reload not working → Check mounted volumes: `docker-compose -f docker-compose.dev.yml config | grep -A5 volumes`
 
-### Debug Mode
+**Debug Mode:**
 ```bash
-# Enable debug logging
 export MYCODER_DEBUG=1
-poetry run python -m mycoder.enhanced_mycoder_v2
-
-# Pytest with detailed output
-poetry run pytest tests/unit/ -v -s --tb=long
-
-# Docker debug shell
-make dev-shell
+poetry run python -m mycoder.enhanced_mycoder_v2       # Enable debug logging
+poetry run pytest tests/unit/ -v -s --tb=long          # Detailed pytest output
+make dev-shell                                         # Docker debug shell
 ```
-
-This project emphasizes production reliability, thermal safety for Q9550 systems, and comprehensive testing across multiple AI providers.
