@@ -27,7 +27,6 @@ defaults:
 
 jobs:
   triage:
-    if: ${{ secrets.GEMINI_API_KEY != '' || secrets.GOOGLE_API_KEY != '' || vars.GCP_WIF_PROVIDER != '' }}
     runs-on: 'ubuntu-latest'
     timeout-minutes: 7
     permissions:
@@ -39,8 +38,18 @@ jobs:
       available_labels: '${{ steps.get_labels.outputs.available_labels }}'
       triaged_issues: '${{ env.TRIAGED_ISSUES }}'
     steps:
+      - name: 'Check Gemini credentials'
+        id: 'credentials'
+        run: |
+          if [[ -n "${{ secrets.GEMINI_API_KEY }}" || -n "${{ secrets.GOOGLE_API_KEY }}" || -n "${{ vars.GCP_WIF_PROVIDER }}" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 'Get repository labels'
         id: 'get_labels'
+        if: ${{ steps.credentials.outputs.enabled == 'true' }}
         uses: 'actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd' # ratchet:actions/github-script@v8.0.0
         with:
           # NOTE: we intentionally do not use the minted token. The default
@@ -67,6 +76,7 @@ jobs:
 
       - name: 'Find untriaged issues'
         id: 'find_issues'
+        if: ${{ steps.credentials.outputs.enabled == 'true' }}
         env:
           GITHUB_REPOSITORY: '${{ github.repository }}'
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN || github.token }}'
@@ -87,17 +97,19 @@ jobs:
           echo "✅ Found ${ISSUE_COUNT} issue(s) to triage! 🎯"
 
       - name: 'Set up Node.js'
+        if: ${{ steps.credentials.outputs.enabled == 'true' }}
         uses: 'actions/setup-node@v4'
         with:
           node-version: '20'
 
       - name: 'Add npm global bin to PATH'
+        if: ${{ steps.credentials.outputs.enabled == 'true' }}
         run: 'echo "$(npm config get prefix)/bin" >> "$GITHUB_PATH"'
 
       - name: 'Run Gemini Issue Analysis'
         id: 'gemini_issue_analysis'
         if: |-
-          ${{ steps.find_issues.outputs.issues_to_triage != '[]' }}
+          ${{ steps.credentials.outputs.enabled == 'true' && steps.find_issues.outputs.issues_to_triage != '[]' }}
         uses: 'google-github-actions/run-gemini-cli@v0' # ratchet:exclude
         env:
           GITHUB_TOKEN: '' # Do not pass any auth token here since this runs on untrusted inputs

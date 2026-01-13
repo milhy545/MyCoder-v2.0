@@ -12,7 +12,6 @@ on:
 
 jobs:
   claude-review:
-    if: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.ANTHROPIC_API_KEY != '' }}
     # Optional: Filter by PR author
     # if: |
     #   github.event.pull_request.user.login == 'external-contributor' ||
@@ -27,13 +26,24 @@ jobs:
       id-token: write
 
     steps:
+      - name: Check Claude credentials
+        id: credentials
+        run: |
+          if [[ -n "${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}" || -n "${{ secrets.ANTHROPIC_API_KEY }}" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout repository
+        if: ${{ steps.credentials.outputs.enabled == 'true' }}
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
       - name: Run Claude Code Review
         id: claude-review
+        if: ${{ steps.credentials.outputs.enabled == 'true' }}
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

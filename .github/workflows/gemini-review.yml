@@ -18,7 +18,6 @@ defaults:
 
 jobs:
   review:
-    if: ${{ secrets.GEMINI_API_KEY != '' || secrets.GOOGLE_API_KEY != '' || vars.GCP_WIF_PROVIDER != '' }}
     runs-on: 'ubuntu-latest'
     timeout-minutes: 7
     permissions:
@@ -27,10 +26,19 @@ jobs:
       issues: 'write'
       pull-requests: 'write'
     steps:
+      - name: 'Check Gemini credentials'
+        id: 'credentials'
+        run: |
+          if [[ -n "${{ secrets.GEMINI_API_KEY }}" || -n "${{ secrets.GOOGLE_API_KEY }}" || -n "${{ vars.GCP_WIF_PROVIDER }}" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 'Mint identity token'
         id: 'mint_identity_token'
         if: |-
-          ${{ vars.APP_ID }}
+          ${{ steps.credentials.outputs.enabled == 'true' && vars.APP_ID != '' }}
         uses: 'actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf' # ratchet:actions/create-github-app-token@v2
         with:
           app-id: '${{ vars.APP_ID }}'
@@ -40,19 +48,23 @@ jobs:
           permission-pull-requests: 'write'
 
       - name: 'Checkout repository'
+        if: ${{ steps.credentials.outputs.enabled == 'true' }}
         uses: 'actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8' # ratchet:actions/checkout@v5
 
       - name: 'Set up Node.js'
+        if: ${{ steps.credentials.outputs.enabled == 'true' }}
         uses: 'actions/setup-node@v4'
         with:
           node-version: '20'
 
       - name: 'Add npm global bin to PATH'
+        if: ${{ steps.credentials.outputs.enabled == 'true' }}
         run: 'echo "$(npm config get prefix)/bin" >> "$GITHUB_PATH"'
 
       - name: 'Run Gemini pull request review'
         uses: 'google-github-actions/run-gemini-cli@v0' # ratchet:exclude
         id: 'gemini_pr_review'
+        if: ${{ steps.credentials.outputs.enabled == 'true' }}
         env:
           GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
           ISSUE_TITLE: '${{ github.event.pull_request.title || github.event.issue.title }}'
