@@ -10,12 +10,10 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from claude_cli_auth import (
-    ClaudeAuthManager,
-    ClaudeAuthError,
-    AuthConfig,
-    ClaudeResponse,
-)
+try:
+    from claude_cli_auth import ClaudeAuthManager, ClaudeAuthError, AuthConfig
+except Exception:
+    from .adaptive_modes import ClaudeAuthManager, ClaudeAuthError, AuthConfig
 
 try:
     from .adaptive_modes import AdaptiveModeManager, OperationalMode
