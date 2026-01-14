@@ -24,4 +24,4 @@ def test_public_api_exports():
 
 def test_version_matches_expected():
     """Package version should stay in sync with release versioning."""
-    assert mycoder.__version__ == "2.1.0"
+    assert mycoder.__version__ == "2.1.1"

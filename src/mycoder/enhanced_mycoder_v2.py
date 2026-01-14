@@ -1,12 +1,12 @@
 """
-Enhanced MyCoder v2.1.0 with Multi-API Architecture
+Enhanced MyCoder v2.1.1 with Multi-API Architecture
 
 This module provides the enhanced MyCoder class that integrates the new multi-API
 provider system with FEI-inspired architecture patterns for optimal performance
 and intelligent fallbacks across different AI providers.
 
 Features:
-- 5-tier API provider system (Claude Anthropic, Claude OAuth, Gemini, Ollama Local/Remote)
+- 7-tier API provider system (Claude Anthropic, Claude OAuth, Gemini, Mercury, Ollama Local, Termux Ollama, Ollama Remote)
 - FEI-inspired tool registry and service layer architecture
 - Intelligent provider selection based on context and thermal conditions
 - Advanced error recovery with provider fallbacks
@@ -43,6 +43,8 @@ try:
         ToolAvailability,
     )
     from .adaptive_modes import AdaptiveModeManager, OperationalMode
+    from .mcp_bridge import MCPBridge
+    from .tool_orchestrator import ToolExecutionOrchestrator
 except ImportError:
     from mycoder.api_providers import (  # type: ignore
         APIProviderRouter,
@@ -61,16 +63,18 @@ except ImportError:
         ToolAvailability,
     )
     from adaptive_modes import AdaptiveModeManager, OperationalMode  # type: ignore
+    from mcp_bridge import MCPBridge  # type: ignore
+    from tool_orchestrator import ToolExecutionOrchestrator  # type: ignore
 
 logger = logging.getLogger(__name__)
 
 
 class EnhancedMyCoderV2:
     """
-    Enhanced MyCoder v2.1.0 with Multi-API Architecture
+    Enhanced MyCoder v2.1.1 with Multi-API Architecture
 
     Provides intelligent AI-powered development assistance with:
-    - 5-tier API provider fallback system
+    - 7-tier API provider fallback system
     - FEI-inspired tool registry and service layers
     - Thermal-aware operation for Q9550 systems
     - Advanced session management across providers
@@ -105,6 +109,10 @@ class EnhancedMyCoderV2:
 
         # Initialize tool registry
         self.tool_registry = get_tool_registry()
+
+        # Initialize MCP bridge and tool orchestrator (v2.1.1)
+        self.mcp_bridge = None
+        self.tool_orchestrator = None
 
         # Initialize adaptive mode manager
         claude_oauth_enabled = bool(
@@ -143,10 +151,13 @@ class EnhancedMyCoderV2:
             logger.debug("Enhanced MyCoder already initialized")
             return
 
-        logger.info("Initializing Enhanced MyCoder v2.1.0 with multi-API system...")
+        logger.info("Initializing Enhanced MyCoder v2.1.1 with multi-API system...")
 
         # Initialize API providers
         await self._initialize_api_providers()
+
+        # NEW (v2.1.1): Initialize MCP bridge and tool orchestrator
+        await self._initialize_tool_system()
 
         # Initialize thermal monitoring for Q9550 systems
         await self._initialize_thermal_monitoring()
@@ -313,6 +324,27 @@ class EnhancedMyCoderV2:
             )
             provider_configs.append(local_ollama_config)
 
+        # Termux Ollama (Priority 5)
+        termux_config = self._get_section("termux_ollama")
+        termux_enabled = termux_config.get(
+            "enabled", self.config.get("termux_ollama_enabled", False)
+        )
+        if bool(termux_enabled):
+            termux_provider_config = APIProviderConfig(
+                provider_type=APIProviderType.TERMUX_OLLAMA,
+                enabled=True,
+                timeout_seconds=termux_config.get("timeout_seconds", 45),
+                max_retries=termux_config.get("max_retries", 2),
+                config={
+                    "base_url": termux_config.get(
+                        "base_url", "http://192.168.1.100:11434"
+                    ),
+                    "model": termux_config.get("model", "tinyllama"),
+                    "connection_type": termux_config.get("connection_type", "wifi"),
+                },
+            )
+            provider_configs.append(termux_provider_config)
+
         # Ollama Remote (Priority 5)
         remote_urls = self.config.get("ollama_remote_urls", [])
         remote_model = self.config.get("ollama_remote_model", "tinyllama")
@@ -332,6 +364,53 @@ class EnhancedMyCoderV2:
         self.provider_router = APIProviderRouter(provider_configs)
 
         logger.info(f"Initialized {len(provider_configs)} API providers")
+
+    async def _initialize_tool_system(self):
+        """Initialize MCP bridge and tool orchestrator for action-performing CLI (v2.1.1)"""
+        try:
+            logger.info("Initializing tool system (MCP bridge + orchestrator)...")
+
+            # Initialize MCP bridge
+            mcp_config = self._get_section("mcp")
+            mcp_url = mcp_config.get(
+                "url", self.config.get("mcp_url", "http://127.0.0.1:8020")
+            )
+            auto_start = mcp_config.get(
+                "auto_start", self.config.get("mcp_auto_start", True)
+            )
+
+            self.mcp_bridge = MCPBridge(
+                mcp_url=mcp_url,
+                auto_start=auto_start,
+            )
+
+            # Initialize and start MCP server if needed
+            success = await self.mcp_bridge.initialize()
+
+            if not success:
+                logger.warning(
+                    "MCP bridge initialization failed - tool execution will be limited"
+                )
+                self.mcp_bridge = None
+                self.tool_orchestrator = None
+                return
+
+            # Register MCP tools in tool registry
+            await self.mcp_bridge.register_mcp_tools_in_registry(self.tool_registry)
+
+            # Initialize tool orchestrator
+            self.tool_orchestrator = ToolExecutionOrchestrator(
+                tool_registry=self.tool_registry,
+                mcp_bridge=self.mcp_bridge,
+                ai_client=self,
+            )
+
+            logger.info("Tool system initialized successfully")
+
+        except Exception as e:
+            logger.error(f"Error initializing tool system: {e}")
+            self.mcp_bridge = None
+            self.tool_orchestrator = None
 
     async def _initialize_thermal_monitoring(self):
         """Initialize thermal monitoring for Q9550 systems"""
@@ -884,14 +963,23 @@ class EnhancedMyCoderV2:
 
     async def shutdown(self):
         """Gracefully shutdown Enhanced MyCoder system"""
-        logger.info("Shutting down Enhanced MyCoder v2.1.0...")
+        logger.info("Shutting down Enhanced MyCoder v2.1.1...")
 
         # Stop adaptive mode monitoring
         if hasattr(self.mode_manager, "stop_monitoring"):
             await self.mode_manager.stop_monitoring()
 
+        if self.mcp_bridge:
+            try:
+                await self.mcp_bridge.close()
+            except Exception as exc:
+                logger.warning(f"Failed to close MCP bridge: {exc}")
+            finally:
+                self.mcp_bridge = None
+                self.tool_orchestrator = None
+
         # Clear session store
         self.session_store.clear()
 
         self._initialized = False
-        logger.info("Enhanced MyCoder v2.1.0 shutdown complete")
+        logger.info("Enhanced MyCoder v2.1.1 shutdown complete")

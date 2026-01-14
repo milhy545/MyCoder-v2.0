@@ -220,6 +220,7 @@ class FileOperationTool(BaseTool):
         operation: str = "read",
         path: Optional[str] = None,
         content: Optional[str] = None,
+        directory: Optional[str] = None,
         **kwargs,
     ) -> ToolResult:
         """Execute file operation"""
@@ -227,8 +228,18 @@ class FileOperationTool(BaseTool):
         self.execution_count += 1
 
         try:
+            if operation == "read" and self.name == "file_list":
+                operation = "list"
+            elif operation == "read" and self.name == "file_write":
+                operation = "write"
+            elif operation == "read" and self.name == "file_read":
+                operation = "read"
+
             if operation not in {"read", "write", "list", "exists"}:
                 raise ValueError(f"Unsupported operation: {operation}")
+
+            if not path and directory:
+                path = directory
 
             if not path:
                 raise ValueError("File path is required")
@@ -473,6 +484,15 @@ class ToolRegistry:
         self.register_tool(FileOperationTool("file_read"))
         self.register_tool(FileOperationTool("file_write"))
         self.register_tool(FileOperationTool("file_list"))
+
+        # Speech recognition tool (v2.1.1)
+        try:
+            from .speech_tool import SpeechTool
+
+            self.register_tool(SpeechTool())
+            logger.info("Registered SpeechTool")
+        except ImportError as e:
+            logger.warning(f"SpeechTool not available: {e}")
 
         # Add more core tools as needed
         logger.info("Initialized core tools in registry")

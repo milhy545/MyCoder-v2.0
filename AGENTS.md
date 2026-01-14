@@ -4,6 +4,8 @@
 
 ## Recent Changes & Updates
 *Agents: Add entries here when making significant changes*
+- 2026-01-13: Codex - Added chat history persistence/scrolling commands and file-write verification with MCP response normalization
+- 2026-01-13: Codex - Implemented v2.1.1 Phase 2/3: speech tool + TTS engine, Termux provider, dynamic UI, CLI voice/TTS commands, config updates, and tests
 - 2026-01-08: Claude Code - Expanded AGENTS.md to serve as comprehensive shared context for all AI agents
 - 2026-01-08: Claude Code - Created CLAUDE.md with detailed Claude Code-specific workflows
 - 2026-01-08: Claude Code - Updated GEMINI.md with reference to AGENTS.md

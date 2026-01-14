@@ -1,12 +1,14 @@
 """
-Multi-API Provider System for MyCoder v2.1.0
+Multi-API Provider System for MyCoder v2.1.1
 
-This module implements a 5-tier API provider system with intelligent fallbacks:
+This module implements a 7-tier API provider system with intelligent fallbacks:
 1. Claude Anthropic API (direct API key)
 2. Claude OAuth (claude-cli-auth subscription)
 3. Gemini API (Google AI)
-4. Ollama Local (localhost:11434)
-5. Ollama Remote (configurable remote URLs)
+4. Mercury (Inception Labs)
+5. Ollama Local (localhost:11434)
+6. Termux Ollama (Android device)
+7. Ollama Remote (configurable remote URLs)
 
 Inspired by FEI architecture patterns for distributed AI systems.
 """
@@ -40,6 +42,7 @@ class APIProviderType(Enum):
     GEMINI = "gemini"
     OLLAMA_LOCAL = "ollama_local"
     OLLAMA_REMOTE = "ollama_remote"
+    TERMUX_OLLAMA = "termux_ollama"
     MERCURY = "mercury"
     RECOVERY = "recovery"
 
@@ -1115,7 +1118,56 @@ class OllamaProvider(BaseAPIProvider):
 
         except Exception as e:
             logger.warning(f"Thermal check failed: {e}")
-            return {"should_throttle": False}
+        return {"should_throttle": False}
+
+
+class TermuxOllamaProvider(OllamaProvider):
+    """
+    Ollama running on Android via Termux.
+
+    Connection types:
+    - WiFi: http://192.168.1.x:11434
+    - USB: http://192.168.42.129:11434
+    """
+
+    def __init__(self, config: APIProviderConfig):
+        super().__init__(config)
+        self.is_termux = True
+        self.connection_type = config.config.get("connection_type", "wifi")
+        logger.info(
+            f"Initialized TermuxOllamaProvider at {self.base_url} "
+            f"(connection: {self.connection_type})"
+        )
+
+    async def health_check(self) -> APIProviderStatus:
+        """Check if Termux device is reachable and Ollama is running."""
+        try:
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=5)
+            ) as session:
+                async with session.get(f"{self.base_url}/api/tags") as resp:
+                    if resp.status == 200:
+                        logger.info("Termux Ollama is reachable and healthy")
+                        return APIProviderStatus.HEALTHY
+
+            logger.warning("Termux Ollama not responding")
+            return APIProviderStatus.UNAVAILABLE
+
+        except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
+            logger.warning(f"Termux Ollama health check failed: {exc}")
+            return APIProviderStatus.UNAVAILABLE
+
+    async def query(
+        self, prompt: str, context: Dict[str, Any] = None, **kwargs
+    ) -> APIResponse:
+        """Generate response with Termux-specific behavior."""
+        response = await super().query(prompt, context=context, **kwargs)
+        if response.provider in {
+            APIProviderType.OLLAMA_LOCAL,
+            APIProviderType.OLLAMA_REMOTE,
+        }:
+            response.provider = APIProviderType.TERMUX_OLLAMA
+        return response
 
 
 class APIProviderRouter:
@@ -1135,6 +1187,7 @@ class APIProviderRouter:
             APIProviderType.OLLAMA_LOCAL: OllamaProvider,
             APIProviderType.OLLAMA_REMOTE: OllamaProvider,
             APIProviderType.MERCURY: MercuryProvider,
+            APIProviderType.TERMUX_OLLAMA: TermuxOllamaProvider,
         }
 
         for config in configs:

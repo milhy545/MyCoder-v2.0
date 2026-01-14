@@ -4,6 +4,7 @@ Main global dictation application.
 Orchestrates audio recording, transcription, and text injection.
 """
 
+import asyncio
 import logging
 import threading
 import time
@@ -49,6 +50,7 @@ class GlobalDictationApp:
         enable_gui: bool = True,
         enable_hotkeys: bool = True,
         hotkey_combo: Optional[list[str]] = None,
+        mycoder_callback=None,
     ):
         """
         Initialize the global dictation application.
@@ -70,6 +72,7 @@ class GlobalDictationApp:
         self.language = language
         self.enable_gui = enable_gui
         self.enable_hotkeys = enable_hotkeys
+        self.mycoder_callback = mycoder_callback
 
         # Initialize components
         logger.info("Initializing Global Dictation App...")
@@ -208,29 +211,40 @@ class GlobalDictationApp:
 
             logger.info(f"Transcribed: {text[:100]}...")
 
-            # Inject text
+            # Deliver text
             self.state = AppState.INJECTING
 
             if self.overlay:
                 self.overlay.button.set_status("Injecting text...")
 
-            logger.info("Injecting text into active window...")
-
-            # Small delay to allow user to focus target window
-            time.sleep(0.3)
-
-            success = self.injector.inject_text(text)
-
-            if success:
-                logger.info("Text injected successfully")
-
-                if self.overlay:
-                    self.overlay.button.show_notification("✓ Done!", duration=1500)
-
+            if self.mycoder_callback:
+                try:
+                    result = self.mycoder_callback(text)
+                    if asyncio.iscoroutine(result):
+                        asyncio.run(result)
+                    logger.info("Delivered transcription to MyCoder callback")
+                except Exception as exc:
+                    logger.error(f"MyCoder callback failed: {exc}")
+                    self._handle_error("MyCoder callback failed")
+                    return
             else:
-                logger.error("Failed to inject text")
-                self._handle_error("Failed to inject text")
-                return
+                logger.info("Injecting text into active window...")
+
+                # Small delay to allow user to focus target window
+                time.sleep(0.3)
+
+                success = self.injector.inject_text(text)
+
+                if success:
+                    logger.info("Text injected successfully")
+
+                    if self.overlay:
+                        self.overlay.button.show_notification("Done!", duration=1500)
+
+                else:
+                    logger.error("Failed to inject text")
+                    self._handle_error("Failed to inject text")
+                    return
 
             # Return to idle state
             self.state = AppState.IDLE

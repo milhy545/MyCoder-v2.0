@@ -53,6 +53,42 @@ poetry run mycoder-demo   # Run demo
 poetry run dictation      # Launch speech recognition
 ```
 
+## New Commands (v2.1.1)
+
+### Voice Commands
+- `/voice start` - Start voice dictation (GUI overlay)
+- `/voice stop` - Stop voice dictation
+- `/voice status` - Dictation status
+- `/speak <text>` - Text-to-speech playback
+
+### Provider Control
+- `/provider <name>` - Override provider selection
+  - Available: claude_anthropic, claude_oauth, gemini, mercury,
+    ollama_local, termux_ollama, ollama_remote
+
+## New Features (v2.1.1)
+
+### Speech Recognition & TTS
+- Voice dictation as MyCoder tool
+- Text-to-speech AI response reading
+- Czech language support
+- Multi-backend TTS (pyttsx3, espeak, gtts, gemini)
+
+### 7-Tier API Provider Fallback
+1. Claude Anthropic (primary)
+2. Claude OAuth (subscription)
+3. Gemini (Google AI)
+4. Mercury (Inception Labs diffusion LLM)
+5. Ollama Local (thermal-aware)
+6. Termux Ollama (Android device)
+7. Ollama Remote (configured URLs)
+
+### Smart Dynamic UI
+- Progress bars for long operations
+- Real-time provider health dashboard
+- Thermal alerts with automatic throttling
+- Token cost estimates
+
 ### Testing
 ```bash
 # By test category

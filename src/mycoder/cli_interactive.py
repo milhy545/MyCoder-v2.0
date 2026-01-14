@@ -1,15 +1,18 @@
 """
-MyCoder v2.1.0 Interactive CLI
+MyCoder v2.1.1 Interactive CLI
 Architecture: Split-screen UI using rich.Live.
 Left: Chat History (Auto-scrolling Markdown). Right: Execution Monitor (Logs + Sys Metrics).
 """
 
 import asyncio
+import json
 import os
 import sys
 import shutil
+from contextlib import suppress
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
+from pathlib import Path
 
 import psutil
 
@@ -44,11 +47,25 @@ try:
     from .enhanced_mycoder_v2 import EnhancedMyCoderV2
     from .config_manager import ConfigManager
     from .api_providers import APIProviderType
+    from .command_parser import CommandParser
+    from .tool_registry import ToolExecutionContext
 except ImportError:
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
     from mycoder.enhanced_mycoder_v2 import EnhancedMyCoderV2
     from mycoder.config_manager import ConfigManager
     from mycoder.api_providers import APIProviderType
+    from mycoder.command_parser import CommandParser
+    from mycoder.tool_registry import ToolExecutionContext
+
+try:
+    from .tts_engine import TTSEngine
+except ImportError:
+    TTSEngine = None
+
+try:
+    from .ui_dynamic_panels import DynamicExecutionMonitor
+except ImportError:
+    DynamicExecutionMonitor = None
 
 # CYBERPUNK PALETTE
 COLOR_SYSTEM = "bold cyan"
@@ -71,6 +88,26 @@ class ExecutionMonitor:
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.logs.append((timestamp, action, resource))
         self.logs = self.logs[-15:]
+
+    def set_operation(self, operation: str, progress: int = 0) -> None:
+        """No-op for compatibility with dynamic monitors."""
+        return None
+
+    def update_progress(self, percent: int) -> None:
+        """No-op for compatibility with dynamic monitors."""
+        return None
+
+    def clear_operation(self) -> None:
+        """No-op for compatibility with dynamic monitors."""
+        return None
+
+    def update_provider_health(self, provider: str, status: str) -> None:
+        """No-op for compatibility with dynamic monitors."""
+        return None
+
+    def set_thermal_warning(self, warning: bool) -> None:
+        """No-op for compatibility with dynamic monitors."""
+        return None
 
     def _render_bar(self, percent: float) -> str:
         """Return a 10-character ASCII bar for the provided percentage."""
@@ -215,8 +252,33 @@ class InteractiveCLI:
         self.active_provider = self.config.preferred_provider or "ollama_local"
         self.preferred_provider = self._map_provider(self.active_provider)
         self.chat_history: List[Dict[str, str]] = []
-        self.monitor = ExecutionMonitor()
+        if DynamicExecutionMonitor:
+            self.monitor = DynamicExecutionMonitor()
+        else:
+            self.monitor = ExecutionMonitor()
         self._warned_small_terminal = False
+        self.history_offset = 0
+        self.history_step = 5
+        history_env = os.getenv("MYCODER_HISTORY_PATH")
+        self.history_path = (
+            Path(history_env)
+            if history_env
+            else Path.home() / ".mycoder" / "history.json"
+        )
+        self._load_history()
+
+        # NEW (v2.1.1): Command parser for tool execution
+        self.command_parser = CommandParser()
+
+        # TTS engine (v2.1.1)
+        self.tts_engine = None
+        tts_config = getattr(self.config, "text_to_speech", {}) or {}
+        if TTSEngine and tts_config.get("enabled", False):
+            self.tts_engine = TTSEngine(
+                provider=tts_config.get("provider", "pyttsx3"),
+                voice=tts_config.get("voice", "cs"),
+                rate=tts_config.get("rate", 150),
+            )
 
     def print_banner(self) -> None:
         """Render the stylized MyCoder banner at startup."""
@@ -227,7 +289,7 @@ class InteractiveCLI:
  / /  / / /_/ / / /___/ /_/ / /_/ /  __/ /
 /_/  /_/\__, /  \____/\____/\__,_/\___/_/
        /____/
-      [ v2.1.0 - AI Powered ]
+      [ v2.1.1 - AI Powered ]
 """
         self.console.print(
             Panel(
@@ -261,6 +323,11 @@ class InteractiveCLI:
                 "api_key": False,
             },
             {
+                "key": "termux_ollama",
+                "label": "Termux Ollama (Android)",
+                "api_key": False,
+            },
+            {
                 "key": "ollama_remote",
                 "label": "Ollama Remote (URLs)",
                 "api_key": False,
@@ -290,6 +357,7 @@ class InteractiveCLI:
             "claude_oauth": APIProviderType.CLAUDE_OAUTH,
             "gemini": APIProviderType.GEMINI,
             "ollama_local": APIProviderType.OLLAMA_LOCAL,
+            "termux_ollama": APIProviderType.TERMUX_OLLAMA,
             "ollama_remote": APIProviderType.OLLAMA_REMOTE,
             "inception_mercury": APIProviderType.MERCURY,
         }
@@ -298,6 +366,104 @@ class InteractiveCLI:
     def _current_timestamp(self) -> str:
         """Return the current time formatted for chat records."""
         return datetime.now().strftime("%H:%M:%S")
+
+    def _append_chat_entry(self, role: str, content: str) -> None:
+        """Append a chat entry and persist history."""
+        self.chat_history.append(
+            {
+                "role": role,
+                "content": content,
+                "timestamp": self._current_timestamp(),
+            }
+        )
+        self.history_offset = 0
+        self._save_history()
+
+    def _load_history(self) -> None:
+        """Load chat history from disk."""
+        try:
+            if not self.history_path.exists():
+                return
+            data = json.loads(self.history_path.read_text(encoding="utf-8"))
+            if isinstance(data, list):
+                self.chat_history = data[-500:]
+        except Exception as exc:
+            self.console.print(
+                f"[bold yellow]History load failed: {exc}[/]"
+            )
+
+    def _save_history(self) -> None:
+        """Persist chat history to disk."""
+        try:
+            self.history_path.parent.mkdir(parents=True, exist_ok=True)
+            payload = self.chat_history[-500:]
+            self.history_path.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+        except Exception as exc:
+            self.console.print(
+                f"[bold yellow]History save failed: {exc}[/]"
+            )
+
+    def _export_history(self, path: Path) -> None:
+        """Export chat history as Markdown."""
+        lines = ["# MyCoder Chat History", ""]
+        for entry in self.chat_history:
+            ts = entry.get("timestamp", "")
+            role = entry.get("role", "unknown").upper()
+            lines.append(f"## [{ts}] {role}")
+            lines.append(entry.get("content", ""))
+            lines.append("")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("\n".join(lines), encoding="utf-8")
+
+    def _scroll_history(self, delta: int) -> None:
+        """Scroll chat history by a delta."""
+        self.history_offset = max(0, self.history_offset + delta)
+
+    def _build_execution_context(self) -> ToolExecutionContext:
+        """Build execution context for tool execution (v2.1.1)."""
+        from pathlib import Path
+
+        return ToolExecutionContext(
+            mode="FULL",
+            working_directory=Path.cwd(),
+            session_id=None,
+            thermal_status=None,
+            network_status={"connected": True},
+            metadata={"ui_mode": "interactive"},
+        )
+
+    def _display_tool_result(self, result) -> None:
+        """Display tool execution result to chat history (v2.1.1)."""
+        if result.success:
+            # Format successful result
+            output_text = f"**Tool: {result.tool_name}**\n\n"
+            output_text += f"Duration: {result.duration_ms}ms\n\n"
+            if result.metadata.get("verified_path"):
+                output_text += f"Verified path: {result.metadata['verified_path']}\n\n"
+
+            if result.data:
+                if isinstance(result.data, dict):
+                    # Format dict data nicely
+                    if "stdout" in result.data:
+                        output_text += f"```\n{result.data['stdout']}\n```"
+                    elif "output" in result.data:
+                        output_text += f"```\n{result.data['output']}\n```"
+                    else:
+                        import json
+                        output_text += f"```json\n{json.dumps(result.data, indent=2)}\n```"
+                else:
+                    output_text += f"```\n{result.data}\n```"
+
+            self._append_chat_entry("system", output_text)
+        else:
+            # Display error
+            error_text = f"**Tool Error: {result.tool_name}**\n\n"
+            error_text += f"Error: {result.error}\n"
+            error_text += f"Duration: {result.duration_ms}ms"
+
+            self._append_chat_entry("system", error_text)
 
     async def _configure_provider(self) -> None:
         """Guide the user through selecting and configuring an AI provider."""
@@ -337,6 +503,16 @@ class InteractiveCLI:
                     "ollama_local", {"base_url": base_url.strip()}
                 )
 
+        if selected == "termux_ollama":
+            base_url = Prompt.ask(
+                "Zadej Termux Ollama URL (Enter=nechat)",
+                default=self.config.termux_ollama.base_url or "",
+            )
+            if base_url.strip():
+                self.config_manager.update_provider_config(
+                    "termux_ollama", {"base_url": base_url.strip()}
+                )
+
         for option in self._provider_options():
             if option["key"] != selected:
                 continue
@@ -362,7 +538,7 @@ class InteractiveCLI:
                         option["key"], {"api_key": api_key.strip(), "enabled": True}
                     )
             else:
-                if option["key"] in {"claude_oauth", "ollama_local"}:
+                if option["key"] in {"claude_oauth", "ollama_local", "termux_ollama"}:
                     self.config_manager.update_provider_config(
                         option["key"], {"enabled": True}
                     )
@@ -428,13 +604,7 @@ class InteractiveCLI:
         elif cmd == "/help":
             self.show_help()
         elif cmd == "/status":
-            self.chat_history.append(
-                {
-                    "role": "system",
-                    "content": "System status displayed",
-                    "timestamp": self._current_timestamp(),
-                }
-            )
+            self._append_chat_entry("system", "System status displayed")
             self.show_status()
         elif cmd == "/diffon":
             if self.active_provider == "inception_mercury" and not self.realtime_mode:
@@ -457,6 +627,90 @@ class InteractiveCLI:
             self._show_providers()
         elif cmd == "/setup":
             await self._configure_provider()
+        elif cmd == "/history":
+            if not args:
+                self.console.print(
+                    "[bold red]Usage: /history save|clear|export <path>|prev|next|home|end[/]"
+                )
+                return
+            action = args[0].lower()
+            if action == "save":
+                self._save_history()
+                self.console.print(f"[{COLOR_SUCCESS}]History saved.[/]")
+            elif action == "clear":
+                self.chat_history.clear()
+                self.history_offset = 0
+                self._save_history()
+                self.console.print(f"[{COLOR_SUCCESS}]History cleared.[/]")
+            elif action == "export":
+                if len(args) < 2:
+                    self.console.print("[bold red]Usage: /history export <path>[/]")
+                    return
+                export_path = Path(args[1]).expanduser()
+                self._export_history(export_path)
+                self.console.print(
+                    f"[{COLOR_SUCCESS}]History exported to {export_path}[/]"
+                )
+            elif action == "prev":
+                self._scroll_history(self.history_step)
+            elif action == "next":
+                self._scroll_history(-self.history_step)
+            elif action == "home":
+                self.history_offset = max(0, len(self.chat_history) - 1)
+            elif action == "end":
+                self.history_offset = 0
+            else:
+                self.console.print(
+                    "[bold red]Usage: /history save|clear|export <path>|prev|next|home|end[/]"
+                )
+                return
+        elif cmd == "/speak":
+            if not self.tts_engine:
+                self.console.print(
+                    "[bold red]TTS not enabled. Set text_to_speech.enabled=true in config[/]"
+                )
+                return
+            text = " ".join(args) if args else "Test ceskeho hlasu"
+            await self.tts_engine.speak_async(text)
+            self.monitor.add_log("TTS", text[:30])
+            self.console.print(f"[{COLOR_SUCCESS}]Speaking: {text}[/]")
+        elif cmd == "/voice":
+            if not args:
+                self.console.print("[bold red]Usage: /voice start|stop|status[/]")
+                return
+
+            action = args[0].lower()
+            if action not in {"start", "stop", "status"}:
+                self.console.print("[bold red]Usage: /voice start|stop|status[/]")
+                return
+            from .command_parser import Command
+
+            command = Command(
+                tool="voice_dictation",
+                args={"mode": "gui", "action": action},
+                raw_input=f"/voice {action}",
+            )
+
+            if hasattr(self.coder, "tool_orchestrator") and self.coder.tool_orchestrator:
+                result = await self.coder.tool_orchestrator.execute_command(
+                    command, self._build_execution_context()
+                )
+                if result.success:
+                    if action == "start":
+                        message = (
+                            "Voice dictation started. Press Ctrl+Shift+Space to record."
+                        )
+                    elif action == "stop":
+                        message = "Voice dictation stopped."
+                    else:
+                        message = f"Voice dictation status: {result.data}"
+                    self.console.print(f"[{COLOR_SUCCESS}]{message}[/]")
+                else:
+                    self.console.print(f"[bold red]Error: {result.error}[/]")
+            else:
+                self.console.print(
+                    "[bold yellow]Tool orchestrator not initialized.[/]"
+                )
         elif cmd == "/clear":
             self.console.clear()
             self.print_banner()
@@ -474,6 +728,9 @@ class InteractiveCLI:
         table.add_row("/tools", "List tools")
         table.add_row("/providers", "List AI providers")
         table.add_row("/setup", "Configure provider & API key")
+        table.add_row("/history ...", "Save/export/scroll chat history")
+        table.add_row("/voice start|stop|status", "Voice dictation control")
+        table.add_row("/speak <text>", "Text-to-speech playback")
         table.add_row("/exit", "Shutdown")
         self.console.print(table)
 
@@ -503,6 +760,8 @@ class InteractiveCLI:
     async def process_chat(self, user_input: str) -> Optional[str]:
         """Send the user's query to the coder, append the assistant response, and return it."""
         self.monitor.add_log("QUERY_INIT", "User Request")
+        self.monitor.set_operation("Generating AI response...", 0)
+        progress_task = asyncio.create_task(self._update_progress_simulation())
         with self.console.status(
             "[bold magenta]Přemýšlím a generuji kód...[/]", spinner="dots"
         ):
@@ -518,18 +777,38 @@ class InteractiveCLI:
                     if isinstance(response, dict)
                     else str(response)
                 )
-                self.chat_history.append(
-                    {
-                        "role": "ai",
-                        "content": content,
-                        "timestamp": self._current_timestamp(),
-                    }
-                )
+                self._append_chat_entry("ai", content)
                 self.monitor.add_log("RESPONSE_OK", f"{len(content)} chars")
+                if self.tts_engine and getattr(
+                    self.config, "text_to_speech", {}
+                ).get("auto_read_responses", False):
+                    plain_text = self._strip_markdown(content)
+                    await self.tts_engine.speak_async(plain_text)
                 return content
             except Exception as e:
                 self.console.print(f"[bold red]Error:[/bold red] {e}")
                 return None
+            finally:
+                self.monitor.clear_operation()
+                progress_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await progress_task
+
+    async def _update_progress_simulation(self) -> None:
+        """Simulate progress updates while waiting for AI response."""
+        for i in range(0, 101, 10):
+            await asyncio.sleep(0.3)
+            self.monitor.update_progress(i)
+
+    def _strip_markdown(self, text: str) -> str:
+        """Strip markdown formatting for TTS output."""
+        import re
+
+        text = re.sub(r"```[\\s\\S]*?```", "", text)
+        text = re.sub(r"`[^`]*`", "", text)
+        text = re.sub(r"[*_~`]", "", text)
+        text = re.sub(r"^#+\\s+", "", text, flags=re.MULTILINE)
+        return text.strip()
 
     def _create_layout(self) -> Layout:
         """Build the split-screen layout, falling back to single-column on narrow terminals."""
@@ -675,9 +954,13 @@ class InteractiveCLI:
         # Reserve space for overflow indicator (if needed)
         OVERFLOW_INDICATOR_LINES = 3
         working_space = safe_available_lines - OVERFLOW_INDICATOR_LINES
+        total_messages = len(self.chat_history)
+        max_offset = max(0, total_messages - 1)
+        self.history_offset = min(max(self.history_offset, 0), max_offset)
+        visible_source = self.chat_history[: total_messages - self.history_offset]
 
         # Iterate backwards through history
-        for entry in reversed(self.chat_history):
+        for entry in reversed(visible_source):
             estimated_lines = self._estimate_message_height(entry, content_width)
 
             # Strict check: stop BEFORE we exceed limit (defensive)
@@ -693,14 +976,24 @@ class InteractiveCLI:
                 break
 
         # Ensure we show at least the most recent message (emergency fallback)
-        if not visible_history and self.chat_history:
-            visible_history = [self.chat_history[-1]]
+        if not visible_history and visible_source:
+            visible_history = [visible_source[-1]]
 
         # Calculate overflow indicator
-        overflow = len(self.chat_history) - len(visible_history)
+        overflow = len(visible_source) - len(visible_history)
 
         # Build renderable content
         renderables: List = []
+
+        if self.history_offset > 0:
+            renderables.append(
+                Text(
+                    f"[... {self.history_offset} newer messages hidden ...]",
+                    style="dim italic",
+                    justify="center",
+                )
+            )
+            renderables.append(separator_line())
 
         # Add overflow indicator if needed
         if overflow > 0:
@@ -774,18 +1067,39 @@ class InteractiveCLI:
                     live.start()
                     if not user_input:
                         continue
+
+                    # NEW (v2.1.1): Parse and execute tool commands
                     if user_input.startswith("/"):
+                        command = self.command_parser.parse(user_input)
+
+                        if command:
+                            # Tool command (e.g., /bash, /file, /git)
+                            self.monitor.add_log("EXEC_TOOL", command.tool)
+
+                            # Execute tool if orchestrator is available
+                            if hasattr(self.coder, "tool_orchestrator") and self.coder.tool_orchestrator:
+                                try:
+                                    result = await self.coder.tool_orchestrator.execute_command(
+                                        command, self._build_execution_context()
+                                    )
+                                    self._display_tool_result(result)
+                                except Exception as e:
+                                    self.console.print(f"[bold red]Tool execution error: {e}[/]")
+                            else:
+                                self.console.print(
+                                    f"[bold yellow]Tool orchestrator not initialized. Run in initialized mode.[/]"
+                                )
+
+                            live.update(self._create_layout())
+                            live.refresh()
+                            continue
+
+                        # Slash command (existing logic for /exit, /help, etc.)
                         await self.handle_slash_command(user_input)
                         live.update(self._create_layout())
                         live.refresh()
                         continue
-                    self.chat_history.append(
-                        {
-                            "role": "user",
-                            "content": user_input,
-                            "timestamp": self._current_timestamp(),
-                        }
-                    )
+                    self._append_chat_entry("user", user_input)
                     live.update(self._create_layout())
                     live.refresh()
                     response_content = await self.process_chat(user_input)

@@ -26,6 +26,7 @@ class APIProviderSettings:
     base_url: Optional[str] = None
     api_key: Optional[str] = None
     priority: int = 10  # Lower number = higher priority
+    connection_type: Optional[str] = None
     # Mercury-specific settings
     realtime: bool = False
     diffusing: bool = False
@@ -68,9 +69,12 @@ class MyCoderConfig:
     claude_oauth: APIProviderSettings = None
     gemini: APIProviderSettings = None
     ollama_local: APIProviderSettings = None
+    termux_ollama: APIProviderSettings = None
     ollama_remote_urls: List[str] = None
 
     inception_mercury: APIProviderSettings = None
+
+    text_to_speech: Dict[str, Any] = None
 
     # System Settings
     thermal: ThermalSettings = None
@@ -93,10 +97,14 @@ class MyCoderConfig:
             self.ollama_local = APIProviderSettings(
                 enabled=True, base_url="http://localhost:11434"
             )
+        if self.termux_ollama is None:
+            self.termux_ollama = APIProviderSettings(enabled=False)
         if self.ollama_remote_urls is None:
             self.ollama_remote_urls = []
         if self.inception_mercury is None:
             self.inception_mercury = APIProviderSettings(enabled=False)
+        if self.text_to_speech is None:
+            self.text_to_speech = {}
         if self.thermal is None:
             self.thermal = ThermalSettings()
         if self.system is None:
@@ -177,6 +185,15 @@ class ConfigManager:
                 "base_url": "http://localhost:11434",
                 "priority": 4,
             },
+            "termux_ollama": {
+                "enabled": False,
+                "timeout_seconds": 45,
+                "max_retries": 2,
+                "model": "tinyllama",
+                "base_url": "http://192.168.1.100:11434",
+                "connection_type": "wifi",
+                "priority": 5,
+            },
             "ollama_remote_urls": [],
             "thermal": {
                 "enabled": True,
@@ -196,12 +213,20 @@ class ConfigManager:
             },
             "inception_mercury": {
                 "enabled": False,
+                "api_key": "${INCEPTION_API_KEY}",
                 "model": "mercury",
                 "base_url": "https://api.inceptionlabs.ai/v1",
                 "timeout_seconds": 60,
                 "realtime": False,
                 "diffusing": False,
                 "tools": [],
+            },
+            "text_to_speech": {
+                "enabled": False,
+                "provider": "pyttsx3",
+                "voice": "cs",
+                "rate": 150,
+                "auto_read_responses": False,
             },
             "preferred_provider": None,
             "fallback_enabled": True,
@@ -293,15 +318,18 @@ class ConfigManager:
             "claude_oauth",
             "gemini",
             "ollama_local",
+            "termux_ollama",
             "thermal",
             "system",
             "inception_mercury",
+            "text_to_speech",
         }
         provider_prefixes = [
             "claude_anthropic",
             "claude_oauth",
             "gemini",
             "ollama_local",
+            "termux_ollama",
             "inception_mercury",
         ]
 
@@ -408,6 +436,7 @@ class ConfigManager:
             claude_oauth = APIProviderSettings(**config_dict.get("claude_oauth", {}))
             gemini = APIProviderSettings(**config_dict.get("gemini", {}))
             ollama_local = APIProviderSettings(**config_dict.get("ollama_local", {}))
+            termux_ollama = APIProviderSettings(**config_dict.get("termux_ollama", {}))
             inception_mercury = APIProviderSettings(
                 **config_dict.get("inception_mercury", {})
             )
@@ -420,8 +449,10 @@ class ConfigManager:
                 claude_oauth=claude_oauth,
                 gemini=gemini,
                 ollama_local=ollama_local,
+                termux_ollama=termux_ollama,
                 inception_mercury=inception_mercury,
                 ollama_remote_urls=config_dict.get("ollama_remote_urls", []),
+                text_to_speech=config_dict.get("text_to_speech", {}),
                 thermal=thermal,
                 system=system,
                 preferred_provider=config_dict.get("preferred_provider"),
@@ -476,6 +507,7 @@ class ConfigManager:
             self.config.claude_oauth,
             self.config.gemini,
             self.config.ollama_local,
+            self.config.termux_ollama,
             self.config.inception_mercury,
         ]
         for provider in providers:
@@ -504,8 +536,10 @@ class ConfigManager:
                 "claude_oauth": asdict(self.config.claude_oauth),
                 "gemini": asdict(self.config.gemini),
                 "ollama_local": asdict(self.config.ollama_local),
+                "termux_ollama": asdict(self.config.termux_ollama),
                 "inception_mercury": asdict(self.config.inception_mercury),
                 "ollama_remote_urls": self.config.ollama_remote_urls,
+                "text_to_speech": self.config.text_to_speech,
                 "thermal": asdict(self.config.thermal),
                 "system": asdict(self.config.system),
                 "preferred_provider": self.config.preferred_provider,
@@ -534,6 +568,7 @@ class ConfigManager:
             "claude_oauth": self.config.claude_oauth,
             "gemini": self.config.gemini,
             "ollama_local": self.config.ollama_local,
+            "termux_ollama": self.config.termux_ollama,
             "inception_mercury": self.config.inception_mercury,
         }
 
@@ -567,6 +602,7 @@ class ConfigManager:
             "env_vars": {
                 "ANTHROPIC_API_KEY": "***" if os.getenv("ANTHROPIC_API_KEY") else None,
                 "GEMINI_API_KEY": "***" if os.getenv("GEMINI_API_KEY") else None,
+                "INCEPTION_API_KEY": "***" if os.getenv("INCEPTION_API_KEY") else None,
                 "MYCODER_*": [k for k in os.environ.keys() if k.startswith("MYCODER_")],
             },
             "config_locations_checked": [
