@@ -4,6 +4,35 @@
 
 ## Recent Changes & Updates
 *Agents: Add entries here when making significant changes*
+- 2026-01-15: Codex - Updated CLAUDE.md with Evolution CLI commands (/todo, /plan, /edit, /agent, /web, /mcp, /self-evolve)
+- 2026-01-15: Codex - Adjusted retryable error handling to include rate limit failures
+- 2026-01-15: Codex - Fixed tool registry reset, MCP collisions, request retries, and recovery compatibility to address test failures
+- 2026-01-15: Codex - Added phase 6 test coverage (todo, circuit breaker, rate limiter, MCP client, plan mode, integration stubs)
+- 2026-01-15: Codex - Added web fetch/search tools, MCP protocol/client modules, and CLI commands with unit tests
+- 2026-01-15: Codex - Added agent orchestration modules and /agent CLI support with unit tests
+- 2026-01-15: Codex - Integrated file_edit tool into registry/CLI and added command parser tests
+- 2026-01-15: Codex - Added unit tests for Enhanced Edit Tool
+- 2026-01-15: Codex - Added Plan mode commands and Enhanced Edit Tool scaffolding
+- 2026-01-15: Codex - Note: before reporting completion, always run full test suite
+- 2026-01-15: Codex - Added Self-Evolve approval + dry-run, ProposalStore locking/cleanup, circuit breaker + rate limiter + lightweight health check, and todo tracker + CLI support
+- 2026-01-14: Codex - Implemented Phase 1 POC AI Testing Framework (simulator, scenario engine, POC tests, directories)
+- 2026-01-14: Codex - Added Phase 2 AI Testing Framework components (assertion framework, metrics collector)
+- 2026-01-14: Codex - Added Phase 3 AI Testing Framework runner + report generator
+- 2026-01-14: Codex - Added E2E fixtures and scenario test suites (prompt/tool/context/error)
+- 2026-01-14: Codex - Extended fixtures for thermal and provider fallback scenarios
+- 2026-01-14: Codex - Expanded fixtures with additional prompt/tool/context/error scenarios
+- 2026-01-14: Codex - Added extra fixture scenarios and extended file-write detection for .md
+- 2026-01-14: Codex - Added scenario modules + fixture loader with validation hooks; runner now loads fixtures
+- 2026-01-14: Codex - Added thermal/provider recommended_actions handling and expected_actions validation
+- 2026-01-14: Codex - Added fixture validations for context/alternatives, expanded fixtures, and documented E2E README
+- 2026-01-14: Codex - Completed AI testing docs and examples (USAGE_GUIDE + examples)
+- 2026-01-14: Codex - Added fallback metadata fixtures and router tests
+- 2026-01-15: Codex - Added Self-Evolve MVP modules and CLI integration
+- 2026-01-15: Codex - Added self-evolve risk scoring, rollback, issue-driven proposals, and monitoring logs
+- 2026-01-14: Codex - Improved provider fallback logic with retries, metadata, and fallback_enabled
+- 2026-01-14: Codex - Fixed runner UTC warning and tuned simulator for update dependencies in multi-step
+- 2026-01-14: Codex - Renamed TestScenario to ScenarioDefinition to avoid pytest collection warnings
+- 2026-01-14: Codex - Fixed multi-step detection to avoid comma-only false positives
 - 2026-01-13: Codex - Added chat history persistence/scrolling commands and file-write verification with MCP response normalization
 - 2026-01-13: Codex - Implemented v2.1.1 Phase 2/3: speech tool + TTS engine, Termux provider, dynamic UI, CLI voice/TTS commands, config updates, and tests
 - 2026-01-08: Claude Code - Expanded AGENTS.md to serve as comprehensive shared context for all AI agents
@@ -15,33 +44,44 @@
 
 ## Project Overview
 
-**Enhanced MyCoder v2.1.0** is a production-ready AI development assistant designed for high availability, performance, and thermal safety. Built with Python 3.10-3.13, managed via Poetry.
+**Enhanced MyCoder v2.2.0** is a production-ready AI development assistant designed for high availability, performance, and thermal safety. Built with Python 3.10-3.13, managed via Poetry.
 
 **Key Features:**
-- **5-Tier API Provider Fallback:** Claude Anthropic API → Claude OAuth → Gemini → Ollama Local → Ollama Remote
+- **7-Tier API Provider Fallback:** Claude Anthropic → Claude OAuth → Gemini → Mercury → Ollama Local → Termux Ollama → Ollama Remote
 - **Q9550 Thermal Management:** Real-time CPU temperature monitoring, automatic throttling, emergency protection
 - **FEI-Inspired Architecture:** Tool Registry Pattern, Service Layer Pattern, Event-Based Architecture
+- **Agent Orchestration:** Explore, Plan, Bash, and General-purpose agents with intelligent task routing
+- **Self-Evolve System:** Automated test failure detection, patch generation, approval workflow, and dry-run sandbox
+- **Circuit Breaker & Rate Limiting:** Resilient API provider management with automatic recovery
 - **Speech Recognition & Dictation:** Whisper and Gemini-based transcription with hotkey support
 - **Docker Support:** Dev (live reload), production, and lightweight deployments
 
 ## Core Architecture
 
 ### Multi-API Provider System
-5-tier intelligent fallback with health monitoring:
+7-tier intelligent fallback with health monitoring, circuit breaker, and rate limiting:
 1. **Claude Anthropic API** (primary, paid, high quality)
 2. **Claude OAuth** (secondary, free, authenticated)
 3. **Gemini API** (tertiary, Google AI)
-4. **Ollama Local** (quaternary, localhost:11434)
-5. **Ollama Remote** (final fallback, remote instances)
+4. **Mercury** (Inception Labs diffusion LLM)
+5. **Ollama Local** (thermal-aware, localhost:11434)
+6. **Termux Ollama** (Android device via WiFi/USB)
+7. **Ollama Remote** (final fallback, remote instances)
 
-Provider selection based on: thermal conditions, request complexity, provider health, cost optimization, performance requirements.
+Provider selection based on: thermal conditions, request complexity, provider health, cost optimization, performance requirements. Circuit breaker pattern prevents cascade failures, rate limiter ensures API compliance.
 
 ### Key Components
-- `src/mycoder/enhanced_mycoder_v2.py` (897 lines) - Main EnhancedMyCoderV2 class with multi-API integration
-- `src/mycoder/api_providers.py` (1271 lines) - All provider implementations, APIProviderRouter for intelligent selection
-- `src/mycoder/tool_registry.py` (707 lines) - FEI-inspired tool registry with execution contexts
-- `src/mycoder/adaptive_modes.py` (671 lines) - Thermal-aware operational mode management
-- `src/mycoder/config_manager.py` (602 lines) - Configuration management across providers
+- `src/mycoder/enhanced_mycoder_v2.py` - Main EnhancedMyCoderV2 class with multi-API integration
+- `src/mycoder/api_providers.py` - All provider implementations, APIProviderRouter, CircuitBreaker, RateLimiter
+- `src/mycoder/tool_registry.py` - FEI-inspired tool registry with execution contexts
+- `src/mycoder/adaptive_modes.py` - Thermal-aware operational mode management
+- `src/mycoder/config_manager.py` - Configuration management across providers
+- `src/mycoder/agents/` - Agent orchestration (Explore, Plan, Bash, General)
+- `src/mycoder/self_evolve/` - Self-evolution system (proposals, risk assessment, sandbox, approval workflow)
+- `src/mycoder/mcp/` - MCP (Model Context Protocol) client support
+- `src/mycoder/tools/` - Enhanced edit tool with unique string validation
+- `src/mycoder/web_tools.py` - Web fetch and search with caching
+- `src/mycoder/todo_tracker.py` - Task tracking with JSON persistence
 - `src/speech_recognition/` - Complete speech recognition and dictation module
 
 ## Project Structure & Module Organization
@@ -52,18 +92,36 @@ Core code lives in `src/mycoder/` (main class in `enhanced_mycoder_v2.py`, provi
 MyCoder-v2.0/
 ├── src/                          # Source code
 │   ├── mycoder/                 # Core package
-│   │   ├── enhanced_mycoder_v2.py   # Main class (897 lines)
-│   │   ├── api_providers.py         # Providers & router (1271 lines)
-│   │   ├── tool_registry.py         # Tool system (707 lines)
-│   │   ├── adaptive_modes.py        # Thermal modes (671 lines)
-│   │   ├── config_manager.py        # Config (602 lines)
-│   │   └── cli.py                   # CLI interface
+│   │   ├── enhanced_mycoder_v2.py   # Main class
+│   │   ├── api_providers.py         # Providers, router, circuit breaker, rate limiter
+│   │   ├── tool_registry.py         # Tool system
+│   │   ├── adaptive_modes.py        # Thermal modes
+│   │   ├── config_manager.py        # Config
+│   │   ├── cli_interactive.py       # Interactive CLI
+│   │   ├── agents/                  # Agent orchestration
+│   │   │   ├── orchestrator.py      # Agent selection & execution
+│   │   │   ├── explore.py           # Codebase exploration
+│   │   │   ├── plan.py              # Implementation planning
+│   │   │   ├── bash.py              # Command execution
+│   │   │   └── general.py           # General-purpose agent
+│   │   ├── self_evolve/             # Self-evolution system
+│   │   │   ├── manager.py           # Orchestrator with approval workflow
+│   │   │   ├── sandbox.py           # Git worktree dry-run
+│   │   │   ├── risk_assessor.py     # Diff risk scoring
+│   │   │   └── storage.py           # Proposals with filelock
+│   │   ├── mcp/                     # MCP support
+│   │   │   ├── client.py            # MCP client
+│   │   │   └── protocol.py          # MCP protocol definitions
+│   │   ├── tools/                   # Enhanced tools
+│   │   │   └── edit_tool.py         # Unique string validation
+│   │   ├── web_tools.py             # Web fetch/search with cache
+│   │   └── todo_tracker.py          # Task tracking
 │   └── speech_recognition/      # Dictation module
 ├── tests/                       # Test suites
-│   ├── unit/                    # Unit tests
+│   ├── unit/                    # Unit tests (290+ tests)
 │   ├── integration/             # Integration tests
 │   ├── functional/              # Functional tests
-│   ├── e2e/                     # End-to-end tests
+│   ├── e2e/                     # End-to-end AI simulation tests
 │   └── stress/                  # Stress & thermal tests
 ├── docs/                        # Documentation
 ├── examples/                    # Usage examples

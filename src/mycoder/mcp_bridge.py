@@ -285,7 +285,10 @@ class MCPBridge:
             await self.initialize()
 
         # Vytvořit BaseTool wrappery pro každý MCP tool
+        skip_tools = {"file_read", "file_write", "file_list", "file_edit"}
         for tool_name, tool_info in self.mcp_tools.items():
+            if tool_name in skip_tools and tool_name in tool_registry.tools:
+                continue
             mcp_tool = self._create_mcp_tool_wrapper(tool_name, tool_info)
             tool_registry.register_tool(mcp_tool)
 

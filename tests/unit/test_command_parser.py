@@ -89,6 +89,32 @@ class TestCommandParser:
         assert result.tool == "file_list"
         assert result.args == {"directory": "src/"}
 
+    def test_parse_file_edit(self):
+        """Test parsing /edit command"""
+        result = self.parser.parse('/edit foo.txt "old" "new"')
+
+        assert result is not None
+        assert result.tool == "file_edit"
+        assert result.args == {
+            "path": "foo.txt",
+            "old_string": "old",
+            "new_string": "new",
+            "replace_all": False,
+        }
+
+    def test_parse_file_edit_replace_all(self):
+        """Test parsing /edit with replace all"""
+        result = self.parser.parse('/edit foo.txt "old" "new" --all')
+
+        assert result is not None
+        assert result.tool == "file_edit"
+        assert result.args == {
+            "path": "foo.txt",
+            "old_string": "old",
+            "new_string": "new",
+            "replace_all": True,
+        }
+
     def test_parse_git_status(self):
         """Test parsing /git status command"""
         result = self.parser.parse("/git status")
@@ -198,6 +224,8 @@ class TestCommandParser:
         help_text = self.parser.get_help_text()
 
         assert isinstance(help_text, str)
+        assert "/edit" in help_text
+        assert "/web" in help_text
         assert "Bash/Terminal" in help_text
         assert "/bash" in help_text
         assert "File Operations" in help_text

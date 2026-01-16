@@ -1,0 +1,86 @@
+{
+  "scenarios": [
+    {
+      "name": "multi_step_update_test",
+      "expected_steps": ["bash", "bash"],
+      "notes": "Update dependencies and run tests should be split into multiple bash steps."
+    },
+    {
+      "name": "git_status",
+      "expected_tool": "bash",
+      "notes": "Git operations should map to bash execution.",
+      "expected_context_keys": ["command_type"],
+      "expected_alternatives": ["mcp"]
+    },
+    {
+      "name": "ambiguous_request",
+      "expected_tool": "ask_user",
+      "notes": "Ambiguous requests should request clarification."
+    },
+    {
+      "name": "thermal_status_check",
+      "expected_tool": "bash",
+      "notes": "Thermal checks map to system command execution.",
+      "expected_alternatives": ["mcp"]
+    },
+    {
+      "name": "thermal_overheat_error",
+      "expected_tool": "ask_user",
+      "notes": "Overheat scenarios should ask for user confirmation or safe action.",
+      "expected_actions": ["check thermal status", "reduce workload"]
+    },
+    {
+      "name": "provider_fallback",
+      "expected_tool": "ask_user",
+      "notes": "Fallback requests are ambiguous without provider context.",
+      "expected_actions": ["check provider status", "retry fallback"]
+    },
+    {
+      "name": "multi_step_read_then_test",
+      "expected_steps": ["file_read", "bash"],
+      "notes": "Read then test should split into file read and command execution."
+    },
+    {
+      "name": "lint_command",
+      "expected_tool": "bash",
+      "notes": "Lint commands should use bash execution.",
+      "expected_alternatives": ["mcp"]
+    },
+    {
+      "name": "docker_compose_read",
+      "expected_tool": "file_read",
+      "notes": "Config file reads should map to file_read.",
+      "expected_alternatives": ["bash"]
+    },
+    {
+      "name": "create_markdown_report",
+      "expected_tool": "file_write",
+      "notes": "Report creation should map to file_write.",
+      "expected_alternatives": ["bash"]
+    },
+    {
+      "name": "unknown_tool_request",
+      "expected_tool": "ask_user",
+      "notes": "Unknown tool requests should ask for clarification.",
+      "expected_actions": ["ask for clarification"]
+    },
+    {
+      "name": "conflicting_instructions",
+      "expected_tool": "ask_user",
+      "notes": "Conflicting instructions should trigger clarification.",
+      "expected_actions": ["ask for clarification"]
+    },
+    {
+      "name": "provider_timeout",
+      "expected_tool": "ask_user",
+      "notes": "Timeouts should trigger provider health checks.",
+      "expected_actions": ["check provider status", "retry fallback"]
+    },
+    {
+      "name": "thermal_context_reference",
+      "expected_tool": "ask_user",
+      "notes": "Thermal context should trigger safe-action suggestions.",
+      "expected_actions": ["check thermal status", "reduce workload"]
+    }
+  ]
+}

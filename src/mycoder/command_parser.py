@@ -7,6 +7,7 @@ pro spuštění nástrojů přes tool_registry.
 
 import logging
 import re
+import shlex
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -38,6 +39,7 @@ class CommandParser:
             r"^/file\s+list\s*(.*)$": self._parse_file_list,
             r"^/read\s+(.+)$": self._parse_file_read,  # Shortcut
             r"^/write\s+(.+)$": self._parse_file_write,  # Shortcut
+            r"^/edit\s+(.+)$": self._parse_file_edit,
             # Git operations
             r"^/git\s+status$": self._parse_git_status,
             r"^/git\s+diff\s*(.*)$": self._parse_git_diff,
@@ -108,6 +110,41 @@ class CommandParser:
             tool="file_list", args={"directory": directory}, raw_input=raw_input
         )
 
+    def _parse_file_edit(self, match: re.Match, raw_input: str) -> Command:
+        """Parse /edit <path> "<old>" "<new>" [--all]"""
+        parts = shlex.split(match.group(1).strip())
+        replace_all = False
+        filtered = []
+        for part in parts:
+            if part == "--all":
+                replace_all = True
+            else:
+                filtered.append(part)
+
+        if len(filtered) < 3:
+            return Command(
+                tool="file_edit",
+                args={
+                    "path": "",
+                    "old_string": None,
+                    "new_string": None,
+                    "replace_all": replace_all,
+                },
+                raw_input=raw_input,
+            )
+
+        path, old_string, new_string = filtered[0], filtered[1], filtered[2]
+        return Command(
+            tool="file_edit",
+            args={
+                "path": path,
+                "old_string": old_string,
+                "new_string": new_string,
+                "replace_all": replace_all,
+            },
+            raw_input=raw_input,
+        )
+
     def _parse_git_status(self, match: re.Match, raw_input: str) -> Command:
         """Parse /git status"""
         return Command(tool="git_status", args={}, raw_input=raw_input)
@@ -164,6 +201,8 @@ File Operations:
   /file write <path>     Write to file (interactive)
   /write <path>          Shortcut for file write
   /file list [dir]       List files in directory
+  /edit <path> "<old>" "<new>" [--all]
+                          Edit file content with unique match validation
 
 Git Operations:
   /git status            Show git status
@@ -177,6 +216,9 @@ Provider Control:
                          (claude_anthropic, claude_oauth, gemini,
                           mercury, ollama_local, termux_ollama, ollama_remote)
   /providers             List available providers
+Web Tools:
+  /web fetch <url> [prompt]
+  /web search <query>
 """
 
 

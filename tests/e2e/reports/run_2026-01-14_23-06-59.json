@@ -1,0 +1,17 @@
+{
+  "run_id": "2026-01-14_23-06-59",
+  "timestamp": "2026-01-14T23:06:59.091051",
+  "total_scenarios": 26,
+  "passed": 26,
+  "failed": 0,
+  "pass_rate": 1.0,
+  "metrics": {
+    "tool_accuracy": 1.0,
+    "context_retention": 1.0,
+    "response_quality": 0.7576923076923077,
+    "error_recovery": 1.0,
+    "prompt_adherence": 1.0,
+    "avg_execution_time_ms": 0.0
+  },
+  "failures": []
+}

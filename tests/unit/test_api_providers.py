@@ -6,6 +6,7 @@ error handling, and thermal integration for Q9550 systems.
 """
 
 import asyncio
+from contextlib import ExitStack
 import pytest
 import os
 import json
@@ -712,11 +713,13 @@ class TestAPIProviderRouter:
         router = self.create_router()
 
         # Mock all providers failing
-        for provider in router.providers:
-            with patch.object(provider, "can_handle_request", return_value=False):
-                pass
+        with ExitStack() as stack:
+            for provider in router.providers:
+                stack.enter_context(
+                    patch.object(provider, "can_handle_request", return_value=False)
+                )
 
-        response = await router.query("Hello")
+            response = await router.query("Hello")
 
         assert response.success is False
         assert response.provider == APIProviderType.RECOVERY
