@@ -370,19 +370,19 @@ class ClaudeAnthropicProvider(BaseAPIProvider):
 
                     tool_context = ToolExecutionContext(
                         mode=context.get("mode", "FULL") if context else "FULL",
-                        working_directory=context.get("working_directory")
-                        if context
-                        else None,
+                        working_directory=(
+                            context.get("working_directory") if context else None
+                        ),
                         session_id=context.get("session_id") if context else None,
-                        thermal_status=context.get("thermal_status")
-                        if context
-                        else None,
-                        network_status=context.get("network_status")
-                        if context
-                        else None,
-                        resource_limits=context.get("resource_limits")
-                        if context
-                        else None,
+                        thermal_status=(
+                            context.get("thermal_status") if context else None
+                        ),
+                        network_status=(
+                            context.get("network_status") if context else None
+                        ),
+                        resource_limits=(
+                            context.get("resource_limits") if context else None
+                        ),
                     )
                     tool_results = []
                     for block in tool_uses:
@@ -407,9 +407,7 @@ class ClaudeAnthropicProvider(BaseAPIProvider):
                     followup_messages.append(
                         {"role": "assistant", "content": result.get("content", [])}
                     )
-                    followup_messages.append(
-                        {"role": "user", "content": tool_results}
-                    )
+                    followup_messages.append({"role": "user", "content": tool_results})
 
                     followup_payload = {
                         **payload,
@@ -1147,8 +1145,10 @@ class GeminiProvider(BaseAPIProvider):
                     result = await response.json()
 
             if tools and tool_registry:
-                parts = result.get("candidates", [{}])[0].get("content", {}).get(
-                    "parts", []
+                parts = (
+                    result.get("candidates", [{}])[0]
+                    .get("content", {})
+                    .get("parts", [])
                 )
                 function_calls = [
                     part.get("functionCall")
@@ -1163,25 +1163,30 @@ class GeminiProvider(BaseAPIProvider):
 
                     tool_context = ToolExecutionContext(
                         mode=context.get("mode", "FULL") if context else "FULL",
-                        working_directory=context.get("working_directory")
-                        if context
-                        else None,
+                        working_directory=(
+                            context.get("working_directory") if context else None
+                        ),
                         session_id=context.get("session_id") if context else None,
-                        thermal_status=context.get("thermal_status")
-                        if context
-                        else None,
-                        network_status=context.get("network_status")
-                        if context
-                        else None,
-                        resource_limits=context.get("resource_limits")
-                        if context
-                        else None,
+                        thermal_status=(
+                            context.get("thermal_status") if context else None
+                        ),
+                        network_status=(
+                            context.get("network_status") if context else None
+                        ),
+                        resource_limits=(
+                            context.get("resource_limits") if context else None
+                        ),
                     )
 
-                    followup_contents = [{"role": "user", "parts": [{"text": full_prompt}]}]
+                    followup_contents = [
+                        {"role": "user", "parts": [{"text": full_prompt}]}
+                    ]
                     for function_call in function_calls:
                         followup_contents.append(
-                            {"role": "model", "parts": [{"functionCall": function_call}]}
+                            {
+                                "role": "model",
+                                "parts": [{"functionCall": function_call}],
+                            }
                         )
                         result_data = await tool_registry.execute_tool(
                             function_call.get("name"),

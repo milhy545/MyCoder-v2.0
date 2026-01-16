@@ -119,9 +119,7 @@ class ActivityPanel:
                 icon = self._get_activity_icon(act.type)
                 status_color = self._get_status_color(act.status)
                 time_str = act.timestamp.strftime("%H:%M:%S")
-                target_short = (
-                    act.target[-30:] if len(act.target) > 30 else act.target
-                )
+                target_short = act.target[-30:] if len(act.target) > 30 else act.target
                 renderables.append(
                     f"[dim]{time_str}[/] {icon} "
                     f"[{status_color}]{act.description}[/] {target_short}"

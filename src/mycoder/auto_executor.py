@@ -63,7 +63,9 @@ class AIResponseParser:
                 if (
                     "/" in filename
                     or "\\" in filename
-                    or filename.endswith((".py", ".js", ".ts", ".json", ".md", ".yaml", ".yml", ".toml"))
+                    or filename.endswith(
+                        (".py", ".js", ".ts", ".json", ".md", ".yaml", ".yml", ".toml")
+                    )
                 ):
                     actions.append(
                         ProposedAction(

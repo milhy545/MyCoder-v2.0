@@ -5,7 +5,7 @@ from mycoder.project_init import generate_project_guide
 
 def test_generate_project_guide_includes_detected_info(tmp_path):
     (tmp_path / "pyproject.toml").write_text(
-        "[project]\nname = \"demo\"\ndescription = \"Demo app\"\n",
+        '[project]\nname = "demo"\ndescription = "Demo app"\n',
         encoding="utf-8",
     )
     (tmp_path / "package.json").write_text(

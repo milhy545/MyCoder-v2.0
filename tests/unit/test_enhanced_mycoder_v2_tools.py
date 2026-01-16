@@ -29,10 +29,7 @@ async def test_enhance_with_tools_parses_write_block(enhanced_mycoder, temp_dir)
     response = APIResponse(
         success=True,
         content=(
-            "/write new.txt\n"
-            "line1\n"
-            "line2\n"
-            '/edit new.txt "line1" "line1a"'
+            "/write new.txt\n" "line1\n" "line2\n" '/edit new.txt "line1" "line1a"'
         ),
         provider=APIProviderType.OLLAMA_LOCAL,
         cost=0.0,

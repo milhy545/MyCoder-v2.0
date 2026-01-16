@@ -303,7 +303,8 @@ class TestClaudeAnthropicProvider:
 
         provider = self.create_provider()
         response = await provider.query(
-            "Hello", context={"tool_registry": tool_registry, "working_directory": temp_dir}
+            "Hello",
+            context={"tool_registry": tool_registry, "working_directory": temp_dir},
         )
 
         assert response.success is True
@@ -373,7 +374,8 @@ class TestClaudeAnthropicProvider:
 
         provider = self.create_provider()
         response = await provider.query(
-            "Hello", context={"tool_registry": tool_registry, "working_directory": temp_dir}
+            "Hello",
+            context={"tool_registry": tool_registry, "working_directory": temp_dir},
         )
 
         assert response.success is True
@@ -582,9 +584,7 @@ class TestGeminiProvider:
             ]
         }
         final_response = {
-            "candidates": [
-                {"content": {"parts": [{"text": "Done"}]}}
-            ],
+            "candidates": [{"content": {"parts": [{"text": "Done"}]}}],
             "usageMetadata": {"totalTokenCount": 7},
         }
 
@@ -620,7 +620,8 @@ class TestGeminiProvider:
 
         provider = self.create_provider()
         response = await provider.query(
-            "Hello", context={"tool_registry": tool_registry, "working_directory": temp_dir}
+            "Hello",
+            context={"tool_registry": tool_registry, "working_directory": temp_dir},
         )
 
         assert response.success is True
@@ -632,9 +633,7 @@ class TestGeminiProvider:
     async def test_query_function_call_skips_when_none(self, mock_post, temp_dir):
         """Test Gemini tool loop is skipped when no functionCall exists"""
         initial_response = {
-            "candidates": [
-                {"content": {"parts": [{"text": "Hello there"}]}}
-            ],
+            "candidates": [{"content": {"parts": [{"text": "Hello there"}]}}],
             "usageMetadata": {"totalTokenCount": 4},
         }
 
@@ -660,7 +659,8 @@ class TestGeminiProvider:
 
         provider = self.create_provider()
         response = await provider.query(
-            "Hello", context={"tool_registry": tool_registry, "working_directory": temp_dir}
+            "Hello",
+            context={"tool_registry": tool_registry, "working_directory": temp_dir},
         )
 
         assert response.success is True

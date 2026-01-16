@@ -47,8 +47,7 @@ try:
     from .agents import AgentOrchestrator, AgentType
     from .api_providers import APIProviderType
     from .auto_executor import ActionType, AutoExecutor
-    from .command_parser import CommandParser
-    from .command_parser import Command
+    from .command_parser import Command, CommandParser
     from .config_manager import ConfigManager
     from .enhanced_mycoder_v2 import EnhancedMyCoderV2
     from .mcp_bridge import MCPBridge
@@ -67,8 +66,7 @@ except ImportError:
     from mycoder.agents import AgentOrchestrator, AgentType
     from mycoder.api_providers import APIProviderType
     from mycoder.auto_executor import ActionType, AutoExecutor
-    from mycoder.command_parser import CommandParser
-    from mycoder.command_parser import Command
+    from mycoder.command_parser import Command, CommandParser
     from mycoder.config_manager import ConfigManager
     from mycoder.enhanced_mycoder_v2 import EnhancedMyCoderV2
     from mycoder.mcp_bridge import MCPBridge
@@ -305,18 +303,14 @@ class InteractiveCLI:
                 rate=tts_config.get("rate", 150),
             )
 
-        self.self_evolve_manager = SelfEvolveManager(
-            self.coder, self.working_directory
-        )
+        self.self_evolve_manager = SelfEvolveManager(self.coder, self.working_directory)
         self.todo_tracker = TodoTracker(
             self.working_directory / ".mycoder" / "todo.json"
         )
         self.plan_task: Optional[str] = None
         self.plan_content: Optional[str] = None
         self.plan_status: str = "idle"
-        self.agent_orchestrator = AgentOrchestrator(
-            self.coder, self.working_directory
-        )
+        self.agent_orchestrator = AgentOrchestrator(self.coder, self.working_directory)
         cache_dir = self.working_directory / ".mycoder" / "web_cache"
         self.web_fetcher = WebFetcher(cache_dir=cache_dir)
         self.web_searcher = WebSearcher(api_key=os.getenv("MYCODER_WEB_SEARCH_KEY"))
@@ -404,9 +398,7 @@ class InteractiveCLI:
                 status="done",
             )
         )
-        self.console.print(
-            f"[{COLOR_SUCCESS}]Init wrote {display_path}[/]"
-        )
+        self.console.print(f"[{COLOR_SUCCESS}]Init wrote {display_path}[/]")
 
     async def _self_evolve_approval(self, proposal) -> bool:
         """Show proposal diff and request user approval."""
@@ -585,7 +577,9 @@ class InteractiveCLI:
         except Exception:
             return
 
-    def _log_activity(self, action: str, target: str = "", status: str = "done") -> None:
+    def _log_activity(
+        self, action: str, target: str = "", status: str = "done"
+    ) -> None:
         """Map legacy action strings to activity entries."""
         action_key = action.upper()
         activity_type = ActivityType.TOOL_CALL
@@ -899,13 +893,9 @@ class InteractiveCLI:
                 )
             elif action == "confirm":
                 self.auto_executor.require_confirmation = True
-                self.console.print(
-                    f"[{COLOR_SUCCESS}]Auto-execute: CONFIRM mode[/]"
-                )
+                self.console.print(f"[{COLOR_SUCCESS}]Auto-execute: CONFIRM mode[/]")
             else:
-                self.console.print(
-                    "[bold red]Usage: /autoexec on|off|confirm[/]"
-                )
+                self.console.print("[bold red]Usage: /autoexec on|off|confirm[/]")
                 return
         elif cmd == "/self-evolve":
             if not args:
@@ -1501,6 +1491,7 @@ class InteractiveCLI:
                     plain_text = self._strip_markdown(content)
                     await self.tts_engine.speak_async(plain_text)
                 if content:
+
                     async def _confirm_action(action):
                         return self._prompt_confirm(
                             f"[yellow]Execute: {action.description}?[/]",
@@ -1525,8 +1516,10 @@ class InteractiveCLI:
                                     },
                                     raw_input="",
                                 )
-                                result = await self.coder.tool_orchestrator.execute_command(
-                                    command, self._build_execution_context()
+                                result = (
+                                    await self.coder.tool_orchestrator.execute_command(
+                                        command, self._build_execution_context()
+                                    )
                                 )
                                 self._display_tool_result(result)
                                 return result.success
