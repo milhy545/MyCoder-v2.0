@@ -12,7 +12,7 @@ MyCoder v2.2.0 is a production-ready AI development assistant featuring **7-tier
 
 ### Multi-API Provider System with Thermal Awareness
 
-The system intelligently routes requests through a 5-tier fallback chain based on:
+The system intelligently routes requests through a 7-tier fallback chain based on:
 1. **Thermal conditions** - CPU temp > 70°C → prefer local inference (Ollama); 85°C → emergency shutdown
 2. **Request complexity** - Complex tasks → more capable providers (Claude/Gemini)
 3. **Provider health** - Real-time health checks skip unhealthy providers
@@ -24,11 +24,17 @@ The system intelligently routes requests through a 5-tier fallback chain based o
 
 ### Key Components & Patterns
 
-- **`src/mycoder/enhanced_mycoder_v2.py`** (897 lines) - Main orchestrator managing provider selection and request processing
-- **`src/mycoder/api_providers.py`** (1271 lines) - All provider implementations + APIProviderRouter with health checks and thermal integration
-- **`src/mycoder/tool_registry.py`** (707 lines) - FEI-inspired: centralized tool management with execution contexts, permissions, sandboxing
-- **`src/mycoder/adaptive_modes.py`** (671 lines) - Thermal-aware modes that adjust behavior to protect Q9550 hardware
-- **`src/mycoder/config_manager.py`** (602 lines) - Unified configuration across all providers with validation
+- **`src/mycoder/enhanced_mycoder_v2.py`** - Main orchestrator managing provider selection and request processing
+- **`src/mycoder/api_providers.py`** - All provider implementations + APIProviderRouter with health checks, thermal integration, CircuitBreaker, RateLimiter
+- **`src/mycoder/tool_registry.py`** - FEI-inspired: centralized tool management with execution contexts, permissions, sandboxing
+- **`src/mycoder/adaptive_modes.py`** - Thermal-aware modes that adjust behavior to protect Q9550 hardware
+- **`src/mycoder/config_manager.py`** - Unified configuration across all providers with validation
+- **`src/mycoder/agents/`** - Agent orchestration (Explore, Plan, Bash, General-purpose)
+- **`src/mycoder/self_evolve/`** - Self-evolution system with approval workflow, sandbox, risk assessment
+- **`src/mycoder/mcp/`** - MCP (Model Context Protocol) client support
+- **`src/mycoder/tools/`** - Enhanced edit tool with unique string validation
+- **`src/mycoder/web_tools.py`** - Web fetch and search with caching
+- **`src/mycoder/todo_tracker.py`** - Task tracking with JSON persistence
 - **`src/speech_recognition/`** - Complete dictation module with Whisper/Gemini transcription, hotkey management, audio recording
 
 **FEI-Inspired Patterns:**
@@ -53,50 +59,58 @@ poetry run mycoder-demo   # Run demo
 poetry run dictation      # Launch speech recognition
 ```
 
-## New Commands (Evolution)
+## Interactive CLI Commands
+
+### Evolution Features (v2.2.0)
 - `/todo` - Track and review pending tasks
 - `/plan` - Generate/approve execution plans
-- `/edit <file>` - Guided edit workflow
-- `/agent` - Agent selection and orchestration
+- `/edit <file>` - Guided edit workflow with unique string validation
+- `/agent` - Agent selection and orchestration (Explore, Plan, Bash, General-purpose)
 - `/web` - Web fetch/search with caching
 - `/mcp` - Connect/call MCP servers
-- `/self-evolve` - Approval-gated self-evolution (supports dry-run)
+- `/self-evolve` - Approval-gated self-evolution with dry-run sandbox
+- `/init` - Generate project guide files (CLAUDE.md, README.md)
 
-## New Commands (v2.1.1)
-
-### Voice Commands
-- `/voice start` - Start voice dictation (GUI overlay)
+### Voice & Speech (v2.1.1)
+- `/voice start` - Start voice dictation with GUI overlay
 - `/voice stop` - Stop voice dictation
-- `/voice status` - Dictation status
-- `/speak <text>` - Text-to-speech playback
+- `/voice status` - Check dictation status
+- `/speak <text>` - Text-to-speech playback (Czech language support)
 
 ### Provider Control
 - `/provider <name>` - Override provider selection
-  - Available: claude_anthropic, claude_oauth, gemini, mercury,
-    ollama_local, termux_ollama, ollama_remote
+  - Available: claude_anthropic, claude_oauth, gemini, mercury, ollama_local, termux_ollama, ollama_remote
 
-## New Features (v2.1.1)
+### Chat Management
+- `/history` - View chat history
+- `/scroll up/down` - Navigate chat history
+- `/clear` - Clear chat history
 
-### Speech Recognition & TTS
-- Voice dictation as MyCoder tool
-- Text-to-speech AI response reading
-- Czech language support
-- Multi-backend TTS (pyttsx3, espeak, gtts, gemini)
+## Key Features
 
 ### 7-Tier API Provider Fallback
-1. Claude Anthropic (primary)
-2. Claude OAuth (subscription)
-3. Gemini (Google AI)
-4. Mercury (Inception Labs diffusion LLM)
-5. Ollama Local (thermal-aware)
-6. Termux Ollama (Android device)
-7. Ollama Remote (configured URLs)
+1. **Claude Anthropic** - Primary (paid, high quality)
+2. **Claude OAuth** - Secondary (subscription)
+3. **Gemini** - Google AI
+4. **Mercury** - Inception Labs diffusion LLM
+5. **Ollama Local** - Thermal-aware local inference
+6. **Termux Ollama** - Android device via WiFi/USB
+7. **Ollama Remote** - Remote Ollama instances (final fallback)
 
-### Smart Dynamic UI
+### Smart Dynamic UI with Activity Panel
 - Progress bars for long operations
 - Real-time provider health dashboard
 - Thermal alerts with automatic throttling
 - Token cost estimates
+- CPU/RAM/Temperature monitoring in Activity Panel
+- Auto-execute flow with streaming callbacks
+- Keyboard scrolling for chat history
+
+### Resilience & Safety
+- **Circuit Breaker** - Prevents cascade failures across providers
+- **Rate Limiter** - Ensures API compliance
+- **Thermal Management** - Q9550 CPU protection with automatic throttling
+- **Self-Evolve System** - Automated test failure detection with approval workflow and sandbox testing
 
 ### Testing
 ```bash

@@ -4,6 +4,17 @@
 
 ## Recent Changes & Updates
 *Agents: Add entries here when making significant changes*
+- 2026-01-16: Codex - Rozsiril unit testy pro function calling edge-cases (vice tool calls, zadny functionCall) v API providerech
+- 2026-01-16: Codex - Dopsal unit testy pro function calling tool_use/functionCall v Claude/Gemini providerech
+- 2026-01-16: Codex - Pridal tool schemata pro file tools, pridal function calling v Claude/Gemini providerech a normalizaci cest v EditTool.validate_edit
+- 2026-01-16: Claude Code - Fixed critical file_edit bugs: (1) file_write now marks files as read for immediate editing, (2) EditTool properly normalizes relative/absolute paths, (3) added on_read callback to file_write tool. All test_enhanced_mycoder_v2_tools.py tests now pass ✅
+- 2026-01-16: Claude Code - Created TODO_FILE_EDIT_FIX.md with detailed implementation plan for Function Calling API support (Anthropic/Gemini tool schemas) and system prompt improvements
+- 2026-01-16: Claude Code - Updated CLAUDE.md: fixed 5→7 tier fallback inconsistency, added missing v2.2.0 components (agents/, self_evolve/, mcp/, tools/, web_tools.py, todo_tracker.py), reorganized CLI commands section, added Activity Panel and Resilience & Safety features
+- 2026-01-16: Codex - Pridal system prompt pro /edit a parsovani /read,/edit,/write v enhanced_mycoder_v2, plus unit testy pro _enhance_with_tools
+- 2026-01-16: Codex - Restored CPU/RAM/TEMP line in Activity Panel, added /init confirmation handling without Live glitches, and auto-included AGENTS/guide files in prompt context
+- 2026-01-16: Codex - Added /init command to generate project guide files (CLI hook, generator, tests)
+- 2026-01-16: Codex - Fixed auto-execute file writes to honor working_directory, improved file_write reliability (mkdir parents, allow empty content), and broadened file parsing.
+- 2026-01-16: Codex - Added Activity Panel + auto-execute flow, streaming callbacks, keyboard scroll, and new unit tests for UI parsing/execution
 - 2026-01-15: Codex - Updated CLAUDE.md with Evolution CLI commands (/todo, /plan, /edit, /agent, /web, /mcp, /self-evolve)
 - 2026-01-15: Codex - Adjusted retryable error handling to include rate limit failures
 - 2026-01-15: Codex - Fixed tool registry reset, MCP collisions, request retries, and recovery compatibility to address test failures
@@ -127,6 +138,26 @@ MyCoder-v2.0/
 ├── examples/                    # Usage examples
 └── Makefile                     # Development automation (Czech)
 ```
+
+## Agent Workflow Rules
+
+### Testing Protocol (POVINNÉ PRO VŠECHNY AGENTY)
+**KRITICKÉ:** Před dokončením jakéhokoliv úkolu MUSÍŠ spustit relevantní testy!
+
+```bash
+# Projekt používá Poetry - pytest VŽDY spouštěj přes poetry run
+poetry run pytest -q tests/unit/test_xyz.py   # Konkrétní test file
+poetry run pytest -q tests/unit/ -v           # Všechny unit testy
+poetry run pytest -m unit                     # Jen unit marked testy
+```
+
+**"pytest není v PATH" NENÍ výmluva!** Použij `poetry run pytest`.
+
+Workflow:
+1. Napiš/změň kód
+2. ⚠️ OKAMŽITĚ spusť testy (poetry run pytest)
+3. Ukáž výsledky uživateli
+4. Teprve pak označ úkol za dokončený
 
 ## Development Commands
 

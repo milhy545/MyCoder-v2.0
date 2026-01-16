@@ -1,5 +1,5 @@
 """
-Multi-API Provider System for MyCoder v2.1.1
+Multi-API Provider System for MyCoder v2.2.0
 
 This module implements a 7-tier API provider system with intelligent fallbacks:
 1. Claude Anthropic API (direct API key)
@@ -194,7 +194,11 @@ class BaseAPIProvider(ABC):
 
     @abstractmethod
     async def query(
-        self, prompt: str, context: Dict[str, Any] = None, **kwargs
+        self,
+        prompt: str,
+        context: Dict[str, Any] = None,
+        stream_callback: Optional[Callable[[str], None]] = None,
+        **kwargs,
     ) -> APIResponse:
         """Execute query with provider-specific implementation"""
         pass
@@ -250,7 +254,11 @@ class ClaudeAnthropicProvider(BaseAPIProvider):
         self.model = config.config.get("model", "claude-3-5-sonnet-20241022")
 
     async def query(
-        self, prompt: str, context: Dict[str, Any] = None, **kwargs
+        self,
+        prompt: str,
+        context: Dict[str, Any] = None,
+        stream_callback: Optional[Callable[[str], None]] = None,
+        **kwargs,
     ) -> APIResponse:
         """Execute query using Anthropic API"""
         self.total_requests += 1
@@ -283,12 +291,29 @@ class ClaudeAnthropicProvider(BaseAPIProvider):
                 if file_content:
                     messages[0]["content"] = f"{file_content}\n\n{prompt}"
 
+            tool_registry = context.get("tool_registry") if context else None
+            tools = []
+            if tool_registry:
+                for tool_name in (
+                    "file_read",
+                    "file_edit",
+                    "file_write",
+                    "terminal_exec",
+                ):
+                    tool = tool_registry.tools.get(tool_name)
+                    if tool:
+                        tools.append(tool.to_anthropic_schema())
+
             payload = {
                 "model": self.model,
                 "messages": messages,
                 "max_tokens": kwargs.get("max_tokens", 4096),
                 "temperature": kwargs.get("temperature", 0.7),
             }
+            if tools:
+                payload["tools"] = tools
+            if stream_callback and not tools:
+                payload["stream"] = True
 
             async with aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
@@ -301,16 +326,131 @@ class ClaudeAnthropicProvider(BaseAPIProvider):
                         error_text = await response.text()
                         raise Exception(f"API error {response.status}: {error_text}")
 
-                    result = await response.json()
+                    if payload.get("stream"):
+                        content_parts: List[str] = []
+                        usage = {}
+                        async for raw_line in response.content:
+                            line = raw_line.decode("utf-8", errors="ignore").strip()
+                            if not line.startswith("data:"):
+                                continue
+                            data_str = line[len("data:") :].strip()
+                            if data_str == "[DONE]":
+                                break
+                            try:
+                                event = json.loads(data_str)
+                            except json.JSONDecodeError:
+                                continue
+                            if "usage" in event:
+                                usage = event.get("usage", usage)
+                            if event.get("type") == "content_block_delta":
+                                delta = event.get("delta", {})
+                                piece = delta.get("text", "")
+                                if piece:
+                                    content_parts.append(piece)
+                                    if stream_callback:
+                                        stream_callback(piece)
+                        result = {
+                            "content": [{"text": "".join(content_parts)}],
+                            "usage": usage,
+                        }
+                    else:
+                        result = await response.json()
+
+            if not payload.get("stream") and tool_registry and tools:
+                tool_uses = [
+                    block
+                    for block in result.get("content", [])
+                    if block.get("type") == "tool_use"
+                ]
+                if tool_uses:
+                    try:
+                        from .tool_registry import ToolExecutionContext
+                    except ImportError:
+                        from tool_registry import ToolExecutionContext  # type: ignore
+
+                    tool_context = ToolExecutionContext(
+                        mode=context.get("mode", "FULL") if context else "FULL",
+                        working_directory=context.get("working_directory")
+                        if context
+                        else None,
+                        session_id=context.get("session_id") if context else None,
+                        thermal_status=context.get("thermal_status")
+                        if context
+                        else None,
+                        network_status=context.get("network_status")
+                        if context
+                        else None,
+                        resource_limits=context.get("resource_limits")
+                        if context
+                        else None,
+                    )
+                    tool_results = []
+                    for block in tool_uses:
+                        result_data = await tool_registry.execute_tool(
+                            block.get("name"),
+                            tool_context,
+                            **block.get("input", {}),
+                        )
+                        content_value = result_data.data
+                        if not isinstance(content_value, str):
+                            content_value = json.dumps(content_value)
+                        tool_results.append(
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": block.get("id"),
+                                "content": content_value,
+                                "is_error": not result_data.success,
+                            }
+                        )
+
+                    followup_messages = list(messages)
+                    followup_messages.append(
+                        {"role": "assistant", "content": result.get("content", [])}
+                    )
+                    followup_messages.append(
+                        {"role": "user", "content": tool_results}
+                    )
+
+                    followup_payload = {
+                        **payload,
+                        "messages": followup_messages,
+                        "stream": False,
+                    }
+                    if "stream" in payload and payload["stream"]:
+                        followup_payload["stream"] = False
+                    async with aiohttp.ClientSession(
+                        timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                    ) as session:
+                        async with session.post(
+                            f"{self.base_url}/messages",
+                            headers=headers,
+                            json=followup_payload,
+                        ) as response:
+                            if response.status != 200:
+                                error_text = await response.text()
+                                raise Exception(
+                                    f"API error {response.status}: {error_text}"
+                                )
+                            result = await response.json()
 
             duration_ms = int((time.time() - start_time) * 1000)
 
             self.successful_requests += 1
             self.status = APIProviderStatus.HEALTHY
 
+            content_blocks = result.get("content", [])
+            if isinstance(content_blocks, list):
+                content_text = "".join(
+                    block.get("text", "")
+                    for block in content_blocks
+                    if isinstance(block, dict) and "text" in block
+                )
+            else:
+                content_text = str(content_blocks)
+
             return APIResponse(
                 success=True,
-                content=result["content"][0]["text"],
+                content=content_text,
                 provider=APIProviderType.CLAUDE_ANTHROPIC,
                 cost=self._calculate_cost(result.get("usage", {})),
                 duration_ms=duration_ms,
@@ -405,7 +545,11 @@ class ClaudeOAuthProvider(BaseAPIProvider):
         return self._auth_manager
 
     async def query(
-        self, prompt: str, context: Dict[str, Any] = None, **kwargs
+        self,
+        prompt: str,
+        context: Dict[str, Any] = None,
+        stream_callback: Optional[Callable[[str], None]] = None,
+        **kwargs,
     ) -> APIResponse:
         """Execute query using Claude OAuth"""
         self.total_requests += 1
@@ -492,7 +636,11 @@ class MercuryProvider(BaseAPIProvider):
         self.diffusing = config.config.get("diffusing", False)
 
     async def query(
-        self, prompt: str, context: Dict[str, Any] = None, **kwargs
+        self,
+        prompt: str,
+        context: Dict[str, Any] = None,
+        stream_callback: Optional[Callable[[str], None]] = None,
+        **kwargs,
     ) -> APIResponse:
         """Execute query against Mercury"""
         self.total_requests += 1
@@ -527,7 +675,7 @@ class MercuryProvider(BaseAPIProvider):
             "max_tokens": kwargs.get("max_tokens", 1024),
             "temperature": kwargs.get("temperature", 0.75),
             "top_p": kwargs.get("top_p", 1.0),
-            "stream": bool(realtime or diffusing),
+            "stream": bool(realtime or diffusing or stream_callback),
             "diffusing": diffusing,
             "realtime": realtime,
         }
@@ -827,6 +975,8 @@ class MercuryProvider(BaseAPIProvider):
                             if isinstance(delta, dict):
                                 if "content" in delta:
                                     piece = delta.get("content") or ""
+                                    if piece and stream_callback:
+                                        stream_callback(piece)
                                     if choice.get("message"):
                                         content_accum = piece
                                     elif diffusing:
@@ -956,6 +1106,19 @@ class GeminiProvider(BaseAPIProvider):
                 if file_content:
                     full_prompt = f"{file_content}\n\n{prompt}"
 
+            tool_registry = context.get("tool_registry") if context else None
+            tools = []
+            if tool_registry:
+                for tool_name in (
+                    "file_read",
+                    "file_edit",
+                    "file_write",
+                    "terminal_exec",
+                ):
+                    tool = tool_registry.tools.get(tool_name)
+                    if tool:
+                        tools.append(tool.to_gemini_schema())
+
             payload = {
                 "contents": [{"parts": [{"text": full_prompt}]}],
                 "generationConfig": {
@@ -965,6 +1128,8 @@ class GeminiProvider(BaseAPIProvider):
                     "topK": kwargs.get("top_k", 40),
                 },
             }
+            if tools:
+                payload["tools"] = [{"function_declarations": tools}]
 
             url = f"{self.base_url}/models/{self.model}:generateContent?key={self.api_key}"
 
@@ -981,12 +1146,89 @@ class GeminiProvider(BaseAPIProvider):
 
                     result = await response.json()
 
+            if tools and tool_registry:
+                parts = result.get("candidates", [{}])[0].get("content", {}).get(
+                    "parts", []
+                )
+                function_calls = [
+                    part.get("functionCall")
+                    for part in parts
+                    if part.get("functionCall")
+                ]
+                if function_calls:
+                    try:
+                        from .tool_registry import ToolExecutionContext
+                    except ImportError:
+                        from tool_registry import ToolExecutionContext  # type: ignore
+
+                    tool_context = ToolExecutionContext(
+                        mode=context.get("mode", "FULL") if context else "FULL",
+                        working_directory=context.get("working_directory")
+                        if context
+                        else None,
+                        session_id=context.get("session_id") if context else None,
+                        thermal_status=context.get("thermal_status")
+                        if context
+                        else None,
+                        network_status=context.get("network_status")
+                        if context
+                        else None,
+                        resource_limits=context.get("resource_limits")
+                        if context
+                        else None,
+                    )
+
+                    followup_contents = [{"role": "user", "parts": [{"text": full_prompt}]}]
+                    for function_call in function_calls:
+                        followup_contents.append(
+                            {"role": "model", "parts": [{"functionCall": function_call}]}
+                        )
+                        result_data = await tool_registry.execute_tool(
+                            function_call.get("name"),
+                            tool_context,
+                            **function_call.get("args", {}),
+                        )
+                        response_payload = result_data.data
+                        if not isinstance(response_payload, dict):
+                            response_payload = {"content": response_payload}
+                        followup_contents.append(
+                            {
+                                "role": "user",
+                                "parts": [
+                                    {
+                                        "functionResponse": {
+                                            "name": function_call.get("name"),
+                                            "response": response_payload,
+                                        }
+                                    }
+                                ],
+                            }
+                        )
+
+                    followup_payload = {
+                        **payload,
+                        "contents": followup_contents,
+                    }
+                    async with aiohttp.ClientSession(
+                        timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                    ) as session:
+                        async with session.post(url, json=followup_payload) as response:
+                            if response.status != 200:
+                                error_text = await response.text()
+                                raise Exception(
+                                    f"Gemini API error {response.status}: {error_text}"
+                                )
+                            result = await response.json()
+
             duration_ms = int((time.time() - start_time) * 1000)
 
             if "candidates" not in result or not result["candidates"]:
                 raise Exception("No response candidates from Gemini")
 
-            content = result["candidates"][0]["content"]["parts"][0]["text"]
+            parts = result["candidates"][0]["content"]["parts"]
+            content = "".join(
+                part.get("text", "") for part in parts if isinstance(part, dict)
+            )
 
             self.successful_requests += 1
             self.status = APIProviderStatus.HEALTHY
@@ -1311,6 +1553,7 @@ class APIProviderRouter:
         context: Dict[str, Any] = None,
         preferred_provider: APIProviderType = None,
         fallback_enabled: bool = True,
+        stream_callback: Optional[Callable[[str], None]] = None,
         **kwargs,
     ) -> APIResponse:
         """Execute query with intelligent provider selection and fallbacks"""
@@ -1355,7 +1598,12 @@ class APIProviderRouter:
                     )
                     if getattr(provider, "rate_limiter", None):
                         await provider.rate_limiter.acquire()
-                    response = await provider.query(prompt, context, **kwargs)
+                    response = await provider.query(
+                        prompt,
+                        context,
+                        stream_callback=stream_callback,
+                        **kwargs,
+                    )
                     if provider_type.value not in attempted_providers:
                         attempted_providers.append(provider_type.value)
 

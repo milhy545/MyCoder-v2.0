@@ -1,5 +1,5 @@
 """
-Enhanced MyCoder v2.1.1 with Multi-API Architecture
+Enhanced MyCoder v2.2.0 with Multi-API Architecture
 
 This module provides the enhanced MyCoder class that integrates the new multi-API
 provider system with FEI-inspired architecture patterns for optimal performance
@@ -18,12 +18,13 @@ import asyncio
 import json
 import logging
 import os
+import shlex
 import socket
 import time
 import urllib.parse
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 try:
     from .adaptive_modes import AdaptiveModeManager, OperationalMode
@@ -69,10 +70,54 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+SYSTEM_PROMPT = """You are MyCoder, an AI development assistant.
+
+CRITICAL: When editing files, you MUST use the /edit command with Search & Replace pattern.
+
+## File Operations
+
+### Reading Files
+/read <path>
+
+### Editing Files (Search & Replace)
+/edit <path> "old_string" "new_string"
+- old_string: EXACT text to find (must be unique in file)
+- new_string: New text to replace with
+- ALWAYS read file first with /read
+- NEVER write entire file content
+- Use /edit --all to replace all occurrences
+
+### Writing New Files
+/write <path>
+[content on next lines]
+
+## Examples
+
+WRONG (generates entire file):
+User: "Add a print statement to hello.py"
+Assistant: "Here's the updated file:
+def hello():
+    print('Starting')
+    return 'Hi'
+..."
+
+CORRECT (Search & Replace):
+User: "Add a print statement to hello.py"
+Assistant: "I'll add a print statement:
+/read hello.py
+/edit hello.py \"def hello():\" \"def hello():\\n    print('Starting')\"
+
+## Rules
+1. ALWAYS use /edit for modifications, NEVER write full files
+2. Make old_string unique (include surrounding context)
+3. Read file first to verify old_string exists
+4. If old_string not unique, add more context
+"""
+
 
 class EnhancedMyCoderV2:
     """
-    Enhanced MyCoder v2.1.1 with Multi-API Architecture
+    Enhanced MyCoder v2.2.0 with Multi-API Architecture
 
     Provides intelligent AI-powered development assistance with:
     - 7-tier API provider fallback system
@@ -88,7 +133,7 @@ class EnhancedMyCoderV2:
         config: Optional[Dict[str, Any]] = None,
     ):
         """
-        Initialize Enhanced MyCoder v2.1.0
+        Initialize Enhanced MyCoder v2.2.0
 
         Args:
             working_directory: Base directory for operations
@@ -111,7 +156,7 @@ class EnhancedMyCoderV2:
         # Initialize tool registry
         self.tool_registry = get_tool_registry()
 
-        # Initialize MCP bridge and tool orchestrator (v2.1.1)
+        # Initialize MCP bridge and tool orchestrator (v2.2.0)
         self.mcp_bridge = None
         self.tool_orchestrator = None
 
@@ -124,7 +169,7 @@ class EnhancedMyCoderV2:
         )
 
         logger.info(
-            f"Enhanced MyCoder v2.1.0 initialized with working directory: {self.working_directory}"
+            f"Enhanced MyCoder v2.2.0 initialized with working directory: {self.working_directory}"
         )
 
     def _load_history(self) -> List[Dict[str, Any]]:
@@ -176,7 +221,7 @@ class EnhancedMyCoderV2:
             logger.debug("Enhanced MyCoder already initialized")
             return
 
-        logger.info("Initializing Enhanced MyCoder v2.1.1 with multi-API system...")
+        logger.info("Initializing Enhanced MyCoder v2.2.0 with multi-API system...")
 
         if hasattr(self.tool_registry, "reset"):
             self.tool_registry.reset()
@@ -184,7 +229,7 @@ class EnhancedMyCoderV2:
         # Initialize API providers
         await self._initialize_api_providers()
 
-        # NEW (v2.1.1): Initialize MCP bridge and tool orchestrator
+        # NEW (v2.2.0): Initialize MCP bridge and tool orchestrator
         await self._initialize_tool_system()
 
         # Initialize thermal monitoring for Q9550 systems
@@ -198,7 +243,7 @@ class EnhancedMyCoderV2:
         await self._register_enhanced_tools()
 
         self._initialized = True
-        logger.info("Enhanced MyCoder v2.1.0 initialization complete")
+        logger.info("Enhanced MyCoder v2.2.0 initialization complete")
 
         # Log available providers
         available_providers = self.provider_router.get_available_providers()
@@ -394,7 +439,7 @@ class EnhancedMyCoderV2:
         logger.info(f"Initialized {len(provider_configs)} API providers")
 
     async def _initialize_tool_system(self):
-        """Initialize MCP bridge and tool orchestrator for action-performing CLI (v2.1.1)"""
+        """Initialize MCP bridge and tool orchestrator for action-performing CLI (v2.2.0)"""
         try:
             logger.info("Initializing tool system (MCP bridge + orchestrator)...")
 
@@ -501,9 +546,9 @@ class EnhancedMyCoderV2:
             self.thermal_monitor = {"enabled": True, "script_path": thermal_script}
 
     async def _register_enhanced_tools(self):
-        """Register enhanced tools for v2.1.0 functionality"""
+        """Register enhanced tools for v2.2.0 functionality"""
         # Tools are already registered in tool_registry initialization
-        # This method can be extended for additional v2.1.0 specific tools
+        # This method can be extended for additional v2.2.0 specific tools
 
         # Add event handlers for tool monitoring
         def tool_execution_handler(event_type, data):
@@ -528,6 +573,7 @@ class EnhancedMyCoderV2:
         continue_session: bool = False,
         preferred_provider: Optional[APIProviderType] = None,
         use_tools: bool = True,
+        stream_callback: Optional[Callable[[str], None]] = None,
         **kwargs,
     ) -> Dict[str, Any]:
         """
@@ -563,10 +609,16 @@ class EnhancedMyCoderV2:
                 continue_session=continue_session,
                 **kwargs,
             )
+            if use_tools:
+                context["tool_registry"] = self.tool_registry
 
             # Get thermal status if monitoring enabled
             if self.thermal_monitor and self.thermal_monitor["enabled"]:
                 context["thermal_status"] = await self._get_thermal_status()
+
+            full_prompt = prompt
+            if use_tools:
+                full_prompt = f"{SYSTEM_PROMPT}\n\nUser: {prompt}"
 
             # Execute request with multi-API system
             max_attempts = int(self.config.get("request_retry_attempts", 2))
@@ -575,10 +627,11 @@ class EnhancedMyCoderV2:
             api_response = None
             for attempt in range(1, max_attempts + 1):
                 api_response = await self.provider_router.query(
-                    prompt=prompt,
+                    prompt=full_prompt,
                     context=context,
                     preferred_provider=preferred_provider,
                     fallback_enabled=self.config.get("fallback_enabled", True),
+                    stream_callback=stream_callback,
                     **kwargs,
                 )
                 if api_response.success or attempt == max_attempts:
@@ -847,22 +900,152 @@ class EnhancedMyCoderV2:
                 resource_limits=context.get("resource_limits"),
             )
 
-            content = api_response.content.lower()
+            content = api_response.content
+            lines = content.splitlines()
+            tool_results = []
+            tools_used = []
+            tool_metadata = []
+
+            index = 0
+            while index < len(lines):
+                raw_line = lines[index]
+                line = raw_line.strip()
+
+                if line.startswith("/read "):
+                    path = line[6:].strip()
+                    if not path:
+                        tool_results.append("ERR Read failed: missing path")
+                        index += 1
+                        continue
+                    result = await self.tool_registry.execute_tool(
+                        "file_read",
+                        tool_context,
+                        path=path,
+                    )
+                    if result.success:
+                        tool_results.append(f"File: {path}\n{result.data}")
+                    else:
+                        tool_results.append(f"ERR Read failed: {result.error}")
+                    tools_used.append("file_read")
+                    tool_metadata.append(result.metadata)
+                    index += 1
+                    continue
+
+                if line.startswith("/edit "):
+                    try:
+                        parts = shlex.split(line[6:])
+                    except ValueError as exc:
+                        tool_results.append(f"ERR Edit failed: {exc}")
+                        index += 1
+                        continue
+                    replace_all = "--all" in parts
+                    filtered = [part for part in parts if part != "--all"]
+                    if len(filtered) < 3:
+                        tool_results.append("ERR Edit failed: missing arguments")
+                        index += 1
+                        continue
+                    path, old_str, new_str = filtered[0], filtered[1], filtered[2]
+                    result = await self.tool_registry.execute_tool(
+                        "file_edit",
+                        tool_context,
+                        path=path,
+                        old_string=old_str,
+                        new_string=new_str,
+                        replace_all=replace_all,
+                    )
+                    if result.success:
+                        tool_results.append(f"OK Edited {path}: {result.data}")
+                    else:
+                        tool_results.append(f"ERR Edit failed: {result.error}")
+                    tools_used.append("file_edit")
+                    tool_metadata.append(result.metadata)
+                    index += 1
+                    continue
+
+                if line.startswith("/write "):
+                    try:
+                        parts = shlex.split(line[7:])
+                    except ValueError as exc:
+                        tool_results.append(f"ERR Write failed: {exc}")
+                        index += 1
+                        continue
+                    if not parts:
+                        tool_results.append("ERR Write failed: missing path")
+                        index += 1
+                        continue
+                    path = parts[0]
+                    content_lines = []
+                    scan_index = index + 1
+                    while scan_index < len(lines):
+                        next_line = lines[scan_index]
+                        next_stripped = next_line.strip()
+                        if any(
+                            next_stripped.startswith(prefix)
+                            for prefix in ("/read ", "/edit ", "/write ")
+                        ):
+                            break
+                        content_lines.append(next_line)
+                        scan_index += 1
+                    write_content = "\n".join(content_lines)
+                    result = await self.tool_registry.execute_tool(
+                        "file_write",
+                        tool_context,
+                        path=path,
+                        content=write_content,
+                    )
+                    if result.success:
+                        tool_results.append(f"OK Wrote {path}: {result.data}")
+                    else:
+                        tool_results.append(f"ERR Write failed: {result.error}")
+                    tools_used.append("file_write")
+                    tool_metadata.append(result.metadata)
+                    index = scan_index
+                    continue
+
+                index += 1
+
+            if tool_results:
+                enhanced_content = (
+                    f"{api_response.content}\n\n## Tool Execution Results:\n"
+                    + "\n".join(tool_results)
+                )
+                return APIResponse(
+                    success=True,
+                    content=enhanced_content,
+                    provider=api_response.provider,
+                    cost=api_response.cost,
+                    duration_ms=api_response.duration_ms,
+                    tokens_used=api_response.tokens_used,
+                    session_id=api_response.session_id,
+                    metadata={
+                        **api_response.metadata,
+                        "tools_used": tools_used,
+                        "tool_results": tool_metadata,
+                    },
+                )
+
+            lower_content = content.lower()
 
             # Check for command execution intent (Simulation/Test logic)
             if any(
-                key in content for key in ["run command:", "execute:", "poetry update"]
+                key in lower_content
+                for key in ["run command:", "execute:", "poetry update"]
             ):
                 # In a real scenario, we would parse the command.
                 # Here we just detect the intent for testing routing logic.
                 cmd_match = (
-                    "poetry update" if "poetry update" in content else "unknown command"
+                    "poetry update"
+                    if "poetry update" in lower_content
+                    else "unknown command"
                 )
 
                 logger.info(f"Detected command execution intent: {cmd_match}")
 
                 # Simulate command execution
-                enhanced_content = f"{api_response.content}\n\nCommand Execution:\nWould execute '{cmd_match}'"
+                enhanced_content = (
+                    f"{api_response.content}\n\nCommand Execution:\n"
+                    f"Would execute '{cmd_match}'"
+                )
 
                 return APIResponse(
                     success=True,
@@ -880,7 +1063,7 @@ class EnhancedMyCoderV2:
                 )
 
             # Existing file read logic
-            if "read file" in content or "show file" in content:
+            if "read file" in lower_content or "show file" in lower_content:
                 # Extract file path from content (simplified)
                 # In a real implementation, this would use NLP to extract file paths
                 file_result = await self.tool_registry.execute_tool(
@@ -1004,7 +1187,7 @@ class EnhancedMyCoderV2:
 
     async def shutdown(self):
         """Gracefully shutdown Enhanced MyCoder system"""
-        logger.info("Shutting down Enhanced MyCoder v2.1.1...")
+        logger.info("Shutting down Enhanced MyCoder v2.2.0...")
 
         # Stop adaptive mode monitoring
         if hasattr(self.mode_manager, "stop_monitoring"):
@@ -1023,4 +1206,4 @@ class EnhancedMyCoderV2:
         self.session_store.clear()
 
         self._initialized = False
-        logger.info("Enhanced MyCoder v2.1.1 shutdown complete")
+        logger.info("Enhanced MyCoder v2.2.0 shutdown complete")

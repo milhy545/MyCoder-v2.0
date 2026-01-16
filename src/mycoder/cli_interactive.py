@@ -1,7 +1,7 @@
 """
-MyCoder v2.1.1 Interactive CLI
+MyCoder v2.2.0 Interactive CLI
 Architecture: Split-screen UI using rich.Live.
-Left: Chat History (Auto-scrolling Markdown). Right: Execution Monitor (Logs + Sys Metrics).
+Left: Chat History (Auto-scrolling Markdown). Right: Activity Panel (Live Activity).
 """
 
 import asyncio
@@ -46,36 +46,47 @@ except ImportError:
 try:
     from .agents import AgentOrchestrator, AgentType
     from .api_providers import APIProviderType
+    from .auto_executor import ActionType, AutoExecutor
     from .command_parser import CommandParser
+    from .command_parser import Command
     from .config_manager import ConfigManager
     from .enhanced_mycoder_v2 import EnhancedMyCoderV2
     from .mcp_bridge import MCPBridge
+    from .project_init import (
+        DEFAULT_INIT_FILENAME,
+        INIT_FILE_ALIASES,
+        generate_project_guide,
+    )
     from .self_evolve import SelfEvolveManager
     from .todo_tracker import TodoTracker
     from .tool_registry import ToolExecutionContext
+    from .ui_activity_panel import Activity, ActivityPanel, ActivityType
     from .web_tools import WebFetcher, WebSearcher
 except ImportError:
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
     from mycoder.agents import AgentOrchestrator, AgentType
     from mycoder.api_providers import APIProviderType
+    from mycoder.auto_executor import ActionType, AutoExecutor
     from mycoder.command_parser import CommandParser
+    from mycoder.command_parser import Command
     from mycoder.config_manager import ConfigManager
     from mycoder.enhanced_mycoder_v2 import EnhancedMyCoderV2
     from mycoder.mcp_bridge import MCPBridge
+    from mycoder.project_init import (
+        DEFAULT_INIT_FILENAME,
+        INIT_FILE_ALIASES,
+        generate_project_guide,
+    )
     from mycoder.self_evolve import SelfEvolveManager
     from mycoder.todo_tracker import TodoTracker
     from mycoder.tool_registry import ToolExecutionContext
+    from mycoder.ui_activity_panel import Activity, ActivityPanel, ActivityType
     from mycoder.web_tools import WebFetcher, WebSearcher
 
 try:
     from .tts_engine import TTSEngine
 except ImportError:
     TTSEngine = None
-
-try:
-    from .ui_dynamic_panels import DynamicExecutionMonitor
-except ImportError:
-    DynamicExecutionMonitor = None
 
 # CYBERPUNK PALETTE
 COLOR_SYSTEM = "bold cyan"
@@ -256,16 +267,20 @@ class InteractiveCLI:
         os.environ["MYCODER_THERMAL_ENABLED"] = "false"
         self.config_manager = ConfigManager()
         self.config = self.config_manager.load_config()
-        self.coder = EnhancedMyCoderV2(config=self.config)
+        self.working_directory = self._resolve_working_directory()
+        self.coder = EnhancedMyCoderV2(
+            working_directory=self.working_directory, config=self.config
+        )
         self.diffusing_mode = True
         self.realtime_mode = False
         self.active_provider = self.config.preferred_provider or "ollama_local"
         self.preferred_provider = self._map_provider(self.active_provider)
         self.chat_history: List[Dict[str, str]] = []
-        if DynamicExecutionMonitor:
-            self.monitor = DynamicExecutionMonitor()
-        else:
-            self.monitor = ExecutionMonitor()
+        self.activity_panel = ActivityPanel()
+        self.auto_executor = AutoExecutor(
+            activity_panel=self.activity_panel, require_confirmation=True
+        )
+        self._live = None
         self._warned_small_terminal = False
         self.history_offset = 0
         self.history_step = 5
@@ -277,10 +292,10 @@ class InteractiveCLI:
         )
         self._load_history()
 
-        # NEW (v2.1.1): Command parser for tool execution
+        # NEW (v2.2.0): Command parser for tool execution
         self.command_parser = CommandParser()
 
-        # TTS engine (v2.1.1)
+        # TTS engine (v2.2.0)
         self.tts_engine = None
         tts_config = getattr(self.config, "text_to_speech", {}) or {}
         if TTSEngine and tts_config.get("enabled", False):
@@ -290,16 +305,108 @@ class InteractiveCLI:
                 rate=tts_config.get("rate", 150),
             )
 
-        self.self_evolve_manager = SelfEvolveManager(self.coder, Path.cwd())
-        self.todo_tracker = TodoTracker(Path.cwd() / ".mycoder" / "todo.json")
+        self.self_evolve_manager = SelfEvolveManager(
+            self.coder, self.working_directory
+        )
+        self.todo_tracker = TodoTracker(
+            self.working_directory / ".mycoder" / "todo.json"
+        )
         self.plan_task: Optional[str] = None
         self.plan_content: Optional[str] = None
         self.plan_status: str = "idle"
-        self.agent_orchestrator = AgentOrchestrator(self.coder, Path.cwd())
-        cache_dir = Path.cwd() / ".mycoder" / "web_cache"
+        self.agent_orchestrator = AgentOrchestrator(
+            self.coder, self.working_directory
+        )
+        cache_dir = self.working_directory / ".mycoder" / "web_cache"
         self.web_fetcher = WebFetcher(cache_dir=cache_dir)
         self.web_searcher = WebSearcher(api_key=os.getenv("MYCODER_WEB_SEARCH_KEY"))
         self.mcp_bridge: Optional[MCPBridge] = None
+
+    def _resolve_working_directory(self) -> Path:
+        return Path.cwd()
+
+    def _default_context_files(self) -> List[Path]:
+        """Collect default context files (AGENTS + guides) from workspace."""
+        candidates = ("AGENTS.md", "CLAUDE.md", "GEMINI.md", "MYCODER.md")
+        files: List[Path] = []
+        for name in candidates:
+            path = self.working_directory / name
+            if path.exists():
+                files.append(path)
+        return files
+
+    def _prompt_confirm(self, message: str, default: bool = False) -> bool:
+        """Ask for confirmation while safely suspending Live layout."""
+        live = self._live
+        if live:
+            with suppress(Exception):
+                live.stop()
+        try:
+            return Confirm.ask(message, default=default)
+        finally:
+            if live:
+                with suppress(Exception):
+                    live.start()
+                self._refresh_live()
+
+    def _handle_init_command(self, args: List[str]) -> None:
+        """Create a project guide file similar to Claude/Gemini /init."""
+        force = False
+        target_value: Optional[str] = None
+
+        for arg in args:
+            if arg in ("-f", "--force"):
+                force = True
+            elif arg in ("--claude", "--gemini", "--mycoder"):
+                target_value = INIT_FILE_ALIASES[arg.lstrip("-")]
+            elif arg.startswith("-"):
+                self.console.print(
+                    "[bold red]Usage: /init [--force|-f] [--claude|--gemini|--mycoder] [path][/]"
+                )
+                return
+            else:
+                target_value = arg
+
+        if target_value is None:
+            target_value = DEFAULT_INIT_FILENAME
+        if target_value in INIT_FILE_ALIASES:
+            target_value = INIT_FILE_ALIASES[target_value]
+
+        target_path = Path(target_value).expanduser()
+        if not target_path.is_absolute():
+            target_path = self.working_directory / target_path
+        if target_path.exists() and target_path.is_dir():
+            target_path = target_path / DEFAULT_INIT_FILENAME
+
+        existed = target_path.exists()
+        if existed and not force:
+            if not self._prompt_confirm(
+                f"[yellow]{target_path} exists. Overwrite?[/]", default=False
+            ):
+                self.console.print(f"[{COLOR_INFO}]Init canceled.[/]")
+                return
+
+        content = generate_project_guide(self.working_directory)
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        target_path.write_text(content, encoding="utf-8")
+
+        activity_type = ActivityType.FILE_EDIT if existed else ActivityType.FILE_CREATE
+        try:
+            display_path = str(target_path.relative_to(self.working_directory))
+        except ValueError:
+            display_path = str(target_path)
+
+        self.activity_panel.add_activity(
+            Activity(
+                type=activity_type,
+                description="Init guide",
+                target=display_path,
+                status="done",
+            )
+        )
+        self.console.print(
+            f"[{COLOR_SUCCESS}]Init wrote {display_path}[/]"
+        )
 
     async def _self_evolve_approval(self, proposal) -> bool:
         """Show proposal diff and request user approval."""
@@ -313,7 +420,7 @@ class InteractiveCLI:
             self.console.print(
                 f"[{COLOR_INFO}]Risk:[/] {risk_pct:.0f}% ({', '.join(proposal.risk_notes)})"
             )
-        return Confirm.ask(
+        return self._prompt_confirm(
             f"Apply proposal {proposal.proposal_id} and run tests?", default=False
         )
 
@@ -339,7 +446,7 @@ class InteractiveCLI:
  / /  / / /_/ / / /___/ /_/ / /_/ /  __/ /
 /_/  /_/\__, /  \____/\____/\__,_/\___/_/
        /____/
-      [ v2.1.1 - AI Powered ]
+      [ v2.2.0 - AI Powered ]
 """
         self.console.print(
             Panel(
@@ -466,14 +573,65 @@ class InteractiveCLI:
     def _scroll_history(self, delta: int) -> None:
         """Scroll chat history by a delta."""
         self.history_offset = max(0, self.history_offset + delta)
+        self._refresh_live()
+
+    def _refresh_live(self) -> None:
+        """Refresh the live UI if available."""
+        if not self._live:
+            return
+        try:
+            self._live.update(self._create_layout())
+            self._live.refresh()
+        except Exception:
+            return
+
+    def _log_activity(self, action: str, target: str = "", status: str = "done") -> None:
+        """Map legacy action strings to activity entries."""
+        action_key = action.upper()
+        activity_type = ActivityType.TOOL_CALL
+        description = action.replace("_", " ").title()
+
+        if action_key in {"QUERY_INIT", "RESPONSE_OK"}:
+            activity_type = ActivityType.API_CALL
+            description = "AI request" if action_key == "QUERY_INIT" else "AI response"
+        elif action_key in {"CMD_EXEC", "EXEC_TOOL"}:
+            activity_type = ActivityType.TOOL_CALL
+            description = "Command" if action_key == "CMD_EXEC" else "Tool"
+        elif action_key == "PROVIDER_SWITCH":
+            activity_type = ActivityType.API_CALL
+            description = "Provider switch"
+        elif action_key == "WEB":
+            activity_type = ActivityType.TOOL_CALL
+            description = "Web"
+        elif action_key == "PLAN":
+            activity_type = ActivityType.TOOL_CALL
+            description = "Plan"
+        elif action_key == "AGENT":
+            activity_type = ActivityType.TOOL_CALL
+            description = "Agent"
+        elif action_key == "SELF_EVOLVE":
+            activity_type = ActivityType.TOOL_CALL
+            description = "Self-evolve"
+        elif action_key == "TTS":
+            activity_type = ActivityType.TOOL_CALL
+            description = "TTS"
+
+        self.activity_panel.add_activity(
+            Activity(
+                type=activity_type,
+                description=description,
+                target=target,
+                status=status,
+            )
+        )
 
     def _build_execution_context(self) -> ToolExecutionContext:
-        """Build execution context for tool execution (v2.1.1)."""
+        """Build execution context for tool execution (v2.2.0)."""
         from pathlib import Path
 
         return ToolExecutionContext(
             mode="FULL",
-            working_directory=Path.cwd(),
+            working_directory=self.working_directory,
             session_id=None,
             thermal_status=None,
             network_status={"connected": True},
@@ -481,7 +639,7 @@ class InteractiveCLI:
         )
 
     def _display_tool_result(self, result) -> None:
-        """Display tool execution result to chat history (v2.1.1)."""
+        """Display tool execution result to chat history (v2.2.0)."""
         if result.success:
             # Format successful result
             output_text = f"**Tool: {result.tool_name}**\n\n"
@@ -593,8 +751,10 @@ class InteractiveCLI:
                     )
 
         self.config_manager.save_config()
-        self.coder = EnhancedMyCoderV2(config=self.config_manager.config)
-        self.monitor.add_log("PROVIDER_SWITCH", self.active_provider)
+        self.coder = EnhancedMyCoderV2(
+            working_directory=self.working_directory, config=self.config_manager.config
+        )
+        self._log_activity("PROVIDER_SWITCH", self.active_provider)
 
     async def _select_provider(self, choices: List[str], default_choice: str) -> str:
         """Prompt the user to select a provider, with optional tab cycling."""
@@ -646,7 +806,7 @@ class InteractiveCLI:
         parts = command.strip().split()
         cmd = parts[0].lower()
         args = parts[1:]
-        self.monitor.add_log("CMD_EXEC", cmd)
+        self._log_activity("CMD_EXEC", cmd)
 
         if cmd in ["/exit", "/quit", "/q"]:
             sys.exit(0)
@@ -655,6 +815,8 @@ class InteractiveCLI:
         elif cmd == "/status":
             self._append_chat_entry("system", "System status displayed")
             self.show_status()
+        elif cmd == "/init":
+            self._handle_init_command(args)
         elif cmd == "/diffon":
             if self.active_provider == "inception_mercury" and not self.realtime_mode:
                 self.console.print(
@@ -706,11 +868,43 @@ class InteractiveCLI:
                 self._scroll_history(-self.history_step)
             elif action == "home":
                 self.history_offset = max(0, len(self.chat_history) - 1)
+                self._refresh_live()
             elif action == "end":
                 self.history_offset = 0
+                self._refresh_live()
             else:
                 self.console.print(
                     "[bold red]Usage: /history save|clear|export <path>|prev|next|home|end[/]"
+                )
+                return
+        elif cmd == "/autoexec":
+            if not args:
+                status = (
+                    "ON"
+                    if not self.auto_executor.require_confirmation
+                    else "OFF (confirm)"
+                )
+                self.console.print(f"[{COLOR_INFO}]Auto-execute: {status}[/]")
+                return
+            action = args[0].lower()
+            if action == "on":
+                self.auto_executor.require_confirmation = False
+                self.console.print(
+                    f"[{COLOR_SUCCESS}]Auto-execute: ON (no confirmation)[/]"
+                )
+            elif action == "off":
+                self.auto_executor.require_confirmation = True
+                self.console.print(
+                    f"[{COLOR_SUCCESS}]Auto-execute: OFF (will confirm)[/]"
+                )
+            elif action == "confirm":
+                self.auto_executor.require_confirmation = True
+                self.console.print(
+                    f"[{COLOR_SUCCESS}]Auto-execute: CONFIRM mode[/]"
+                )
+            else:
+                self.console.print(
+                    "[bold red]Usage: /autoexec on|off|confirm[/]"
                 )
                 return
         elif cmd == "/self-evolve":
@@ -724,7 +918,7 @@ class InteractiveCLI:
                 self.console.print(
                     f"[{COLOR_INFO}]Running self-evolve diagnostics and proposal...[/]"
                 )
-                self.monitor.add_log("SELF_EVOLVE", "propose")
+                self._log_activity("SELF_EVOLVE", "propose")
                 proposal = await self.self_evolve_manager.propose()
                 if proposal is None:
                     self.console.print(
@@ -763,7 +957,7 @@ class InteractiveCLI:
                 self.console.print(
                     f"[{COLOR_INFO}]Applying proposal {proposal_id} and running tests...[/]"
                 )
-                self.monitor.add_log("SELF_EVOLVE", f"apply:{proposal_id}")
+                self._log_activity("SELF_EVOLVE", f"apply:{proposal_id}")
                 result = await self.self_evolve_manager.apply(
                     proposal_id,
                     require_approval=True,
@@ -788,7 +982,7 @@ class InteractiveCLI:
                 self.console.print(
                     f"[{COLOR_INFO}]Running dry-run for proposal {proposal_id}...[/]"
                 )
-                self.monitor.add_log("SELF_EVOLVE", f"dry-run:{proposal_id}")
+                self._log_activity("SELF_EVOLVE", f"dry-run:{proposal_id}")
                 try:
                     result = await self.self_evolve_manager.dry_run(proposal_id)
                 except ValueError as exc:
@@ -824,7 +1018,7 @@ class InteractiveCLI:
                 self.console.print(
                     f"[{COLOR_INFO}]Creating proposal from user issue...[/]"
                 )
-                self.monitor.add_log("SELF_EVOLVE", "issue")
+                self._log_activity("SELF_EVOLVE", "issue")
                 proposal = await self.self_evolve_manager.propose_from_issue(issue_text)
                 if proposal.status == "failed":
                     self.console.print(
@@ -934,7 +1128,7 @@ class InteractiveCLI:
                         f"{self.plan_content}"
                     )
                     self.console.print(f"[{COLOR_INFO}]Executing approved plan...[/]")
-                    self.monitor.add_log("PLAN", "execute")
+                    self._log_activity("PLAN", "execute")
                     await self.process_chat(execution_prompt)
                     return
             task = " ".join(args).strip()
@@ -945,7 +1139,7 @@ class InteractiveCLI:
             self.plan_status = "pending"
             plan_prompt = self._build_plan_prompt(task)
             self.console.print(f"[{COLOR_INFO}]Generating plan for: {task}[/]")
-            self.monitor.add_log("PLAN", "generate")
+            self._log_activity("PLAN", "generate")
             with self.console.status(
                 "[bold magenta]Generuji plan...[/]", spinner="dots"
             ):
@@ -985,7 +1179,7 @@ class InteractiveCLI:
             else:
                 self.console.print("[bold red]Unknown agent type.[/]")
                 return
-            self.monitor.add_log("AGENT", agent_key)
+            self._log_activity("AGENT", agent_key)
             result = await self.agent_orchestrator.get_agent(agent_type).execute(
                 task, context=context
             )
@@ -1007,7 +1201,7 @@ class InteractiveCLI:
                     return
                 url = args[1]
                 prompt = " ".join(args[2:]).strip()
-                self.monitor.add_log("WEB", f"fetch:{url}")
+                self._log_activity("WEB", f"fetch:{url}")
                 result = await self.web_fetcher.fetch(url, prompt=prompt)
                 if not result.get("success"):
                     self.console.print(
@@ -1022,7 +1216,7 @@ class InteractiveCLI:
                 if not query:
                     self.console.print("[bold red]Usage: /web search <query>[/]")
                     return
-                self.monitor.add_log("WEB", "search")
+                self._log_activity("WEB", "search")
                 results = await self.web_searcher.search(query)
                 if not results:
                     self.console.print(f"[{COLOR_INFO}]No results.[/]")
@@ -1160,7 +1354,7 @@ class InteractiveCLI:
                 return
             text = " ".join(args) if args else "Test ceskeho hlasu"
             await self.tts_engine.speak_async(text)
-            self.monitor.add_log("TTS", text[:30])
+            self._log_activity("TTS", text[:30])
             self.console.print(f"[{COLOR_SUCCESS}]Speaking: {text}[/]")
         elif cmd == "/voice":
             if not args:
@@ -1217,7 +1411,9 @@ class InteractiveCLI:
         table.add_row("/tools", "List tools")
         table.add_row("/providers", "List AI providers")
         table.add_row("/setup", "Configure provider & API key")
+        table.add_row("/init ...", "Initialize project guide file")
         table.add_row("/history ...", "Save/export/scroll chat history")
+        table.add_row("/autoexec ...", "Toggle auto-execute confirmations")
         table.add_row(
             "/self-evolve ...",
             "Self-evolve (propose|issue <desc>|apply <id>|status|show <id>)",
@@ -1258,18 +1454,39 @@ class InteractiveCLI:
 
     async def process_chat(self, user_input: str) -> Optional[str]:
         """Send the user's query to the coder, append the assistant response, and return it."""
-        self.monitor.add_log("QUERY_INIT", "User Request")
-        self.monitor.set_operation("Generating AI response...", 0)
+        self.activity_panel.add_activity(
+            Activity(
+                type=ActivityType.API_CALL,
+                description=f"Query {self.active_provider}",
+                target="User request",
+                status="running",
+            )
+        )
+        self.activity_panel.set_operation("Generating AI response...", 0)
         progress_task = asyncio.create_task(self._update_progress_simulation())
+        stream_text = ""
+
+        def _stream_handler(chunk: str) -> None:
+            nonlocal stream_text
+            if not chunk:
+                return
+            stream_text += chunk
+            if len(stream_text) > 1000:
+                stream_text = stream_text[-1000:]
+            self.activity_panel.set_thinking(stream_text)
+            self._refresh_live()
+
         with self.console.status(
             "[bold magenta]Přemýšlím a generuji kód...[/]", spinner="dots"
         ):
             try:
                 response = await self.coder.process_request(
                     user_input,
+                    files=self._default_context_files() or None,
                     diffusing=self.diffusing_mode,
                     realtime=self.realtime_mode,
                     preferred_provider=self.preferred_provider,
+                    stream_callback=_stream_handler,
                 )
                 content = (
                     response.get("content", str(response))
@@ -1277,18 +1494,88 @@ class InteractiveCLI:
                     else str(response)
                 )
                 self._append_chat_entry("ai", content)
-                self.monitor.add_log("RESPONSE_OK", f"{len(content)} chars")
+                self._log_activity("RESPONSE_OK", f"{len(content)} chars")
                 if self.tts_engine and getattr(self.config, "text_to_speech", {}).get(
                     "auto_read_responses", False
                 ):
                     plain_text = self._strip_markdown(content)
                     await self.tts_engine.speak_async(plain_text)
+                if content:
+                    async def _confirm_action(action):
+                        return self._prompt_confirm(
+                            f"[yellow]Execute: {action.description}?[/]",
+                            default=False,
+                        )
+
+                    async def _execute_action(action):
+                        if action.type == ActionType.CREATE_FILE:
+                            if action.content is None:
+                                return False
+                            target_path = self.working_directory / Path(action.target)
+                            target_path.parent.mkdir(parents=True, exist_ok=True)
+                            if (
+                                hasattr(self.coder, "tool_orchestrator")
+                                and self.coder.tool_orchestrator
+                            ):
+                                command = Command(
+                                    tool="file_write",
+                                    args={
+                                        "path": str(target_path),
+                                        "content": action.content,
+                                    },
+                                    raw_input="",
+                                )
+                                result = await self.coder.tool_orchestrator.execute_command(
+                                    command, self._build_execution_context()
+                                )
+                                self._display_tool_result(result)
+                                return result.success
+                            target_path.write_text(action.content, encoding="utf-8")
+                            return True
+                        if action.type in {
+                            ActionType.RUN_COMMAND,
+                            ActionType.INSTALL_PACKAGE,
+                        }:
+                            if (
+                                not hasattr(self.coder, "tool_orchestrator")
+                                or not self.coder.tool_orchestrator
+                            ):
+                                self.console.print(
+                                    "[bold yellow]Tool orchestrator not initialized.[/]"
+                                )
+                                return False
+                            command = Command(
+                                tool="terminal_exec",
+                                args={"command": action.target},
+                                raw_input="",
+                            )
+                            result = await self.coder.tool_orchestrator.execute_command(
+                                command, self._build_execution_context()
+                            )
+                            self._display_tool_result(result)
+                            return result.success
+                        return False
+
+                    await self.auto_executor.process_response(
+                        content,
+                        confirm_callback=_confirm_action,
+                        execute_callback=_execute_action,
+                    )
                 return content
             except Exception as e:
                 self.console.print(f"[bold red]Error:[/bold red] {e}")
+                self.activity_panel.add_activity(
+                    Activity(
+                        type=ActivityType.API_CALL,
+                        description="AI response error",
+                        target=str(e),
+                        status="error",
+                    )
+                )
                 return None
             finally:
-                self.monitor.clear_operation()
+                self.activity_panel.clear_operation()
+                self.activity_panel.clear_thinking()
                 progress_task.cancel()
                 with suppress(asyncio.CancelledError):
                     await progress_task
@@ -1297,7 +1584,7 @@ class InteractiveCLI:
         """Simulate progress updates while waiting for AI response."""
         for i in range(0, 101, 10):
             await asyncio.sleep(0.3)
-            self.monitor.update_progress(i)
+            self.activity_panel.update_progress(i)
 
     def _strip_markdown(self, text: str) -> str:
         """Strip markdown formatting for TTS output."""
@@ -1322,7 +1609,7 @@ class InteractiveCLI:
             compact_layout.update(
                 Group(
                     self._render_chat_panel(),
-                    self.monitor.render(self.console),
+                    self.activity_panel.render(self.console),
                 )
             )
             return compact_layout
@@ -1333,7 +1620,7 @@ class InteractiveCLI:
             Layout(name="monitor", ratio=40),
         )
         layout["chat"].update(self._render_chat_panel())
-        layout["monitor"].update(self.monitor.render(self.console))
+        layout["monitor"].update(self.activity_panel.render(self.console))
         return layout
 
     def _estimate_message_height(
@@ -1552,6 +1839,29 @@ class InteractiveCLI:
         """Main run loop that renders the layout and handles user input."""
         self.print_banner()
         await self._configure_provider()
+        session = None
+        if PromptSession and KeyBindings:
+            key_bindings = KeyBindings()
+
+            @key_bindings.add("pageup")
+            def _scroll_up(event):
+                self._scroll_history(self.history_step)
+
+            @key_bindings.add("pagedown")
+            def _scroll_down(event):
+                self._scroll_history(-self.history_step)
+
+            @key_bindings.add("home")
+            def _scroll_top(event):
+                self.history_offset = max(0, len(self.chat_history) - 1)
+                self._refresh_live()
+
+            @key_bindings.add("end")
+            def _scroll_bottom(event):
+                self.history_offset = 0
+                self._refresh_live()
+
+            session = PromptSession(key_bindings=key_bindings)
         try:
             with Live(
                 self._create_layout(),
@@ -1559,21 +1869,25 @@ class InteractiveCLI:
                 refresh_per_second=4,
                 screen=False,
             ) as live:
+                self._live = live
                 while True:
                     live.update(self._create_layout())
                     live.stop()
-                    user_input = Prompt.ask(f"[{COLOR_USER}]You[/]")
+                    if session:
+                        user_input = (await session.prompt_async("You> ")).strip()
+                    else:
+                        user_input = Prompt.ask(f"[{COLOR_USER}]You[/]").strip()
                     live.start()
                     if not user_input:
                         continue
 
-                    # NEW (v2.1.1): Parse and execute tool commands
+                    # NEW (v2.2.0): Parse and execute tool commands
                     if user_input.startswith("/"):
                         command = self.command_parser.parse(user_input)
 
                         if command:
                             # Tool command (e.g., /bash, /file, /git)
-                            self.monitor.add_log("EXEC_TOOL", command.tool)
+                            self._log_activity("EXEC_TOOL", command.tool)
 
                             # Execute tool if orchestrator is available
                             if (
@@ -1606,13 +1920,15 @@ class InteractiveCLI:
                     self._append_chat_entry("user", user_input)
                     live.update(self._create_layout())
                     live.refresh()
-                    response_content = await self.process_chat(user_input)
+                    await self.process_chat(user_input)
                     live.update(self._create_layout())
                     live.refresh()
         except (KeyboardInterrupt, EOFError):
             self.console.print(
                 "\n[bold yellow]⛔ Shutting down MyCoder... Goodbye![/bold yellow]"
             )
+        finally:
+            self._live = None
 
 
 def main():

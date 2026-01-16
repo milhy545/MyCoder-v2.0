@@ -1,5 +1,5 @@
 """
-FEI-Inspired Tool Registry for MyCoder v2.1.0
+FEI-Inspired Tool Registry for MyCoder v2.2.0
 
 This module implements a centralized tool registry system inspired by the FEI project
 architecture for managing and routing tools across different operational modes.
@@ -156,6 +156,30 @@ class BaseTool(ABC):
         """Validate if tool can execute in given context"""
         raise NotImplementedError("Context validation not implemented")
 
+    def get_description(self) -> str:
+        """Human-readable description for tool schemas."""
+        return f"{self.name} tool"
+
+    def get_input_schema(self) -> Dict[str, Any]:
+        """JSON schema for tool input parameters."""
+        return {"type": "object", "properties": {}}
+
+    def to_anthropic_schema(self) -> Dict[str, Any]:
+        """Generate Anthropic tool schema."""
+        return {
+            "name": self.name,
+            "description": self.get_description(),
+            "input_schema": self.get_input_schema(),
+        }
+
+    def to_gemini_schema(self) -> Dict[str, Any]:
+        """Generate Gemini function declaration schema."""
+        return {
+            "name": self.name,
+            "description": self.get_description(),
+            "parameters": self.get_input_schema(),
+        }
+
     def can_execute_in_mode(self, mode: str) -> bool:
         """Check if tool can execute in given operational mode"""
         mode_mappings = {
@@ -223,6 +247,54 @@ class FileOperationTool(BaseTool):
         )
         self.on_read = on_read
 
+    def get_description(self) -> str:
+        if self.name == "file_read":
+            return "Read file contents from disk."
+        if self.name == "file_write":
+            return "Write content to a file on disk."
+        if self.name == "file_list":
+            return "List files in a directory."
+        return "File operation tool."
+
+    def get_input_schema(self) -> Dict[str, Any]:
+        if self.name == "file_read":
+            return {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Relative path to file",
+                    }
+                },
+                "required": ["path"],
+            }
+        if self.name == "file_write":
+            return {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Relative path to file",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "File content to write",
+                    },
+                },
+                "required": ["path", "content"],
+            }
+        if self.name == "file_list":
+            return {
+                "type": "object",
+                "properties": {
+                    "directory": {
+                        "type": "string",
+                        "description": "Directory path to list",
+                    }
+                },
+            }
+        return super().get_input_schema()
+
     async def execute(
         self,
         context: ToolExecutionContext,
@@ -268,10 +340,14 @@ class FileOperationTool(BaseTool):
                     raise FileNotFoundError(f"File not found: {file_path}")
 
             elif operation == "write":
-                if not content:
+                if content is None:
                     raise ValueError("Content is required for write operation")
+                file_path.parent.mkdir(parents=True, exist_ok=True)
                 file_path.write_text(content, encoding="utf-8")
                 result_data = f"Written {len(content)} characters to {file_path}"
+                # Mark file as read after successful write (allows immediate editing)
+                if self.on_read:
+                    self.on_read(str(file_path))
 
             elif operation == "list":
                 if file_path.is_dir():
@@ -331,6 +407,38 @@ class FileEditTool(BaseTool):
             capabilities=capabilities,
         )
         self.edit_tool = edit_tool
+
+    def get_description(self) -> str:
+        return (
+            "Edit files using Search & Replace. "
+            "Find unique old_string and replace with new_string. "
+            "ALWAYS read the file first."
+        )
+
+    def get_input_schema(self) -> Dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "Relative path to file",
+                },
+                "old_string": {
+                    "type": "string",
+                    "description": "Exact text to find (must be unique)",
+                },
+                "new_string": {
+                    "type": "string",
+                    "description": "Replacement text",
+                },
+                "replace_all": {
+                    "type": "boolean",
+                    "description": "Replace all occurrences (default false)",
+                    "default": False,
+                },
+            },
+            "required": ["path", "old_string", "new_string"],
+        }
 
     async def execute(
         self,
@@ -579,13 +687,17 @@ class ToolRegistry:
             file_read_tool = FileOperationTool(
                 "file_read", on_read=edit_tool.mark_as_read
             )
+            file_write_tool = FileOperationTool(
+                "file_write", on_read=edit_tool.mark_as_read
+            )
         else:
             file_read_tool = FileOperationTool("file_read")
+            file_write_tool = FileOperationTool("file_write")
         self.register_tool(file_read_tool)
-        self.register_tool(FileOperationTool("file_write"))
+        self.register_tool(file_write_tool)
         self.register_tool(FileOperationTool("file_list"))
 
-        # Speech recognition tool (v2.1.1)
+        # Speech recognition tool (v2.2.0)
         try:
             from .speech_tool import SpeechTool
 

@@ -12,6 +12,7 @@ import sys
 import time
 from contextlib import ExitStack
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
@@ -252,6 +253,135 @@ class TestClaudeAnthropicProvider:
 
     @pytest.mark.asyncio
     @patch("aiohttp.ClientSession.post")
+    async def test_query_function_call_executes_tools(self, mock_post, temp_dir):
+        """Test Claude tool_use handling with tool execution loop"""
+        tool_use_response = {
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "tool1",
+                    "name": "file_read",
+                    "input": {"path": "foo.txt"},
+                }
+            ],
+            "usage": {"input_tokens": 5, "output_tokens": 0},
+        }
+        final_response = {
+            "content": [{"text": "All set"}],
+            "usage": {"input_tokens": 6, "output_tokens": 3},
+        }
+
+        first = AsyncMock()
+        first.status = 200
+        first.json = AsyncMock(return_value=tool_use_response)
+        second = AsyncMock()
+        second.status = 200
+        second.json = AsyncMock(return_value=final_response)
+
+        first_cm = AsyncMock()
+        first_cm.__aenter__.return_value = first
+        second_cm = AsyncMock()
+        second_cm.__aenter__.return_value = second
+        mock_post.side_effect = [first_cm, second_cm]
+
+        class DummyTool:
+            def to_anthropic_schema(self):
+                return {
+                    "name": "file_read",
+                    "description": "Read file",
+                    "input_schema": {"type": "object", "properties": {}},
+                }
+
+        execute_tool = AsyncMock(
+            return_value=SimpleNamespace(
+                success=True, data="content", metadata={"path": "foo.txt"}
+            )
+        )
+        tool_registry = SimpleNamespace(
+            tools={"file_read": DummyTool()}, execute_tool=execute_tool
+        )
+
+        provider = self.create_provider()
+        response = await provider.query(
+            "Hello", context={"tool_registry": tool_registry, "working_directory": temp_dir}
+        )
+
+        assert response.success is True
+        assert response.content == "All set"
+        execute_tool.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    @patch("aiohttp.ClientSession.post")
+    async def test_query_function_call_multiple_tools(self, mock_post, temp_dir):
+        """Test Claude tool_use handling with multiple tool calls"""
+        tool_use_response = {
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "tool1",
+                    "name": "file_read",
+                    "input": {"path": "foo.txt"},
+                },
+                {
+                    "type": "tool_use",
+                    "id": "tool2",
+                    "name": "file_write",
+                    "input": {"path": "bar.txt", "content": "ok"},
+                },
+            ],
+            "usage": {"input_tokens": 5, "output_tokens": 0},
+        }
+        final_response = {
+            "content": [{"text": "Done"}],
+            "usage": {"input_tokens": 6, "output_tokens": 3},
+        }
+
+        first = AsyncMock()
+        first.status = 200
+        first.json = AsyncMock(return_value=tool_use_response)
+        second = AsyncMock()
+        second.status = 200
+        second.json = AsyncMock(return_value=final_response)
+
+        first_cm = AsyncMock()
+        first_cm.__aenter__.return_value = first
+        second_cm = AsyncMock()
+        second_cm.__aenter__.return_value = second
+        mock_post.side_effect = [first_cm, second_cm]
+
+        class DummyTool:
+            def __init__(self, name):
+                self.name = name
+
+            def to_anthropic_schema(self):
+                return {
+                    "name": self.name,
+                    "description": "Tool",
+                    "input_schema": {"type": "object", "properties": {}},
+                }
+
+        execute_tool = AsyncMock(
+            return_value=SimpleNamespace(success=True, data="ok", metadata={})
+        )
+        tool_registry = SimpleNamespace(
+            tools={
+                "file_read": DummyTool("file_read"),
+                "file_write": DummyTool("file_write"),
+            },
+            execute_tool=execute_tool,
+        )
+
+        provider = self.create_provider()
+        response = await provider.query(
+            "Hello", context={"tool_registry": tool_registry, "working_directory": temp_dir}
+        )
+
+        assert response.success is True
+        assert response.content == "Done"
+        assert execute_tool.await_count == 2
+
+    @pytest.mark.asyncio
+    @patch("aiohttp.ClientSession.post")
     async def test_query_api_error(self, mock_post):
         """Test Claude API error handling"""
         # Mock API error response
@@ -430,6 +560,112 @@ class TestGeminiProvider:
         assert response.content == "Hello! I'm Gemini, how can I assist you?"
         assert response.provider == APIProviderType.GEMINI
         assert response.tokens_used == 50
+
+    @pytest.mark.asyncio
+    @patch("aiohttp.ClientSession.post")
+    async def test_query_function_call_executes_tools(self, mock_post, temp_dir):
+        """Test Gemini functionCall handling with tool execution loop"""
+        tool_call_response = {
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [
+                            {
+                                "functionCall": {
+                                    "name": "file_read",
+                                    "args": {"path": "foo.txt"},
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+        final_response = {
+            "candidates": [
+                {"content": {"parts": [{"text": "Done"}]}}
+            ],
+            "usageMetadata": {"totalTokenCount": 7},
+        }
+
+        first = AsyncMock()
+        first.status = 200
+        first.json = AsyncMock(return_value=tool_call_response)
+        second = AsyncMock()
+        second.status = 200
+        second.json = AsyncMock(return_value=final_response)
+
+        first_cm = AsyncMock()
+        first_cm.__aenter__.return_value = first
+        second_cm = AsyncMock()
+        second_cm.__aenter__.return_value = second
+        mock_post.side_effect = [first_cm, second_cm]
+
+        class DummyTool:
+            def to_gemini_schema(self):
+                return {
+                    "name": "file_read",
+                    "description": "Read file",
+                    "parameters": {"type": "object", "properties": {}},
+                }
+
+        execute_tool = AsyncMock(
+            return_value=SimpleNamespace(
+                success=True, data="content", metadata={"path": "foo.txt"}
+            )
+        )
+        tool_registry = SimpleNamespace(
+            tools={"file_read": DummyTool()}, execute_tool=execute_tool
+        )
+
+        provider = self.create_provider()
+        response = await provider.query(
+            "Hello", context={"tool_registry": tool_registry, "working_directory": temp_dir}
+        )
+
+        assert response.success is True
+        assert response.content == "Done"
+        execute_tool.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    @patch("aiohttp.ClientSession.post")
+    async def test_query_function_call_skips_when_none(self, mock_post, temp_dir):
+        """Test Gemini tool loop is skipped when no functionCall exists"""
+        initial_response = {
+            "candidates": [
+                {"content": {"parts": [{"text": "Hello there"}]}}
+            ],
+            "usageMetadata": {"totalTokenCount": 4},
+        }
+
+        first = AsyncMock()
+        first.status = 200
+        first.json = AsyncMock(return_value=initial_response)
+        first_cm = AsyncMock()
+        first_cm.__aenter__.return_value = first
+        mock_post.return_value = first_cm
+
+        class DummyTool:
+            def to_gemini_schema(self):
+                return {
+                    "name": "file_read",
+                    "description": "Read file",
+                    "parameters": {"type": "object", "properties": {}},
+                }
+
+        execute_tool = AsyncMock()
+        tool_registry = SimpleNamespace(
+            tools={"file_read": DummyTool()}, execute_tool=execute_tool
+        )
+
+        provider = self.create_provider()
+        response = await provider.query(
+            "Hello", context={"tool_registry": tool_registry, "working_directory": temp_dir}
+        )
+
+        assert response.success is True
+        assert response.content == "Hello there"
+        execute_tool.assert_not_awaited()
 
     @pytest.mark.asyncio
     @patch("aiohttp.ClientSession.post")

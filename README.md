@@ -1,4 +1,4 @@
-# Enhanced MyCoder v2.1.0
+# Enhanced MyCoder v2.2.0
 
 > **Multi-API AI Development Assistant with Q9550 Thermal Management**
 
@@ -7,7 +7,7 @@
 [![Test Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](#testing)
 [![Q9550 Compatible](https://img.shields.io/badge/Q9550-thermal%20managed-orange.svg)](#thermal-management)
 
-Enhanced MyCoder v2.1.0 is a comprehensive AI development assistant featuring **5-tier API provider fallback**, **Q9550 thermal management**, and **FEI-inspired architecture**. Built for production environments requiring high availability and thermal safety.
+Enhanced MyCoder v2.2.0 is a comprehensive AI development assistant featuring **7-tier API provider fallback**, **Q9550 thermal management**, **agent orchestration**, and **FEI-inspired architecture**. Built for production environments requiring high availability and thermal safety.
 
 ## 🚀 Quick Start
 
@@ -431,4 +431,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ for the AI development community**
 
-*Enhanced MyCoder v2.1.0 - Where AI meets thermal responsibility*
+*Enhanced MyCoder v2.2.0 - Where AI meets thermal responsibility*

@@ -1,11 +1,11 @@
-"""Enhanced MyCoder v2.1.0 - Multi-API AI Development Assistant.
+"""Enhanced MyCoder v2.2.0 - Multi-API AI Development Assistant.
 
 A comprehensive AI-powered development assistant with multi-provider fallback,
 Q9550 thermal management, and FEI-inspired architecture.
 
 Key Features:
-- 5-tier API provider fallback (Claude Anthropic, Claude OAuth, Gemini,
-  Ollama Local, Ollama Remote)
+- 7-tier API provider fallback (Claude Anthropic, Claude OAuth, Gemini, Mercury,
+  Ollama Local, Termux Ollama, Ollama Remote)
 - Q9550 thermal management integration
 - FEI-inspired architecture with tool registry
 - Comprehensive testing framework
@@ -92,7 +92,7 @@ from .tool_registry import (
 )
 
 # Version info
-__version__ = "2.1.1"
+__version__ = "2.2.0"
 __author__ = "David Strejc"
 __email__ = "strejc.david@gmail.com"
 __license__ = "MIT"

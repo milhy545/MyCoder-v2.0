@@ -31,6 +31,11 @@ class EditTool:
     ) -> EditResult:
         path = Path(file_path)
 
+        # Normalize to absolute path for consistency
+        if not path.is_absolute():
+            path = self.working_dir / path
+        path = path.resolve()
+
         if str(path) not in self.read_files:
             return EditResult(
                 success=False,
@@ -74,10 +79,18 @@ class EditTool:
         )
 
     def mark_as_read(self, file_path: str) -> None:
-        self.read_files.add(file_path)
+        # Normalize to absolute path for consistency
+        path = Path(file_path)
+        if not path.is_absolute():
+            path = self.working_dir / path
+        path = path.resolve()
+        self.read_files.add(str(path))
 
     def validate_edit(self, file_path: str, old_string: str) -> Tuple[bool, str]:
         path = Path(file_path)
+        if not path.is_absolute():
+            path = self.working_dir / path
+        path = path.resolve()
 
         if not path.exists():
             return False, f"File not found: {file_path}"
