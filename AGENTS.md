@@ -4,6 +4,8 @@
 
 ## Recent Changes & Updates
 *Agents: Add entries here when making significant changes*
+- 2026-01-16: Claude Code - Released MyCoder v2.2.0: Unified versioning, fixed critical file_edit bugs (3 bugs), formatted all code with black/isort, 314 tests passing, pushed to GitHub ✅
+- 2026-01-16: Claude Code - Verified MyCoder editing works in practice: sequential edits, /read,/edit,/write commands all functional
 - 2026-01-16: Codex - Rozsiril unit testy pro function calling edge-cases (vice tool calls, zadny functionCall) v API providerech
 - 2026-01-16: Codex - Dopsal unit testy pro function calling tool_use/functionCall v Claude/Gemini providerech
 - 2026-01-16: Codex - Pridal tool schemata pro file tools, pridal function calling v Claude/Gemini providerech a normalizaci cest v EditTool.validate_edit
