@@ -88,9 +88,7 @@ class CommandParser:
     def _parse_file_read(self, match: re.Match, raw_input: str) -> Command:
         """Parse /file read <path> nebo /read <path>"""
         file_path = match.group(1).strip()
-        return Command(
-            tool="file_read", args={"path": file_path}, raw_input=raw_input
-        )
+        return Command(tool="file_read", args={"path": file_path}, raw_input=raw_input)
 
     def _parse_file_write(self, match: re.Match, raw_input: str) -> Command:
         """Parse /file write <path> nebo /write <path>"""
@@ -174,7 +172,9 @@ class CommandParser:
             message = message[1:-1]
         elif message.startswith("'") and message.endswith("'"):
             message = message[1:-1]
-        return Command(tool="git_commit", args={"message": message}, raw_input=raw_input)
+        return Command(
+            tool="git_commit", args={"message": message}, raw_input=raw_input
+        )
 
     def _parse_provider_override(self, match: re.Match, raw_input: str) -> Command:
         """Parse /provider <name>"""

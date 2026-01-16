@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, List
 
-from .base import BaseAgent, AgentResult, AgentType
+from .base import AgentResult, AgentType, BaseAgent
 
 
 class ExploreAgent(BaseAgent):
@@ -17,7 +17,9 @@ class ExploreAgent(BaseAgent):
 
     @property
     def description(self) -> str:
-        return "Fast codebase exploration: find files, search code, understand structure"
+        return (
+            "Fast codebase exploration: find files, search code, understand structure"
+        )
 
     async def execute(self, task: str, context: Dict[str, Any] = None) -> AgentResult:
         thoroughness = context.get("thoroughness", "medium") if context else "medium"

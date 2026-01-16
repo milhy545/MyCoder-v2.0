@@ -145,9 +145,7 @@ def _run_query(router: APIProviderRouter, fallback_enabled: bool = True) -> APIR
     return _run_query_sync(router, fallback_enabled)
 
 
-def _run_query_sync(
-    router: APIProviderRouter, fallback_enabled: bool
-) -> APIResponse:
+def _run_query_sync(router: APIProviderRouter, fallback_enabled: bool) -> APIResponse:
     import asyncio
 
     async def _inner() -> APIResponse:

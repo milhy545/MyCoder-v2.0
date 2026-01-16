@@ -26,9 +26,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 try:
+    from .adaptive_modes import AdaptiveModeManager, OperationalMode
     from .api_providers import (
-        APIProviderRouter,
         APIProviderConfig,
+        APIProviderRouter,
         APIProviderType,
         APIResponse,
         ClaudeAnthropicProvider,
@@ -36,19 +37,22 @@ try:
         GeminiProvider,
         OllamaProvider,
     )
-    from .tool_registry import (
-        get_tool_registry,
-        ToolExecutionContext,
-        ToolCategory,
-        ToolAvailability,
-    )
-    from .adaptive_modes import AdaptiveModeManager, OperationalMode
     from .mcp_bridge import MCPBridge
     from .tool_orchestrator import ToolExecutionOrchestrator
+    from .tool_registry import (
+        ToolAvailability,
+        ToolCategory,
+        ToolExecutionContext,
+        get_tool_registry,
+    )
 except ImportError:
+    from adaptive_modes import AdaptiveModeManager, OperationalMode  # type: ignore
+    from mcp_bridge import MCPBridge  # type: ignore
+    from tool_orchestrator import ToolExecutionOrchestrator  # type: ignore
+
     from mycoder.api_providers import (  # type: ignore
-        APIProviderRouter,
         APIProviderConfig,
+        APIProviderRouter,
         APIProviderType,
         APIResponse,
         ClaudeAnthropicProvider,
@@ -57,14 +61,11 @@ except ImportError:
         OllamaProvider,
     )
     from mycoder.tool_registry import (  # type: ignore
-        get_tool_registry,
-        ToolExecutionContext,
-        ToolCategory,
         ToolAvailability,
+        ToolCategory,
+        ToolExecutionContext,
+        get_tool_registry,
     )
-    from adaptive_modes import AdaptiveModeManager, OperationalMode  # type: ignore
-    from mcp_bridge import MCPBridge  # type: ignore
-    from tool_orchestrator import ToolExecutionOrchestrator  # type: ignore
 
 logger = logging.getLogger(__name__)
 

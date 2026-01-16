@@ -2,7 +2,9 @@ from mycoder.mcp.protocol import MCPMessage, MCPMessageType, MCPTool
 
 
 def test_mcp_tool_to_dict() -> None:
-    tool = MCPTool(name="tool", description="desc", parameters={"q": {"type": "string"}})
+    tool = MCPTool(
+        name="tool", description="desc", parameters={"q": {"type": "string"}}
+    )
 
     payload = tool.to_dict()
 

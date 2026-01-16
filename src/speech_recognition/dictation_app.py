@@ -8,14 +8,14 @@ import asyncio
 import logging
 import threading
 import time
-from typing import Optional, Dict, Any
 from enum import Enum
+from typing import Any, Dict, Optional
 
 from .audio_recorder import AudioRecorder
-from .whisper_transcriber import WhisperTranscriber, WhisperProvider
-from .text_injector import TextInjector, InjectionMethod
-from .overlay_button import OverlayApp, ButtonState
 from .hotkey_manager import HotkeyManager
+from .overlay_button import ButtonState, OverlayApp
+from .text_injector import InjectionMethod, TextInjector
+from .whisper_transcriber import WhisperProvider, WhisperTranscriber
 
 logger = logging.getLogger(__name__)
 

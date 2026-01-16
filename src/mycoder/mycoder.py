@@ -11,9 +11,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 try:
-    from claude_cli_auth import ClaudeAuthManager, ClaudeAuthError, AuthConfig
+    from claude_cli_auth import AuthConfig, ClaudeAuthError, ClaudeAuthManager
 except Exception:
-    from .adaptive_modes import ClaudeAuthManager, ClaudeAuthError, AuthConfig
+    from .adaptive_modes import AuthConfig, ClaudeAuthError, ClaudeAuthManager
 
 try:
     from .adaptive_modes import AdaptiveModeManager, OperationalMode

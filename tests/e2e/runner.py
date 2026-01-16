@@ -19,7 +19,12 @@ from tests.e2e.framework.scenario_engine import (
     ScenarioResult,
     ScenarioType,
 )
-from tests.e2e.scenarios import context_awareness, error_handling, prompt_engineering, tool_selection
+from tests.e2e.scenarios import (
+    context_awareness,
+    error_handling,
+    prompt_engineering,
+    tool_selection,
+)
 
 
 class SelfTestRunner:
@@ -51,7 +56,9 @@ class SelfTestRunner:
             expected=result.scenario.expected_tool,
             actual=result.actual_tool,
         )
-        self.metrics.record_execution_time(result.scenario.name, result.execution_time_ms)
+        self.metrics.record_execution_time(
+            result.scenario.name, result.execution_time_ms
+        )
 
         if result.scenario.context:
             self.metrics.record_context_retention(bool(response.get("context_aware")))

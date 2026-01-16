@@ -59,7 +59,9 @@ class MCPClient:
             )
         return tools
 
-    async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    async def call_tool(
+        self, tool_name: str, arguments: Dict[str, Any]
+    ) -> Dict[str, Any]:
         if ":" in tool_name:
             server_name, tool = tool_name.split(":", 1)
         else:

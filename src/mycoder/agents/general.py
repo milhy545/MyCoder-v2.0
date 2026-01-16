@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from .base import BaseAgent, AgentResult, AgentType
+from .base import AgentResult, AgentType, BaseAgent
 
 
 class GeneralPurposeAgent(BaseAgent):
@@ -20,7 +20,9 @@ class GeneralPurposeAgent(BaseAgent):
 
     async def execute(self, task: str, context: Dict[str, Any] = None) -> AgentResult:
         response = await self.coder.process_request(task)
-        content = response.get("content") if isinstance(response, dict) else str(response)
+        content = (
+            response.get("content") if isinstance(response, dict) else str(response)
+        )
 
         return AgentResult(
             success=True,

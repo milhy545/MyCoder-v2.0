@@ -16,29 +16,29 @@ from typing import Any, Dict, List, Optional
 import aiohttp
 
 try:
+    from .local_mcp_server import LocalMCPServer
+    from .mcp_connector import MCPConnector
     from .tool_registry import (
         BaseTool,
-        ToolCategory,
         ToolAvailability,
-        ToolPriority,
         ToolCapabilities,
+        ToolCategory,
         ToolExecutionContext,
+        ToolPriority,
         ToolResult,
     )
-    from .mcp_connector import MCPConnector
-    from .local_mcp_server import LocalMCPServer
 except ImportError:
+    from local_mcp_server import LocalMCPServer
+    from mcp_connector import MCPConnector
     from tool_registry import (
         BaseTool,
-        ToolCategory,
         ToolAvailability,
-        ToolPriority,
         ToolCapabilities,
+        ToolCategory,
         ToolExecutionContext,
+        ToolPriority,
         ToolResult,
     )
-    from mcp_connector import MCPConnector
-    from local_mcp_server import LocalMCPServer
 
 logger = logging.getLogger(__name__)
 
@@ -367,9 +367,7 @@ class MCPToolWrapper(BaseTool):
         self.mcp_bridge = mcp_bridge
         self.tool_info = tool_info
 
-    async def execute(
-        self, context: ToolExecutionContext, **kwargs
-    ) -> ToolResult:
+    async def execute(self, context: ToolExecutionContext, **kwargs) -> ToolResult:
         """Spustí MCP tool přes bridge"""
         start_time = time.time()
 

@@ -23,7 +23,9 @@ def test_circuit_breaker_half_open_after_timeout() -> None:
 
 
 def test_circuit_breaker_closes_after_successes() -> None:
-    breaker = CircuitBreaker(failure_threshold=1, recovery_timeout=0, half_open_max_calls=2)
+    breaker = CircuitBreaker(
+        failure_threshold=1, recovery_timeout=0, half_open_max_calls=2
+    )
     breaker.record_failure()
     breaker.can_execute()
     assert breaker.state == CircuitState.HALF_OPEN

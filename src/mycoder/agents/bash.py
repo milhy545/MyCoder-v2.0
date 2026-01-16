@@ -5,7 +5,7 @@ from __future__ import annotations
 import subprocess
 from typing import Any, Dict
 
-from .base import BaseAgent, AgentResult, AgentType
+from .base import AgentResult, AgentType, BaseAgent
 
 
 class BashAgent(BaseAgent):

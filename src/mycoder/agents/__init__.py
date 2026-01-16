@@ -1,11 +1,11 @@
 """Agent orchestration system inspired by Claude Code CLI."""
 
-from .base import BaseAgent, AgentResult, AgentType
-from .explore import ExploreAgent
-from .plan import PlanAgent
+from .base import AgentResult, AgentType, BaseAgent
 from .bash import BashAgent
+from .explore import ExploreAgent
 from .general import GeneralPurposeAgent
 from .orchestrator import AgentOrchestrator
+from .plan import PlanAgent
 
 __all__ = [
     "BaseAgent",

@@ -50,7 +50,9 @@ class ReportGenerator:
             for index, result in enumerate(
                 [result for result in results_list if not result.passed], start=1
             ):
-                failure_reason = "; ".join(result.failures) if result.failures else "Unknown"
+                failure_reason = (
+                    "; ".join(result.failures) if result.failures else "Unknown"
+                )
                 lines.append(f"  {index}. {result.scenario.name} - {failure_reason}")
 
         return "\n".join(lines)

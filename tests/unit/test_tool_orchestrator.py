@@ -4,27 +4,28 @@ Unit tests for ToolExecutionOrchestrator (v2.1.1)
 Tests orchestration of tool execution between CLI, tool_registry, and MCP.
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
+import pytest
+
+from mycoder.command_parser import Command
+from mycoder.mcp_bridge import MCPBridge
 from mycoder.tool_orchestrator import (
     ToolExecutionOrchestrator,
     execute_command_quick,
 )
-from mycoder.command_parser import Command
 from mycoder.tool_registry import (
-    ToolExecutionContext,
-    ToolResult,
-    ToolRegistry,
     BaseTool,
-    ToolCategory,
     ToolAvailability,
-    ToolPriority,
     ToolCapabilities,
+    ToolCategory,
+    ToolExecutionContext,
+    ToolPriority,
+    ToolRegistry,
+    ToolResult,
 )
-from mycoder.mcp_bridge import MCPBridge
 
 
 class MockTool(BaseTool):
@@ -129,13 +130,15 @@ class TestToolExecutionOrchestrator:
     async def test_execute_command_success(self, orchestrator, execution_context):
         """Test successful command execution"""
         command = Command(
-            tool="test_tool", args={"arg1": "value1"}, raw_input="/test_tool arg1=value1"
+            tool="test_tool",
+            args={"arg1": "value1"},
+            raw_input="/test_tool arg1=value1",
         )
 
         result = await orchestrator.execute_command(command, execution_context)
 
         assert isinstance(result, ToolResult)
-        assert result.success == True
+        assert result.success is True
         assert result.tool_name == "test_tool"
         assert orchestrator.total_executions == 1
         assert orchestrator.successful_executions == 1
@@ -143,14 +146,12 @@ class TestToolExecutionOrchestrator:
     @pytest.mark.asyncio
     async def test_execute_command_failure(self, orchestrator, execution_context):
         """Test failed command execution"""
-        command = Command(
-            tool="failing_tool", args={}, raw_input="/failing_tool"
-        )
+        command = Command(tool="failing_tool", args={}, raw_input="/failing_tool")
 
         result = await orchestrator.execute_command(command, execution_context)
 
         assert isinstance(result, ToolResult)
-        assert result.success == False
+        assert result.success is False
         assert "Mock execution failed" in result.error
         assert orchestrator.total_executions == 1
         assert orchestrator.failed_executions == 1
@@ -167,7 +168,7 @@ class TestToolExecutionOrchestrator:
         result = await orchestrator.execute_command(command, execution_context)
 
         assert isinstance(result, ToolResult)
-        assert result.success == True  # Mock MCP returns success
+        assert result.success is True  # Mock MCP returns success
         assert orchestrator.total_executions == 1
         # Should have called MCP bridge
         mcp_bridge_mock.call_mcp_tool.assert_called_once()
@@ -175,9 +176,7 @@ class TestToolExecutionOrchestrator:
     @pytest.mark.asyncio
     async def test_execute_command_exception(self, orchestrator, execution_context):
         """Test command execution with exception"""
-        command = Command(
-            tool="nonexistent_tool", args={}, raw_input="/nonexistent"
-        )
+        command = Command(tool="nonexistent_tool", args={}, raw_input="/nonexistent")
 
         # Mock MCP bridge to raise exception
         orchestrator.mcp_bridge.call_mcp_tool = AsyncMock(
@@ -187,7 +186,7 @@ class TestToolExecutionOrchestrator:
         result = await orchestrator.execute_command(command, execution_context)
 
         assert isinstance(result, ToolResult)
-        assert result.success == False
+        assert result.success is False
         assert "Connection error" in result.error
         assert orchestrator.failed_executions == 1
 
@@ -201,7 +200,7 @@ class TestToolExecutionOrchestrator:
         )
 
         assert isinstance(result, ToolResult)
-        assert result.success == True
+        assert result.success is True
         assert result.tool_name == "mcp_tool"
         mcp_bridge_mock.call_mcp_tool.assert_called_once_with(
             "mcp_tool", {"arg": "value"}
@@ -220,7 +219,7 @@ class TestToolExecutionOrchestrator:
         result = await orchestrator._execute_mcp_tool_directly("mcp_tool", {})
 
         assert isinstance(result, ToolResult)
-        assert result.success == False
+        assert result.success is False
         assert "MCP tool failed" in result.error
 
     @pytest.mark.asyncio
@@ -231,19 +230,21 @@ class TestToolExecutionOrchestrator:
         )
 
         assert isinstance(result, dict)
-        assert result["success"] == True
+        assert result["success"] is True
         assert "ai_response" in result
         assert "tools_executed" in result
 
     @pytest.mark.asyncio
     async def test_execute_workflow_success(self, orchestrator, execution_context):
         """Test workflow execution (not fully implemented, basic test)"""
-        results = await orchestrator.execute_workflow("test_workflow", execution_context)
+        results = await orchestrator.execute_workflow(
+            "test_workflow", execution_context
+        )
 
         assert isinstance(results, list)
         # Workflow not found returns error result
         assert len(results) == 1
-        assert results[0].success == False
+        assert results[0].success is False
 
     def test_get_statistics_no_executions(self, orchestrator):
         """Test getting statistics with no executions"""
@@ -316,10 +317,12 @@ class TestExecuteCommandQuick:
         )
 
         assert isinstance(result, ToolResult)
-        assert result.success == False
+        assert result.success is False
         assert "Could not parse command" in result.error
 
-    @pytest.mark.skip(reason="Complex integration with EnhancedMyCoderV2, tested in integration tests")
+    @pytest.mark.skip(
+        reason="Complex integration with EnhancedMyCoderV2, tested in integration tests"
+    )
     @pytest.mark.asyncio
     async def test_execute_command_quick_valid_command(self):
         """Test quick execution with valid command"""

@@ -36,6 +36,7 @@ async def test_self_evolve_apply_requires_approval(tmp_path: Path, monkeypatch) 
 
     monkeypatch.setattr(manager, "_validate_diff", lambda diff: None)
     monkeypatch.setattr(manager, "_apply_patch", lambda diff: None)
+
     async def _run_tests():
         return manager._empty_test_run()
 

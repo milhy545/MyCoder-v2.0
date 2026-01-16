@@ -14,7 +14,9 @@ class AIAssertionError(AssertionError):
 class AIAssertions:
     """AI behavior assertions with clear failure messages."""
 
-    def assert_tool_selected(self, response: Dict[str, Any], expected_tool: str) -> None:
+    def assert_tool_selected(
+        self, response: Dict[str, Any], expected_tool: str
+    ) -> None:
         """Assert that the expected tool was selected."""
         actual_tool = response.get("tool")
         if actual_tool != expected_tool:
@@ -53,7 +55,9 @@ class AIAssertions:
             raise AIAssertionError("Response did not use any context")
 
         missing = [
-            key for key, value in previous_context.items() if context_used.get(key) != value
+            key
+            for key, value in previous_context.items()
+            if context_used.get(key) != value
         ]
         if missing:
             raise AIAssertionError(f"Context not retained for keys: {missing}")
@@ -70,9 +74,7 @@ class AIAssertions:
             raise AIAssertionError("Multi-step response has no steps")
 
         if expected_steps is not None and len(steps) != expected_steps:
-            raise AIAssertionError(
-                f"Expected {expected_steps} steps, got {len(steps)}"
-            )
+            raise AIAssertionError(f"Expected {expected_steps} steps, got {len(steps)}")
 
     def assert_step_tool(
         self, response: Dict[str, Any], step_index: int, expected_tool: str
@@ -106,12 +108,16 @@ class AIAssertions:
         if not reasoning:
             raise AIAssertionError("Response missing reasoning")
 
-    def assert_prompt_followed(self, response: Dict[str, Any], expected_keywords: List[str]) -> None:
+    def assert_prompt_followed(
+        self, response: Dict[str, Any], expected_keywords: List[str]
+    ) -> None:
         """Assert that response reasoning mentions expected prompt keywords."""
-        reasoning = response.get("reasoning", "") + " " + response.get(
-            "detailed_reasoning", ""
+        reasoning = (
+            response.get("reasoning", "") + " " + response.get("detailed_reasoning", "")
         )
-        missing = [kw for kw in expected_keywords if kw.lower() not in reasoning.lower()]
+        missing = [
+            kw for kw in expected_keywords if kw.lower() not in reasoning.lower()
+        ]
         if missing:
             raise AIAssertionError(f"Reasoning missing expected keywords: {missing}")
 

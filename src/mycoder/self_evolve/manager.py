@@ -93,12 +93,16 @@ class SelfEvolveManager:
         if not issue:
             raise ValueError("Issue description is required")
         self._prune_proposals()
-        test_run = await self._run_tests() if self.config["run_tests_on_issue"] else None
+        test_run = (
+            await self._run_tests() if self.config["run_tests_on_issue"] else None
+        )
         if test_run is None:
             test_run = self._empty_test_run()
         signal = self.signal_collector.build_signal(test_run)
         signal.summary = f"User reported issue: {issue}"
-        signal.failure_output = signal.failure_output or "No failing test output provided."
+        signal.failure_output = (
+            signal.failure_output or "No failing test output provided."
+        )
 
         draft = await self.proposal_engine.generate(signal)
         if draft.error:
@@ -154,9 +158,7 @@ class SelfEvolveManager:
             raise ValueError(f"Proposal not in proposed state: {proposal.status}")
 
         if require_approval:
-            approved = await self._request_user_approval(
-                proposal, approval_callback
-            )
+            approved = await self._request_user_approval(proposal, approval_callback)
             if not approved:
                 proposal.status = "rejected"
                 proposal.error = "User rejected proposal"

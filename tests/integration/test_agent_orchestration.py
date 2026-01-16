@@ -1,8 +1,9 @@
-import pytest
 from pathlib import Path
 
-from mycoder.agents.orchestrator import AgentOrchestrator
+import pytest
+
 from mycoder.agents.base import AgentType
+from mycoder.agents.orchestrator import AgentOrchestrator
 
 
 class DummyCoder:

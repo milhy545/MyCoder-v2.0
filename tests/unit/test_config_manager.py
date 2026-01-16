@@ -5,23 +5,23 @@ Tests the configuration system with multiple sources,
 validation, and integration with multi-API providers.
 """
 
-import pytest
-import os
 import json
+import os
+import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import MagicMock, mock_open, patch
 
-import sys
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from mycoder.config_manager import (
+    APIProviderSettings,
     ConfigManager,
     MyCoderConfig,
-    APIProviderSettings,
-    ThermalSettings,
     SystemSettings,
+    ThermalSettings,
     get_config_manager,
     load_config,
 )

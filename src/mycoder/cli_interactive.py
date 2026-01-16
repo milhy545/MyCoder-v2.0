@@ -7,36 +7,36 @@ Left: Chat History (Auto-scrolling Markdown). Right: Execution Monitor (Logs + S
 import asyncio
 import json
 import os
-import sys
 import shutil
+import sys
 from contextlib import suppress
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 import psutil
 
 # Rich library is now required via poetry
 try:
+    from rich import box
     from rich.align import Align
     from rich.console import Console, Group
     from rich.layout import Layout
     from rich.live import Live
-    from rich.panel import Panel
-    from rich.prompt import Prompt, Confirm
-    from rich.table import Table
     from rich.markdown import Markdown
+    from rich.panel import Panel
+    from rich.prompt import Confirm, Prompt
+    from rich.table import Table
     from rich.text import Text
-    from rich import box
 except ImportError:
     print("CRITICAL: 'rich' library not found. Please run: poetry add rich")
     sys.exit(1)
 
 # Optional prompt_toolkit for Tab-based selection.
 try:
+    from prompt_toolkit import PromptSession
     from prompt_toolkit import prompt as pt_prompt
     from prompt_toolkit.key_binding import KeyBindings
-    from prompt_toolkit import PromptSession
 except ImportError:
     pt_prompt = None
     KeyBindings = None
@@ -44,28 +44,28 @@ except ImportError:
 
 # Import Core
 try:
-    from .enhanced_mycoder_v2 import EnhancedMyCoderV2
-    from .config_manager import ConfigManager
+    from .agents import AgentOrchestrator, AgentType
     from .api_providers import APIProviderType
     from .command_parser import CommandParser
-    from .tool_registry import ToolExecutionContext
+    from .config_manager import ConfigManager
+    from .enhanced_mycoder_v2 import EnhancedMyCoderV2
+    from .mcp_bridge import MCPBridge
     from .self_evolve import SelfEvolveManager
     from .todo_tracker import TodoTracker
-    from .agents import AgentOrchestrator, AgentType
+    from .tool_registry import ToolExecutionContext
     from .web_tools import WebFetcher, WebSearcher
-    from .mcp_bridge import MCPBridge
 except ImportError:
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-    from mycoder.enhanced_mycoder_v2 import EnhancedMyCoderV2
-    from mycoder.config_manager import ConfigManager
+    from mycoder.agents import AgentOrchestrator, AgentType
     from mycoder.api_providers import APIProviderType
     from mycoder.command_parser import CommandParser
-    from mycoder.tool_registry import ToolExecutionContext
+    from mycoder.config_manager import ConfigManager
+    from mycoder.enhanced_mycoder_v2 import EnhancedMyCoderV2
+    from mycoder.mcp_bridge import MCPBridge
     from mycoder.self_evolve import SelfEvolveManager
     from mycoder.todo_tracker import TodoTracker
-    from mycoder.agents import AgentOrchestrator, AgentType
+    from mycoder.tool_registry import ToolExecutionContext
     from mycoder.web_tools import WebFetcher, WebSearcher
-    from mycoder.mcp_bridge import MCPBridge
 
 try:
     from .tts_engine import TTSEngine
@@ -290,21 +290,15 @@ class InteractiveCLI:
                 rate=tts_config.get("rate", 150),
             )
 
-        self.self_evolve_manager = SelfEvolveManager(
-            self.coder, Path.cwd()
-        )
-        self.todo_tracker = TodoTracker(
-            Path.cwd() / ".mycoder" / "todo.json"
-        )
+        self.self_evolve_manager = SelfEvolveManager(self.coder, Path.cwd())
+        self.todo_tracker = TodoTracker(Path.cwd() / ".mycoder" / "todo.json")
         self.plan_task: Optional[str] = None
         self.plan_content: Optional[str] = None
         self.plan_status: str = "idle"
         self.agent_orchestrator = AgentOrchestrator(self.coder, Path.cwd())
         cache_dir = Path.cwd() / ".mycoder" / "web_cache"
         self.web_fetcher = WebFetcher(cache_dir=cache_dir)
-        self.web_searcher = WebSearcher(
-            api_key=os.getenv("MYCODER_WEB_SEARCH_KEY")
-        )
+        self.web_searcher = WebSearcher(api_key=os.getenv("MYCODER_WEB_SEARCH_KEY"))
         self.mcp_bridge: Optional[MCPBridge] = None
 
     async def _self_evolve_approval(self, proposal) -> bool:
@@ -444,9 +438,7 @@ class InteractiveCLI:
             if isinstance(data, list):
                 self.chat_history = data[-500:]
         except Exception as exc:
-            self.console.print(
-                f"[bold yellow]History load failed: {exc}[/]"
-            )
+            self.console.print(f"[bold yellow]History load failed: {exc}[/]")
 
     def _save_history(self) -> None:
         """Persist chat history to disk."""
@@ -457,9 +449,7 @@ class InteractiveCLI:
                 json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
             )
         except Exception as exc:
-            self.console.print(
-                f"[bold yellow]History save failed: {exc}[/]"
-            )
+            self.console.print(f"[bold yellow]History save failed: {exc}[/]")
 
     def _export_history(self, path: Path) -> None:
         """Export chat history as Markdown."""
@@ -508,7 +498,10 @@ class InteractiveCLI:
                         output_text += f"```\n{result.data['output']}\n```"
                     else:
                         import json
-                        output_text += f"```json\n{json.dumps(result.data, indent=2)}\n```"
+
+                        output_text += (
+                            f"```json\n{json.dumps(result.data, indent=2)}\n```"
+                        )
                 else:
                     output_text += f"```\n{result.data}\n```"
 
@@ -777,9 +770,7 @@ class InteractiveCLI:
                     approval_callback=self._self_evolve_approval,
                 )
                 status = result.status.replace("_", " ")
-                self.console.print(
-                    f"[{COLOR_SUCCESS}]Self-evolve result:[/] {status}"
-                )
+                self.console.print(f"[{COLOR_SUCCESS}]Self-evolve result:[/] {status}")
                 if result.risk_notes:
                     risk_pct = result.risk_score * 100
                     self.console.print(
@@ -834,9 +825,7 @@ class InteractiveCLI:
                     f"[{COLOR_INFO}]Creating proposal from user issue...[/]"
                 )
                 self.monitor.add_log("SELF_EVOLVE", "issue")
-                proposal = await self.self_evolve_manager.propose_from_issue(
-                    issue_text
-                )
+                proposal = await self.self_evolve_manager.propose_from_issue(issue_text)
                 if proposal.status == "failed":
                     self.console.print(
                         f"[bold red]Proposal failed:[/] {proposal.error or 'Unknown error'}"
@@ -908,9 +897,7 @@ class InteractiveCLI:
             if action in {"approve", "cancel", "execute", "show"}:
                 if action == "show":
                     if not self.plan_content:
-                        self.console.print(
-                            f"[{COLOR_INFO}]No active plan.[/]"
-                        )
+                        self.console.print(f"[{COLOR_INFO}]No active plan.[/]")
                         return
                     self.console.print(Markdown(self.plan_content))
                     return
@@ -918,26 +905,18 @@ class InteractiveCLI:
                     self.plan_task = None
                     self.plan_content = None
                     self.plan_status = "idle"
-                    self.console.print(
-                        f"[{COLOR_SUCCESS}]Plan cleared.[/]"
-                    )
+                    self.console.print(f"[{COLOR_SUCCESS}]Plan cleared.[/]")
                     return
                 if action == "approve":
                     if not self.plan_content:
-                        self.console.print(
-                            f"[{COLOR_INFO}]No plan to approve.[/]"
-                        )
+                        self.console.print(f"[{COLOR_INFO}]No plan to approve.[/]")
                         return
                     self.plan_status = "approved"
-                    self.console.print(
-                        f"[{COLOR_SUCCESS}]Plan approved.[/]"
-                    )
+                    self.console.print(f"[{COLOR_SUCCESS}]Plan approved.[/]")
                     return
                 if action == "execute":
                     if not self.plan_content:
-                        self.console.print(
-                            f"[{COLOR_INFO}]No plan to execute.[/]"
-                        )
+                        self.console.print(f"[{COLOR_INFO}]No plan to execute.[/]")
                         return
                     if self.plan_status != "approved":
                         self.console.print(
@@ -954,9 +933,7 @@ class InteractiveCLI:
                         "Execute this plan step-by-step. Ask before any destructive action.\n\n"
                         f"{self.plan_content}"
                     )
-                    self.console.print(
-                        f"[{COLOR_INFO}]Executing approved plan...[/]"
-                    )
+                    self.console.print(f"[{COLOR_INFO}]Executing approved plan...[/]")
                     self.monitor.add_log("PLAN", "execute")
                     await self.process_chat(execution_prompt)
                     return
@@ -967,9 +944,7 @@ class InteractiveCLI:
             self.plan_task = task
             self.plan_status = "pending"
             plan_prompt = self._build_plan_prompt(task)
-            self.console.print(
-                f"[{COLOR_INFO}]Generating plan for: {task}[/]"
-            )
+            self.console.print(f"[{COLOR_INFO}]Generating plan for: {task}[/]")
             self.monitor.add_log("PLAN", "generate")
             with self.console.status(
                 "[bold magenta]Generuji plan...[/]", spinner="dots"
@@ -1028,7 +1003,7 @@ class InteractiveCLI:
             action = args[0].lower()
             if action == "fetch":
                 if len(args) < 2:
-                    self.console.print("[bold red]Usage: /web fetch <url> [prompt][/]") 
+                    self.console.print("[bold red]Usage: /web fetch <url> [prompt][/]")
                     return
                 url = args[1]
                 prompt = " ".join(args[2:]).strip()
@@ -1053,7 +1028,9 @@ class InteractiveCLI:
                     self.console.print(f"[{COLOR_INFO}]No results.[/]")
                     return
                 for item in results:
-                    self.console.print(f"- {item.title}\n  {item.url}\n  {item.snippet}")
+                    self.console.print(
+                        f"- {item.title}\n  {item.url}\n  {item.snippet}"
+                    )
             else:
                 self.console.print(
                     "[bold red]Usage: /web fetch <url> [prompt] | /web search <query>[/]"
@@ -1095,9 +1072,7 @@ class InteractiveCLI:
                     self.console.print(f"- {name}: {desc}")
             elif action == "call":
                 if len(args) < 3:
-                    self.console.print(
-                        "[bold red]Usage: /mcp call <tool> <json>[/]"
-                    )
+                    self.console.print("[bold red]Usage: /mcp call <tool> <json>[/]")
                     return
                 tool_name = args[1]
                 payload = " ".join(args[2:]).strip()
@@ -1125,9 +1100,7 @@ class InteractiveCLI:
             if not args:
                 items = self.todo_tracker.list_items()
                 if not items:
-                    self.console.print(
-                        f"[{COLOR_INFO}]No todo items.[/]"
-                    )
+                    self.console.print(f"[{COLOR_INFO}]No todo items.[/]")
                     return
                 table = Table(title="Todo List", box=box.ROUNDED)
                 table.add_column("#", style="cyan", no_wrap=True)
@@ -1206,7 +1179,10 @@ class InteractiveCLI:
                 raw_input=f"/voice {action}",
             )
 
-            if hasattr(self.coder, "tool_orchestrator") and self.coder.tool_orchestrator:
+            if (
+                hasattr(self.coder, "tool_orchestrator")
+                and self.coder.tool_orchestrator
+            ):
                 result = await self.coder.tool_orchestrator.execute_command(
                     command, self._build_execution_context()
                 )
@@ -1223,9 +1199,7 @@ class InteractiveCLI:
                 else:
                     self.console.print(f"[bold red]Error: {result.error}[/]")
             else:
-                self.console.print(
-                    "[bold yellow]Tool orchestrator not initialized.[/]"
-                )
+                self.console.print("[bold yellow]Tool orchestrator not initialized.[/]")
         elif cmd == "/clear":
             self.console.clear()
             self.print_banner()
@@ -1304,9 +1278,9 @@ class InteractiveCLI:
                 )
                 self._append_chat_entry("ai", content)
                 self.monitor.add_log("RESPONSE_OK", f"{len(content)} chars")
-                if self.tts_engine and getattr(
-                    self.config, "text_to_speech", {}
-                ).get("auto_read_responses", False):
+                if self.tts_engine and getattr(self.config, "text_to_speech", {}).get(
+                    "auto_read_responses", False
+                ):
                     plain_text = self._strip_markdown(content)
                     await self.tts_engine.speak_async(plain_text)
                 return content
@@ -1602,14 +1576,19 @@ class InteractiveCLI:
                             self.monitor.add_log("EXEC_TOOL", command.tool)
 
                             # Execute tool if orchestrator is available
-                            if hasattr(self.coder, "tool_orchestrator") and self.coder.tool_orchestrator:
+                            if (
+                                hasattr(self.coder, "tool_orchestrator")
+                                and self.coder.tool_orchestrator
+                            ):
                                 try:
                                     result = await self.coder.tool_orchestrator.execute_command(
                                         command, self._build_execution_context()
                                     )
                                     self._display_tool_result(result)
                                 except Exception as e:
-                                    self.console.print(f"[bold red]Tool execution error: {e}[/]")
+                                    self.console.print(
+                                        f"[bold red]Tool execution error: {e}[/]"
+                                    )
                             else:
                                 self.console.print(
                                     f"[bold yellow]Tool orchestrator not initialized. Run in initialized mode.[/]"

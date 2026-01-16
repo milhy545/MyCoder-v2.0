@@ -24,7 +24,9 @@ class ProposalDraft:
 class ProposalEngine:
     """Generate patch proposals using the configured coder."""
 
-    def __init__(self, coder, repo_root: Path, allowed_paths: Optional[list[str]] = None):
+    def __init__(
+        self, coder, repo_root: Path, allowed_paths: Optional[list[str]] = None
+    ):
         self.coder = coder
         self.repo_root = repo_root
         self.allowed_paths = allowed_paths or []
@@ -35,7 +37,9 @@ class ProposalEngine:
             prompt,
             use_tools=False,
         )
-        content = response.get("content") if isinstance(response, dict) else str(response)
+        content = (
+            response.get("content") if isinstance(response, dict) else str(response)
+        )
         payload = self._extract_json(content)
         if payload:
             diff = payload.get("diff", "")
@@ -63,7 +67,9 @@ class ProposalEngine:
 
     def _build_prompt(self, signal: EvolveSignal) -> str:
         status = self._git_status()
-        allowed_text = ", ".join(self.allowed_paths) if self.allowed_paths else "repo root"
+        allowed_text = (
+            ", ".join(self.allowed_paths) if self.allowed_paths else "repo root"
+        )
         return (
             "You are the Self-Evolve engine for MyCoder. "
             "Use the failing test output to propose a minimal fix. "

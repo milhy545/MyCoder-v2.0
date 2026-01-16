@@ -31,7 +31,9 @@ class SimpleAISimulator:
         self.call_count = 0
         self.history: List[Dict[str, Any]] = []
 
-    def simulate(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def simulate(
+        self, prompt: str, context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Simulate AI response for given prompt.
 
@@ -119,7 +121,9 @@ class SimpleAISimulator:
                 },
             )
 
-        if self._matches_conflict(prompt_lower) or self._matches_unknown_tool(prompt_lower):
+        if self._matches_conflict(prompt_lower) or self._matches_unknown_tool(
+            prompt_lower
+        ):
             return self._respond(
                 "ask_user",
                 0.5,
@@ -268,13 +272,17 @@ class AISimulator:
     - Response quality simulation.
     """
 
-    def __init__(self, intelligence_level: IntelligenceLevel = IntelligenceLevel.NORMAL) -> None:
+    def __init__(
+        self, intelligence_level: IntelligenceLevel = IntelligenceLevel.NORMAL
+    ) -> None:
         self.intelligence = intelligence_level
         self.context_memory: List[Dict[str, Any]] = []
         self.tool_usage_history: List[str] = []
         self.simple_sim = SimpleAISimulator()
 
-    def simulate(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def simulate(
+        self, prompt: str, context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Advanced simulation with intelligence levels.
 
@@ -336,17 +344,17 @@ class AISimulator:
         reasoning = f"Selected '{tool}' because: "
 
         if tool == "file_read":
-            reasoning += (
-                "Prompt indicates reading file content. Direct file access is most efficient."
-            )
+            reasoning += "Prompt indicates reading file content. Direct file access is most efficient."
         elif tool == "file_write":
-            reasoning += (
-                "Prompt indicates writing data to file. File write tool provides safe write operations."
-            )
+            reasoning += "Prompt indicates writing data to file. File write tool provides safe write operations."
         elif tool == "bash":
-            reasoning += "Prompt requires command execution. Bash tool provides shell access."
+            reasoning += (
+                "Prompt requires command execution. Bash tool provides shell access."
+            )
         elif tool == "multi_step":
-            reasoning += f"Task requires {len(response.get('steps', []))} sequential steps."
+            reasoning += (
+                f"Task requires {len(response.get('steps', []))} sequential steps."
+            )
         else:
             reasoning += "Best match for user intent based on pattern analysis."
 

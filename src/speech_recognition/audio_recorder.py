@@ -10,12 +10,12 @@ import io
 import logging
 import threading
 import time
-from typing import Optional, Callable, Any
 import wave
+from typing import Any, Callable, Optional
 
 try:
-    import sounddevice as sd
     import numpy as np
+    import sounddevice as sd
 
     AUDIO_AVAILABLE = True
 except ImportError:

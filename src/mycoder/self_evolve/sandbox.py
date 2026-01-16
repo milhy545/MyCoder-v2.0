@@ -17,11 +17,11 @@ class WorktreeSandbox:
         self.base_dir = base_dir
 
     def create(self) -> Path:
-        base_dir = self.base_dir or self.repo_root / ".mycoder" / "self_evolve" / "worktrees"
-        base_dir.mkdir(parents=True, exist_ok=True)
-        worktree_path = Path(
-            tempfile.mkdtemp(prefix="self-evolve-", dir=base_dir)
+        base_dir = (
+            self.base_dir or self.repo_root / ".mycoder" / "self_evolve" / "worktrees"
         )
+        base_dir.mkdir(parents=True, exist_ok=True)
+        worktree_path = Path(tempfile.mkdtemp(prefix="self-evolve-", dir=base_dir))
         add_result = subprocess.run(
             ["git", "worktree", "add", "--detach", str(worktree_path)],
             cwd=self.repo_root,

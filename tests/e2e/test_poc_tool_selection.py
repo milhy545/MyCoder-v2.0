@@ -36,9 +36,9 @@ class TestSimpleAISimulatorPOC:
 
         for prompt, expected_tool in test_cases:
             result = self.simulator.simulate(prompt)
-            assert result["tool"] == expected_tool, (
-                f"Failed for '{prompt}': expected {expected_tool}, got {result['tool']}"
-            )
+            assert (
+                result["tool"] == expected_tool
+            ), f"Failed for '{prompt}': expected {expected_tool}, got {result['tool']}"
             assert result["confidence"] > 0.8, "Confidence too low"
 
     def test_file_write_operations(self) -> None:
@@ -117,9 +117,9 @@ class TestSimpleAISimulatorPOC:
 
         for prompt in ambiguous_prompts:
             result = self.simulator.simulate(prompt)
-            assert result["tool"] == "ask_user" or result["confidence"] < 0.7, (
-                f"Ambiguous prompt '{prompt}' should have low confidence or ask user"
-            )
+            assert (
+                result["tool"] == "ask_user" or result["confidence"] < 0.7
+            ), f"Ambiguous prompt '{prompt}' should have low confidence or ask user"
 
     def test_simulator_history_tracking(self) -> None:
         """Test that simulator tracks call history."""
@@ -193,9 +193,7 @@ class TestScenarioIntegration:
 
         for prompt, expected_tool in steps:
             result = simulator.simulate(prompt)
-            assert result["tool"] == expected_tool, (
-                f"Workflow step failed: '{prompt}'"
-            )
+            assert result["tool"] == expected_tool, f"Workflow step failed: '{prompt}'"
 
     def test_error_recovery_scenario(self) -> None:
         """Test handling of error scenarios."""

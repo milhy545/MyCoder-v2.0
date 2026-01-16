@@ -4,14 +4,14 @@ Dynamic UI Panels for MyCoder v2.1.1
 Enhanced execution monitor with AI-aware features.
 """
 
-from typing import Dict, Optional, List, Tuple
 from datetime import datetime
+from typing import Dict, List, Optional, Tuple
 
 import psutil
-from rich.table import Table
-from rich.panel import Panel
-from rich.text import Text
 from rich import box
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
 
 
 class DynamicExecutionMonitor:
@@ -96,8 +96,12 @@ class DynamicExecutionMonitor:
 
         metrics = self._get_system_metrics()
         table.add_row(Text("SYSTEM", style="bold cyan"))
-        table.add_row(Text(f"CPU: {self._render_bar(metrics['cpu'])} {metrics['cpu']:.0f}%"))
-        table.add_row(Text(f"RAM: {self._render_bar(metrics['ram'])} {metrics['ram']:.0f}%"))
+        table.add_row(
+            Text(f"CPU: {self._render_bar(metrics['cpu'])} {metrics['cpu']:.0f}%")
+        )
+        table.add_row(
+            Text(f"RAM: {self._render_bar(metrics['ram'])} {metrics['ram']:.0f}%")
+        )
         if metrics["thermal"] != "N/A":
             table.add_row(Text(f"THERMAL: {metrics['thermal']}"))
 

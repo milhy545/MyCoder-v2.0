@@ -10,22 +10,22 @@ Tests complete system integration with real-world scenarios including:
 """
 
 import asyncio
-import pytest
-import os
-import tempfile
 import json
+import os
+import sys
+import tempfile
 import time
 from pathlib import Path
-from unittest.mock import patch, Mock, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
 
-import sys
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from mycoder import EnhancedMyCoderV2
-from mycoder.api_providers import APIProviderType, APIProviderConfig
+from mycoder.api_providers import APIProviderConfig, APIProviderType
 from mycoder.config_manager import ConfigManager, MyCoderConfig
-from mycoder.tool_registry import get_tool_registry, ToolExecutionContext
+from mycoder.tool_registry import ToolExecutionContext, get_tool_registry
 
 
 class TestEnhancedMyCoderIntegration:

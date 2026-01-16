@@ -6,29 +6,29 @@ error handling, and thermal integration for Q9550 systems.
 """
 
 import asyncio
-from contextlib import ExitStack
-import pytest
-import os
 import json
-import time
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from pathlib import Path
-
+import os
 import sys
+import time
+from contextlib import ExitStack
+from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from mycoder.api_providers import (
-    APIProviderRouter,
     APIProviderConfig,
-    APIProviderType,
+    APIProviderRouter,
     APIProviderStatus,
+    APIProviderType,
     APIResponse,
+    BaseAPIProvider,
     ClaudeAnthropicProvider,
     ClaudeOAuthProvider,
     GeminiProvider,
     OllamaProvider,
-    BaseAPIProvider,
 )
 
 

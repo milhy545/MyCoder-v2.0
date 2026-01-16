@@ -40,7 +40,5 @@ class SignalCollector:
             output = output.strip()
             if len(output) > self.max_output_chars:
                 output = output[-self.max_output_chars :]
-            blocks.append(
-                f"$ {failure.command}\n{output}\n"
-            )
+            blocks.append(f"$ {failure.command}\n{output}\n")
         return "\n".join(blocks).strip()

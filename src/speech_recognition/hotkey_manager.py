@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import threading
-from typing import Optional, Callable, Dict, Set
+from typing import Callable, Dict, Optional, Set
 
 try:
     from pynput import keyboard

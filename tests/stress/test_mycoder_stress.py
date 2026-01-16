@@ -13,22 +13,22 @@ Run with: pytest tests/stress/test_mycoder_stress.py -v -s --tb=short
 """
 
 import asyncio
-import pytest
 import os
-import tempfile
-import time
 import random
-from pathlib import Path
-from unittest.mock import patch, Mock, AsyncMock
-from concurrent.futures import ThreadPoolExecutor
-import threading
-
 import sys
+import tempfile
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from mycoder import EnhancedMyCoderV2
-from mycoder.api_providers import APIProviderType, APIProviderConfig, APIResponse
+from mycoder.api_providers import APIProviderConfig, APIProviderType, APIResponse
 from mycoder.config_manager import ConfigManager
 
 

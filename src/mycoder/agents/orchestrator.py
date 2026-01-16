@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from .base import BaseAgent, AgentResult, AgentType
+from .base import AgentResult, AgentType, BaseAgent
 from .bash import BashAgent
 from .explore import ExploreAgent
 from .general import GeneralPurposeAgent

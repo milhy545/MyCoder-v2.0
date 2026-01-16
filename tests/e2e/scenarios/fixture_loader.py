@@ -59,7 +59,9 @@ def _scenario_type_from_key(key: str) -> ScenarioType:
     return mapping.get(key, ScenarioType.TOOL_SELECTION)
 
 
-def _build_validation_rules(behaviors: Dict[str, Any]) -> List[Callable[[Dict[str, Any]], bool]]:
+def _build_validation_rules(
+    behaviors: Dict[str, Any],
+) -> List[Callable[[Dict[str, Any]], bool]]:
     rules: List[Callable[[Dict[str, Any]], bool]] = []
 
     expected_steps = behaviors.get("expected_steps")
@@ -94,7 +96,9 @@ def _rule_expected_steps(expected_steps: List[str]) -> Callable[[Dict[str, Any]]
     return _rule
 
 
-def _rule_expected_actions(expected_actions: List[str]) -> Callable[[Dict[str, Any]], bool]:
+def _rule_expected_actions(
+    expected_actions: List[str],
+) -> Callable[[Dict[str, Any]], bool]:
     def _rule(response: Dict[str, Any]) -> bool:
         context_used = response.get("context_used", {})
         actions = context_used.get("recommended_actions", [])

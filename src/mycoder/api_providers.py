@@ -14,17 +14,17 @@ Inspired by FEI architecture patterns for distributed AI systems.
 """
 
 import asyncio
+import json
 import logging
 import os
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union, Callable
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import aiohttp
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -184,7 +184,9 @@ class BaseAPIProvider(ABC):
         self.circuit_breaker = CircuitBreaker(
             failure_threshold=config.config.get("circuit_breaker_threshold", 5),
             recovery_timeout=config.config.get("circuit_breaker_timeout", 60),
-            half_open_max_calls=config.config.get("circuit_breaker_half_open_max_calls", 3),
+            half_open_max_calls=config.config.get(
+                "circuit_breaker_half_open_max_calls", 3
+            ),
         )
         self.rate_limiter = RateLimiter(
             requests_per_minute=config.config.get("rate_limit_rpm", 60)
@@ -207,9 +209,7 @@ class BaseAPIProvider(ABC):
         if not self.config.enabled:
             return False
         if not self.circuit_breaker.can_execute():
-            logger.info(
-                f"Circuit breaker OPEN for {self.config.provider_type.value}"
-            )
+            logger.info(f"Circuit breaker OPEN for {self.config.provider_type.value}")
             return False
 
         # Perform health check if needed
@@ -1399,7 +1399,8 @@ class APIProviderRouter:
             provider=APIProviderType.RECOVERY,
             error=f"All providers failed. Last error: {last_error}",
             metadata={
-                "attempted_providers": attempted_providers or [p.value for p in provider_order],
+                "attempted_providers": attempted_providers
+                or [p.value for p in provider_order],
                 "attempted_errors": attempted_errors,
                 "fallback_used": len(attempted_providers) > 1,
             },
@@ -1420,6 +1421,7 @@ class APIProviderRouter:
             "rate limit",
         )
         return not any(term in lowered for term in non_retryable)
+
     def _get_provider(
         self, provider_type: APIProviderType
     ) -> Optional[BaseAPIProvider]:

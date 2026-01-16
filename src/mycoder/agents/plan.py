@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
-from .base import BaseAgent, AgentResult, AgentType
+from .base import AgentResult, AgentType, BaseAgent
 
 
 @dataclass
@@ -34,13 +34,17 @@ class PlanAgent(BaseAgent):
 
     @property
     def description(self) -> str:
-        return "Design implementation plans, identify critical files, consider trade-offs"
+        return (
+            "Design implementation plans, identify critical files, consider trade-offs"
+        )
 
     async def execute(self, task: str, context: Dict[str, Any] = None) -> AgentResult:
         plan_prompt = self._build_plan_prompt(task, context)
 
         response = await self.coder.process_request(plan_prompt, use_tools=False)
-        content = response.get("content") if isinstance(response, dict) else str(response)
+        content = (
+            response.get("content") if isinstance(response, dict) else str(response)
+        )
 
         return AgentResult(
             success=True,

@@ -17,8 +17,8 @@ import time
 from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Callable, Set
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Set
 
 try:
     from .mcp_connector import MCPConnector
@@ -28,10 +28,10 @@ except ImportError:
     except ImportError:
         MCPConnector = None  # type: ignore
 try:
-    from .tools.edit_tool import EditTool, EditResult
+    from .tools.edit_tool import EditResult, EditTool
 except ImportError:
     try:
-        from tools.edit_tool import EditTool, EditResult  # type: ignore
+        from tools.edit_tool import EditResult, EditTool  # type: ignore
     except ImportError:
         EditTool = None  # type: ignore
         EditResult = None  # type: ignore
@@ -352,7 +352,7 @@ class FileEditTool(BaseTool):
                 data=None,
                 tool_name=self.name,
                 duration_ms=duration_ms,
-                error="Usage: /edit <path> \"old\" \"new\" [--all]",
+                error='Usage: /edit <path> "old" "new" [--all]',
             )
 
         file_path = Path(path)

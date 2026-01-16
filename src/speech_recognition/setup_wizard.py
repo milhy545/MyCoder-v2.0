@@ -6,22 +6,22 @@ Interactive wizard that tests and configures the dictation application.
 """
 
 import logging
+import re
+import subprocess
 import sys
 import time
-import subprocess
-import re
-from typing import Optional, Tuple
 from pathlib import Path
+from typing import Optional, Tuple
 
 try:
-    import sounddevice as sd
     import numpy as np
+    import sounddevice as sd
 
     AUDIO_AVAILABLE = True
 except ImportError:
     AUDIO_AVAILABLE = False
 
-from .config import ConfigManager, DictationConfig, AudioConfig, WhisperConfig
+from .config import AudioConfig, ConfigManager, DictationConfig, WhisperConfig
 
 logger = logging.getLogger(__name__)
 
@@ -413,7 +413,7 @@ class SetupWizard:
 
         try:
             from .audio_recorder import AudioRecorder
-            from .whisper_transcriber import WhisperTranscriber, WhisperProvider
+            from .whisper_transcriber import WhisperProvider, WhisperTranscriber
 
             print("\n🔄 Načítám Whisper model (tiny)...")
             recorder = AudioRecorder(

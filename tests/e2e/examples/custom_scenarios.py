@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 from tests.e2e.framework.ai_simulator import AISimulator, IntelligenceLevel
-from tests.e2e.framework.scenario_engine import ScenarioDefinition, ScenarioEngine, ScenarioType
+from tests.e2e.framework.scenario_engine import (
+    ScenarioDefinition,
+    ScenarioEngine,
+    ScenarioType,
+)
 
 
 def main() -> None:

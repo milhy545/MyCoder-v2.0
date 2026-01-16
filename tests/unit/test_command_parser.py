@@ -5,7 +5,8 @@ Tests parsing of CLI commands like /bash, /file, /git into structured Command ob
 """
 
 import pytest
-from mycoder.command_parser import CommandParser, Command, parse_command
+
+from mycoder.command_parser import Command, CommandParser, parse_command
 
 
 class TestCommandParser:

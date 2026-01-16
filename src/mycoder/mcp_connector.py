@@ -15,9 +15,9 @@ from urllib.parse import urlparse
 import aiohttp
 
 try:
-    from .adaptive_modes import OperationalMode, ClaudeNetworkError
+    from .adaptive_modes import ClaudeNetworkError, OperationalMode
 except ImportError:
-    from adaptive_modes import OperationalMode, ClaudeNetworkError  # type: ignore
+    from adaptive_modes import ClaudeNetworkError, OperationalMode  # type: ignore
 
 logger = logging.getLogger(__name__)
 
