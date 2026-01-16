@@ -5,8 +5,8 @@ from mycoder.api_providers import (
     APIProviderStatus,
     APIProviderType,
     APIResponse,
-    TermuxOllamaProvider,
     OllamaProvider,
+    TermuxOllamaProvider,
 )
 
 

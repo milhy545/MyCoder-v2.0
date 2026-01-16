@@ -2,12 +2,14 @@ import asyncio
 import http.server
 import json
 import logging
+import os
 import threading
 import time
+from pathlib import Path
+
 import pytest
 import pytest_asyncio
-import os
-from pathlib import Path
+
 from mycoder import EnhancedMyCoderV2
 from mycoder.api_providers import APIProviderType
 

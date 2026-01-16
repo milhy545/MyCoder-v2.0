@@ -4,9 +4,10 @@ Unit tests for speech recognition module.
 Tests core components without requiring audio hardware or API keys.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 import io
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 
 class TestAudioRecorder:
@@ -64,7 +65,7 @@ class TestWhisperTranscriber:
     def test_whisper_api_config(self):
         """Test Whisper API configuration."""
         try:
-            from speech_recognition import WhisperTranscriber, WhisperProvider
+            from speech_recognition import WhisperProvider, WhisperTranscriber
 
             with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}):
                 transcriber = WhisperTranscriber(
@@ -85,7 +86,7 @@ class TestWhisperTranscriber:
     def test_whisper_available_models(self):
         """Test getting available Whisper models."""
         try:
-            from speech_recognition import WhisperTranscriber, WhisperProvider
+            from speech_recognition import WhisperProvider, WhisperTranscriber
 
             with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}):
                 # API models
@@ -114,7 +115,7 @@ class TestTextInjector:
     def test_text_injector_init(self):
         """Test TextInjector initialization."""
         try:
-            from speech_recognition import TextInjector, InjectionMethod
+            from speech_recognition import InjectionMethod, TextInjector
 
             injector = TextInjector(
                 method=InjectionMethod.AUTO,

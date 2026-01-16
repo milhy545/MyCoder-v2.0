@@ -1,0 +1,52 @@
+{
+  "responses": [
+    {
+      "tool": "file_read",
+      "confidence": 0.9,
+      "reasoning": "Detected file read request",
+      "alternatives": ["bash"],
+      "context_used": {
+        "file_path": "README.md"
+      }
+    },
+    {
+      "tool": "bash",
+      "confidence": 0.85,
+      "reasoning": "Detected command execution request",
+      "alternatives": ["mcp"],
+      "context_used": {
+        "command_type": "git"
+      }
+    },
+    {
+      "tool": "multi_step",
+      "confidence": 0.8,
+      "reasoning": "Task requires multiple steps",
+      "steps": [
+        {
+          "tool": "file_read",
+          "confidence": 0.9
+        },
+        {
+          "tool": "bash",
+          "confidence": 0.85
+        }
+      ]
+    },
+    {
+      "tool": "file_list",
+      "confidence": 0.85,
+      "reasoning": "Detected file list request",
+      "alternatives": ["bash"],
+      "context_used": {
+        "directory": "src/"
+      }
+    },
+    {
+      "tool": "ask_user",
+      "confidence": 0.5,
+      "reasoning": "Request is ambiguous",
+      "alternatives": []
+    }
+  ]
+}

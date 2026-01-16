@@ -20,8 +20,8 @@ except ImportError:
 
 from .config import ConfigManager, DictationConfig, setup_logging
 from .dictation_app import GlobalDictationApp
-from .whisper_transcriber import WhisperProvider
 from .text_injector import InjectionMethod
+from .whisper_transcriber import WhisperProvider
 
 logger = logging.getLogger(__name__)
 

@@ -14,17 +14,17 @@ Inspired by FEI architecture patterns for distributed AI systems.
 """
 
 import asyncio
+import json
 import logging
 import os
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union, Callable
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import aiohttp
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +54,86 @@ class APIProviderStatus(Enum):
     DEGRADED = "degraded"
     UNAVAILABLE = "unavailable"
     UNKNOWN = "unknown"
+
+
+class CircuitState(Enum):
+    """Circuit breaker states."""
+
+    CLOSED = "closed"
+    OPEN = "open"
+    HALF_OPEN = "half_open"
+
+
+@dataclass
+class CircuitBreaker:
+    failure_threshold: int = 5
+    recovery_timeout: int = 60
+    half_open_max_calls: int = 3
+
+    state: CircuitState = CircuitState.CLOSED
+    failure_count: int = 0
+    last_failure_time: float = 0.0
+    half_open_calls: int = 0
+
+    def can_execute(self) -> bool:
+        if self.state == CircuitState.CLOSED:
+            return True
+
+        if self.state == CircuitState.OPEN:
+            if time.time() - self.last_failure_time > self.recovery_timeout:
+                self.state = CircuitState.HALF_OPEN
+                self.half_open_calls = 0
+                return True
+            return False
+
+        return self.half_open_calls < self.half_open_max_calls
+
+    def record_success(self) -> None:
+        if self.state == CircuitState.HALF_OPEN:
+            self.half_open_calls += 1
+            if self.half_open_calls >= self.half_open_max_calls:
+                self.state = CircuitState.CLOSED
+                self.failure_count = 0
+        else:
+            self.failure_count = 0
+
+    def record_failure(self) -> None:
+        self.failure_count += 1
+        self.last_failure_time = time.time()
+
+        if self.state == CircuitState.HALF_OPEN:
+            self.state = CircuitState.OPEN
+        elif self.failure_count >= self.failure_threshold:
+            self.state = CircuitState.OPEN
+
+
+class RateLimiter:
+    """Token bucket rate limiter."""
+
+    def __init__(self, requests_per_minute: int = 60) -> None:
+        self.rpm = max(0, int(requests_per_minute))
+        self.tokens = self.rpm
+        self.last_refill = time.time()
+
+    async def acquire(self) -> None:
+        if self.rpm <= 0:
+            return
+
+        self._refill()
+        while self.tokens <= 0:
+            await asyncio.sleep(0.1)
+            self._refill()
+
+        self.tokens -= 1
+
+    def _refill(self) -> None:
+        now = time.time()
+        elapsed = now - self.last_refill
+        refill_amount = int(elapsed * (self.rpm / 60))
+
+        if refill_amount > 0:
+            self.tokens = min(self.rpm, self.tokens + refill_amount)
+            self.last_refill = now
 
 
 @dataclass
@@ -101,6 +181,16 @@ class BaseAPIProvider(ABC):
         self.error_count = 0
         self.total_requests = 0
         self.successful_requests = 0
+        self.circuit_breaker = CircuitBreaker(
+            failure_threshold=config.config.get("circuit_breaker_threshold", 5),
+            recovery_timeout=config.config.get("circuit_breaker_timeout", 60),
+            half_open_max_calls=config.config.get(
+                "circuit_breaker_half_open_max_calls", 3
+            ),
+        )
+        self.rate_limiter = RateLimiter(
+            requests_per_minute=config.config.get("rate_limit_rpm", 60)
+        )
 
     @abstractmethod
     async def query(
@@ -117,6 +207,9 @@ class BaseAPIProvider(ABC):
     async def can_handle_request(self, context: Dict[str, Any] = None) -> bool:
         """Check if provider can handle the request"""
         if not self.config.enabled:
+            return False
+        if not self.circuit_breaker.can_execute():
+            logger.info(f"Circuit breaker OPEN for {self.config.provider_type.value}")
             return False
 
         # Perform health check if needed
@@ -240,19 +333,26 @@ class ClaudeAnthropicProvider(BaseAPIProvider):
             )
 
     async def health_check(self) -> APIProviderStatus:
-        """Check Claude Anthropic API health"""
+        """Lightweight Claude health check without full query."""
         try:
             if not self.api_key:
                 return APIProviderStatus.UNAVAILABLE
 
-            # Simple test query
-            test_response = await self.query("Hello", timeout_seconds=10)
-
-            if test_response.success:
-                return APIProviderStatus.HEALTHY
-            else:
-                return APIProviderStatus.DEGRADED
-
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=5)
+            ) as session:
+                async with session.get(
+                    f"{self.base_url}/v1/models",
+                    headers={
+                        "x-api-key": self.api_key,
+                        "anthropic-version": "2023-06-01",
+                    },
+                ) as response:
+                    if response.status == 200:
+                        return APIProviderStatus.HEALTHY
+                    if response.status == 401:
+                        return APIProviderStatus.UNAVAILABLE
+                    return APIProviderStatus.DEGRADED
         except Exception as e:
             logger.warning(f"Claude Anthropic health check failed: {e}")
             return APIProviderStatus.UNAVAILABLE
@@ -1210,6 +1310,7 @@ class APIProviderRouter:
         prompt: str,
         context: Dict[str, Any] = None,
         preferred_provider: APIProviderType = None,
+        fallback_enabled: bool = True,
         **kwargs,
     ) -> APIResponse:
         """Execute query with intelligent provider selection and fallbacks"""
@@ -1218,19 +1319,22 @@ class APIProviderRouter:
         provider_order = []
 
         if preferred_provider and preferred_provider in self.fallback_chain:
-            # Start with preferred provider
             provider_order.append(preferred_provider)
-            # Add remaining providers in fallback order
-            provider_order.extend(
-                [p for p in self.fallback_chain if p != preferred_provider]
-            )
+            if fallback_enabled:
+                provider_order.extend(
+                    [p for p in self.fallback_chain if p != preferred_provider]
+                )
         else:
-            # Use default fallback order
-            provider_order = self.fallback_chain.copy()
+            if fallback_enabled:
+                provider_order = self.fallback_chain.copy()
+            elif self.fallback_chain:
+                provider_order = [self.fallback_chain[0]]
 
         logger.info(f"Query execution order: {[p.value for p in provider_order]}")
 
         last_error = None
+        attempted_providers: List[str] = []
+        attempted_errors: Dict[str, str] = {}
 
         for provider_type in provider_order:
             provider = self._get_provider(provider_type)
@@ -1244,21 +1348,47 @@ class APIProviderRouter:
                     logger.info(f"Provider {provider_type.value} cannot handle request")
                     continue
 
-                logger.info(f"Attempting query with {provider_type.value}")
-                response = await provider.query(prompt, context, **kwargs)
+                attempts = max(1, provider.config.max_retries)
+                for attempt in range(1, attempts + 1):
+                    logger.info(
+                        f"Attempting query with {provider_type.value} (attempt {attempt}/{attempts})"
+                    )
+                    if getattr(provider, "rate_limiter", None):
+                        await provider.rate_limiter.acquire()
+                    response = await provider.query(prompt, context, **kwargs)
+                    if provider_type.value not in attempted_providers:
+                        attempted_providers.append(provider_type.value)
 
-                if response.success:
-                    logger.info(f"Query successful with {provider_type.value}")
-                    return response
-                else:
+                    if response.success:
+                        provider.circuit_breaker.record_success()
+                        logger.info(f"Query successful with {provider_type.value}")
+                        if response.metadata is None:
+                            response.metadata = {}
+                        response.metadata.setdefault(
+                            "attempted_providers", attempted_providers
+                        )
+                        response.metadata.setdefault(
+                            "attempted_errors", attempted_errors
+                        )
+                        response.metadata.setdefault(
+                            "fallback_used", len(attempted_providers) > 1
+                        )
+                        return response
+
+                    provider.circuit_breaker.record_failure()
                     logger.warning(
                         f"Provider {provider_type.value} returned error: {response.error}"
                     )
                     last_error = response.error
+                    attempted_errors[provider_type.value] = response.error or "unknown"
+                    if not self._is_retryable_error(response.error):
+                        break
 
             except Exception as e:
+                provider.circuit_breaker.record_failure()
                 logger.error(f"Provider {provider_type.value} failed: {e}")
                 last_error = str(e)
+                attempted_errors[provider_type.value] = last_error
                 continue
 
         # All providers failed
@@ -1268,8 +1398,29 @@ class APIProviderRouter:
             content="",
             provider=APIProviderType.RECOVERY,
             error=f"All providers failed. Last error: {last_error}",
-            metadata={"attempted_providers": [p.value for p in provider_order]},
+            metadata={
+                "attempted_providers": attempted_providers
+                or [p.value for p in provider_order],
+                "attempted_errors": attempted_errors,
+                "fallback_used": len(attempted_providers) > 1,
+            },
         )
+
+    @staticmethod
+    def _is_retryable_error(error: Optional[str]) -> bool:
+        if not error:
+            return True
+        lowered = error.lower()
+        non_retryable = (
+            "invalid api key",
+            "authentication failed",
+            "unauthorized",
+            "api quota",
+            "quota exceeded",
+            "permission",
+            "rate limit",
+        )
+        return not any(term in lowered for term in non_retryable)
 
     def _get_provider(
         self, provider_type: APIProviderType

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MyCoder v2.1.0 is a production-ready AI development assistant featuring **5-tier API provider fallback** (Claude Anthropic → Claude OAuth → Gemini → Ollama Local → Ollama Remote), **Q9550 thermal management**, and **FEI-inspired architecture**. Built with Python 3.10-3.13, managed via Poetry.
+MyCoder v2.2.0 is a production-ready AI development assistant featuring **7-tier API provider fallback** (Claude Anthropic → Claude OAuth → Gemini → Mercury → Ollama Local → Termux Ollama → Ollama Remote), **Q9550 thermal management**, **agent orchestration**, and **FEI-inspired architecture**. Built with Python 3.10-3.13, managed via Poetry.
 
 ## Core Architecture
 
@@ -52,6 +52,15 @@ poetry run mycoder        # Interactive CLI
 poetry run mycoder-demo   # Run demo
 poetry run dictation      # Launch speech recognition
 ```
+
+## New Commands (Evolution)
+- `/todo` - Track and review pending tasks
+- `/plan` - Generate/approve execution plans
+- `/edit <file>` - Guided edit workflow
+- `/agent` - Agent selection and orchestration
+- `/web` - Web fetch/search with caching
+- `/mcp` - Connect/call MCP servers
+- `/self-evolve` - Approval-gated self-evolution (supports dry-run)
 
 ## New Commands (v2.1.1)
 

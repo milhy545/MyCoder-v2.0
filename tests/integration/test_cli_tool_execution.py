@@ -7,17 +7,18 @@ CommandParser → ToolOrchestrator → ToolRegistry → MCP Bridge
 These tests require MCP server to be running or mocked appropriately.
 """
 
-import pytest
 import asyncio
-import pytest_asyncio
 from pathlib import Path
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
 
-from mycoder.enhanced_mycoder_v2 import EnhancedMyCoderV2
+import pytest
+import pytest_asyncio
+
 from mycoder.command_parser import CommandParser
-from mycoder.tool_registry import ToolExecutionContext
+from mycoder.enhanced_mycoder_v2 import EnhancedMyCoderV2
 from mycoder.mcp_bridge import MCPBridge
 from mycoder.tool_orchestrator import ToolExecutionOrchestrator
+from mycoder.tool_registry import ToolExecutionContext
 
 
 @pytest.mark.integration
@@ -86,7 +87,7 @@ class TestCLIToolExecution:
             command, execution_context
         )
 
-        assert result.success == True
+        assert result.success is True
         assert result.tool_name == "terminal_exec"
 
     @pytest.mark.asyncio
@@ -114,7 +115,7 @@ class TestCLIToolExecution:
             command, execution_context
         )
 
-        assert result.success == True
+        assert result.success is True
         assert result.tool_name == "file_read"
 
     @pytest.mark.asyncio
@@ -142,7 +143,7 @@ class TestCLIToolExecution:
             command, execution_context
         )
 
-        assert result.success == True
+        assert result.success is True
         assert result.tool_name == "git_status"
 
     @pytest.mark.asyncio
@@ -202,7 +203,7 @@ class TestCLIToolExecution:
             command, execution_context
         )
 
-        assert result.success == False
+        assert result.success is False
         assert "not found" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -319,7 +320,7 @@ class TestCLIToolExecutionWithRealMCP:
             command, context
         )
 
-        assert result.success == True
+        assert result.success is True
         assert "Integration test" in str(result.data)
 
     @pytest.mark.asyncio
@@ -332,9 +333,7 @@ class TestCLIToolExecutionWithRealMCP:
         parser = CommandParser()
         command = parser.parse(f"/file read {test_file}")
 
-        context = ToolExecutionContext(
-            mode="FULL", working_directory=tmp_path
-        )
+        context = ToolExecutionContext(mode="FULL", working_directory=tmp_path)
 
         result = await mycoder_with_real_mcp.tool_orchestrator.execute_command(
             command, context

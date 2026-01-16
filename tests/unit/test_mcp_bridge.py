@@ -4,15 +4,17 @@ Unit tests for MCPBridge (v2.1.1)
 Tests MCP bridge functionality for connecting tool_registry with MCP server.
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
+
 from mycoder.mcp_bridge import MCPBridge, MCPToolWrapper
 from mycoder.tool_registry import (
     ToolCategory,
     ToolExecutionContext,
-    ToolResult,
     ToolRegistry,
+    ToolResult,
 )
 
 
@@ -38,15 +40,15 @@ class TestMCPBridge:
     def test_mcp_bridge_initialization(self, mcp_bridge):
         """Test MCPBridge initialization"""
         assert mcp_bridge.mcp_url == "http://127.0.0.1:8020"
-        assert mcp_bridge.auto_start == False
-        assert mcp_bridge.is_initialized == False
+        assert mcp_bridge.auto_start is False
+        assert mcp_bridge.is_initialized is False
         assert mcp_bridge.mcp_tools == {}
 
     @pytest.mark.asyncio
     async def test_check_mcp_health_no_session(self, mcp_bridge):
         """Test health check without session"""
         result = await mcp_bridge._check_mcp_health()
-        assert result == False
+        assert result is False
 
     @pytest.mark.asyncio
     @patch("aiohttp.ClientSession")
@@ -64,7 +66,7 @@ class TestMCPBridge:
         mcp_bridge.session = mock_session
 
         result = await mcp_bridge._check_mcp_health()
-        assert result == True
+        assert result is True
 
     @pytest.mark.asyncio
     @patch("aiohttp.ClientSession")
@@ -82,7 +84,7 @@ class TestMCPBridge:
         mcp_bridge.session = mock_session
 
         result = await mcp_bridge._check_mcp_health()
-        assert result == False
+        assert result is False
 
     @pytest.mark.asyncio
     @patch("aiohttp.ClientSession")
@@ -101,9 +103,11 @@ class TestMCPBridge:
         mock_session.post = Mock(return_value=mock_response)
         mcp_bridge.session = mock_session
 
-        result = await mcp_bridge.call_mcp_tool("terminal_exec", {"command": "echo hello"})
+        result = await mcp_bridge.call_mcp_tool(
+            "terminal_exec", {"command": "echo hello"}
+        )
 
-        assert result["success"] == True
+        assert result["success"] is True
         assert "data" in result
 
     @pytest.mark.asyncio
@@ -125,7 +129,7 @@ class TestMCPBridge:
 
         result = await mcp_bridge.call_mcp_tool("invalid_tool", {})
 
-        assert result["success"] == False
+        assert result["success"] is False
         assert "error" in result
 
     @pytest.mark.asyncio
@@ -133,7 +137,7 @@ class TestMCPBridge:
         """Test MCP tool call without session"""
         result = await mcp_bridge.call_mcp_tool("terminal_exec", {"command": "ls"})
 
-        assert result["success"] == False
+        assert result["success"] is False
         assert "error" in result
 
     def test_create_mcp_tool_wrapper_file_operations(self, mcp_bridge):
@@ -188,7 +192,7 @@ class TestMCPBridge:
         await mcp_bridge.close()
 
         assert mcp_bridge.session is None
-        assert mcp_bridge.is_initialized == False
+        assert mcp_bridge.is_initialized is False
 
 
 class TestMCPToolWrapper:
@@ -230,7 +234,7 @@ class TestMCPToolWrapper:
         result = await tool_wrapper.execute(context, arg1="value1")
 
         assert isinstance(result, ToolResult)
-        assert result.success == True
+        assert result.success is True
         assert result.tool_name == "test_tool"
         assert result.data == {"result": "success"}
 
@@ -247,7 +251,7 @@ class TestMCPToolWrapper:
         result = await tool_wrapper.execute(context)
 
         assert isinstance(result, ToolResult)
-        assert result.success == False
+        assert result.success is False
         assert result.tool_name == "test_tool"
         assert "Tool execution failed" in result.error
 
@@ -261,7 +265,7 @@ class TestMCPToolWrapper:
         result = await tool_wrapper.execute(context)
 
         assert isinstance(result, ToolResult)
-        assert result.success == False
+        assert result.success is False
         assert "Connection error" in result.error
 
     @pytest.mark.asyncio
@@ -271,4 +275,4 @@ class TestMCPToolWrapper:
         result = await tool_wrapper.validate_context(context)
 
         # MCP tools are always available
-        assert result == True
+        assert result is True

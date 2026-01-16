@@ -26,9 +26,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 try:
+    from .adaptive_modes import AdaptiveModeManager, OperationalMode
     from .api_providers import (
-        APIProviderRouter,
         APIProviderConfig,
+        APIProviderRouter,
         APIProviderType,
         APIResponse,
         ClaudeAnthropicProvider,
@@ -36,19 +37,22 @@ try:
         GeminiProvider,
         OllamaProvider,
     )
-    from .tool_registry import (
-        get_tool_registry,
-        ToolExecutionContext,
-        ToolCategory,
-        ToolAvailability,
-    )
-    from .adaptive_modes import AdaptiveModeManager, OperationalMode
     from .mcp_bridge import MCPBridge
     from .tool_orchestrator import ToolExecutionOrchestrator
+    from .tool_registry import (
+        ToolAvailability,
+        ToolCategory,
+        ToolExecutionContext,
+        get_tool_registry,
+    )
 except ImportError:
+    from adaptive_modes import AdaptiveModeManager, OperationalMode  # type: ignore
+    from mcp_bridge import MCPBridge  # type: ignore
+    from tool_orchestrator import ToolExecutionOrchestrator  # type: ignore
+
     from mycoder.api_providers import (  # type: ignore
-        APIProviderRouter,
         APIProviderConfig,
+        APIProviderRouter,
         APIProviderType,
         APIResponse,
         ClaudeAnthropicProvider,
@@ -57,14 +61,11 @@ except ImportError:
         OllamaProvider,
     )
     from mycoder.tool_registry import (  # type: ignore
-        get_tool_registry,
-        ToolExecutionContext,
-        ToolCategory,
         ToolAvailability,
+        ToolCategory,
+        ToolExecutionContext,
+        get_tool_registry,
     )
-    from adaptive_modes import AdaptiveModeManager, OperationalMode  # type: ignore
-    from mcp_bridge import MCPBridge  # type: ignore
-    from tool_orchestrator import ToolExecutionOrchestrator  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -137,6 +138,30 @@ class EnhancedMyCoderV2:
             logger.error(f"Failed to load history: {e}")
             return []
 
+    @property
+    def session(self) -> Dict[str, Dict]:
+        return self.session_store
+
+    @session.setter
+    def session(self, value: Dict[str, Dict]) -> None:
+        self.session_store = value
+
+    @property
+    def provider(self):
+        return self.provider_router
+
+    @provider.setter
+    def provider(self, value) -> None:
+        self.provider_router = value
+
+    @property
+    def tool(self):
+        return self.tool_registry
+
+    @tool.setter
+    def tool(self, value) -> None:
+        self.tool_registry = value
+
     def _save_history(self):
         """Save conversation history to file"""
         try:
@@ -152,6 +177,9 @@ class EnhancedMyCoderV2:
             return
 
         logger.info("Initializing Enhanced MyCoder v2.1.1 with multi-API system...")
+
+        if hasattr(self.tool_registry, "reset"):
+            self.tool_registry.reset()
 
         # Initialize API providers
         await self._initialize_api_providers()
@@ -376,7 +404,7 @@ class EnhancedMyCoderV2:
                 "url", self.config.get("mcp_url", "http://127.0.0.1:8020")
             )
             auto_start = mcp_config.get(
-                "auto_start", self.config.get("mcp_auto_start", True)
+                "auto_start", self.config.get("mcp_auto_start", False)
             )
 
             self.mcp_bridge = MCPBridge(
@@ -541,12 +569,25 @@ class EnhancedMyCoderV2:
                 context["thermal_status"] = await self._get_thermal_status()
 
             # Execute request with multi-API system
-            api_response = await self.provider_router.query(
-                prompt=prompt,
-                context=context,
-                preferred_provider=preferred_provider,
-                **kwargs,
-            )
+            max_attempts = int(self.config.get("request_retry_attempts", 2))
+            if max_attempts < 1:
+                max_attempts = 1
+            api_response = None
+            for attempt in range(1, max_attempts + 1):
+                api_response = await self.provider_router.query(
+                    prompt=prompt,
+                    context=context,
+                    preferred_provider=preferred_provider,
+                    fallback_enabled=self.config.get("fallback_enabled", True),
+                    **kwargs,
+                )
+                if api_response.success or attempt == max_attempts:
+                    break
+                logger.warning(
+                    "Request failed on attempt %s/%s, retrying...",
+                    attempt,
+                    max_attempts,
+                )
 
             # Enhance response with tool integration if requested
             if use_tools and api_response.success:

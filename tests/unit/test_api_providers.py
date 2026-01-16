@@ -6,28 +6,29 @@ error handling, and thermal integration for Q9550 systems.
 """
 
 import asyncio
-import pytest
-import os
 import json
-import time
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from pathlib import Path
-
+import os
 import sys
+import time
+from contextlib import ExitStack
+from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from mycoder.api_providers import (
-    APIProviderRouter,
     APIProviderConfig,
-    APIProviderType,
+    APIProviderRouter,
     APIProviderStatus,
+    APIProviderType,
     APIResponse,
+    BaseAPIProvider,
     ClaudeAnthropicProvider,
     ClaudeOAuthProvider,
     GeminiProvider,
     OllamaProvider,
-    BaseAPIProvider,
 )
 
 
@@ -712,11 +713,13 @@ class TestAPIProviderRouter:
         router = self.create_router()
 
         # Mock all providers failing
-        for provider in router.providers:
-            with patch.object(provider, "can_handle_request", return_value=False):
-                pass
+        with ExitStack() as stack:
+            for provider in router.providers:
+                stack.enter_context(
+                    patch.object(provider, "can_handle_request", return_value=False)
+                )
 
-        response = await router.query("Hello")
+            response = await router.query("Hello")
 
         assert response.success is False
         assert response.provider == APIProviderType.RECOVERY

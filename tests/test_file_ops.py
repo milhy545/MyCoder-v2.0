@@ -1,6 +1,7 @@
-import unittest
 import os
 import shutil
+import unittest
+
 from mycoder.utils.file_ops import read_file, write_file
 
 

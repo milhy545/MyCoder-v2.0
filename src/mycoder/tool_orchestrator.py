@@ -8,18 +8,18 @@ Poskytuje inteligentní routing a AI-assisted tool execution.
 import asyncio
 import logging
 import time
-from urllib.parse import urlparse
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 try:
     from .command_parser import Command, CommandParser
     from .mcp_bridge import MCPBridge
-    from .tool_registry import ToolExecutionContext, ToolResult, ToolRegistry
+    from .tool_registry import ToolExecutionContext, ToolRegistry, ToolResult
 except ImportError:
     from command_parser import Command, CommandParser
     from mcp_bridge import MCPBridge
-    from tool_registry import ToolExecutionContext, ToolResult, ToolRegistry
+    from tool_registry import ToolExecutionContext, ToolRegistry, ToolResult
 
 if TYPE_CHECKING:
     from .enhanced_mycoder_v2 import EnhancedMyCoderV2
@@ -78,9 +78,7 @@ class ToolExecutionOrchestrator:
         self.total_executions += 1
 
         try:
-            logger.info(
-                f"Executing command: {command.tool} with args: {command.args}"
-            )
+            logger.info(f"Executing command: {command.tool} with args: {command.args}")
 
             # Najít tool v registry
             tool = self.tool_registry.tools.get(command.tool)
@@ -118,7 +116,9 @@ class ToolExecutionOrchestrator:
             result = await tool.execute(context, **command.args)
 
             if result.success and command.tool == "file_write":
-                result = self._verify_file_write(result, command=command, context=context)
+                result = self._verify_file_write(
+                    result, command=command, context=context
+                )
 
             if result.success:
                 self.successful_executions += 1
@@ -453,9 +453,7 @@ async def execute_command_quick(
             error=f"Could not parse command: {command_str}",
         )
 
-    context = ToolExecutionContext(
-        mode="FULL", working_directory=working_directory
-    )
+    context = ToolExecutionContext(mode="FULL", working_directory=working_directory)
 
     # Pro quick use vytvoříme dočasný orchestrator (není optimální ale funguje)
     from .enhanced_mycoder_v2 import EnhancedMyCoderV2

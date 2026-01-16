@@ -1,0 +1,34 @@
+{
+  "cases": [
+    {
+      "name": "fallback_success",
+      "expected": {
+        "fallback_used": true,
+        "attempted_providers": ["claude_oauth", "gemini"],
+        "attempted_errors": {
+          "claude_oauth": "boom"
+        }
+      }
+    },
+    {
+      "name": "retry_success",
+      "expected": {
+        "fallback_used": false,
+        "attempted_providers": ["claude_oauth"],
+        "attempted_errors": {
+          "claude_oauth": "boom"
+        }
+      }
+    },
+    {
+      "name": "fallback_disabled_failure",
+      "expected": {
+        "fallback_used": false,
+        "attempted_providers": ["claude_oauth"],
+        "attempted_errors": {
+          "claude_oauth": "boom"
+        }
+      }
+    }
+  ]
+}

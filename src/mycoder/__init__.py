@@ -61,34 +61,34 @@ Example:
 
 # Core components
 from .adaptive_modes import AdaptiveModeManager, OperationalMode
-from .enhanced_mycoder import EnhancedMyCoder
-from .enhanced_mycoder_v2 import EnhancedMyCoderV2
-from .mycoder import MyCoder
 from .api_providers import (
-    APIProviderRouter,
-    APIProviderType,
     APIProviderConfig,
-    APIResponse,
+    APIProviderRouter,
     APIProviderStatus,
+    APIProviderType,
+    APIResponse,
     ClaudeAnthropicProvider,
     ClaudeOAuthProvider,
     GeminiProvider,
     OllamaProvider,
 )
 from .config_manager import (
+    APIProviderSettings,
     ConfigManager,
     MyCoderConfig,
-    APIProviderSettings,
-    ThermalSettings,
     SystemSettings,
-    load_config,
+    ThermalSettings,
     get_config_manager,
+    load_config,
 )
+from .enhanced_mycoder import EnhancedMyCoder
+from .enhanced_mycoder_v2 import EnhancedMyCoderV2
+from .mycoder import MyCoder
 from .tool_registry import (
-    get_tool_registry,
-    ToolRegistry,
     ToolExecutionContext,
+    ToolRegistry,
     ToolResult,
+    get_tool_registry,
 )
 
 # Version info

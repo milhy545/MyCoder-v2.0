@@ -7,9 +7,9 @@ Supports both OpenAI Whisper API and local Whisper models.
 import io
 import logging
 import os
-from enum import Enum
-from typing import Optional, Dict, Any
 import tempfile
+from enum import Enum
+from typing import Any, Dict, Optional
 
 try:
     import openai

@@ -1,0 +1,26 @@
+{
+  "run_id": "2026-01-14_22-59-03",
+  "timestamp": "2026-01-14T22:59:03.146499",
+  "total_scenarios": 26,
+  "passed": 25,
+  "failed": 1,
+  "pass_rate": 0.9615384615384616,
+  "metrics": {
+    "tool_accuracy": 1.0,
+    "context_retention": 1.0,
+    "response_quality": 0.7576923076923077,
+    "error_recovery": 1.0,
+    "prompt_adherence": 0.9615384615384616,
+    "avg_execution_time_ms": 0.0
+  },
+  "failures": [
+    {
+      "scenario": "multi_step_update_test",
+      "expected_tool": "multi_step",
+      "actual_tool": "multi_step",
+      "failures": [
+        "Custom validation failed: _rule"
+      ]
+    }
+  ]
+}

@@ -7,36 +7,36 @@ Left: Chat History (Auto-scrolling Markdown). Right: Execution Monitor (Logs + S
 import asyncio
 import json
 import os
-import sys
 import shutil
+import sys
 from contextlib import suppress
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 import psutil
 
 # Rich library is now required via poetry
 try:
+    from rich import box
     from rich.align import Align
     from rich.console import Console, Group
     from rich.layout import Layout
     from rich.live import Live
-    from rich.panel import Panel
-    from rich.prompt import Prompt
-    from rich.table import Table
     from rich.markdown import Markdown
+    from rich.panel import Panel
+    from rich.prompt import Confirm, Prompt
+    from rich.table import Table
     from rich.text import Text
-    from rich import box
 except ImportError:
     print("CRITICAL: 'rich' library not found. Please run: poetry add rich")
     sys.exit(1)
 
 # Optional prompt_toolkit for Tab-based selection.
 try:
+    from prompt_toolkit import PromptSession
     from prompt_toolkit import prompt as pt_prompt
     from prompt_toolkit.key_binding import KeyBindings
-    from prompt_toolkit import PromptSession
 except ImportError:
     pt_prompt = None
     KeyBindings = None
@@ -44,18 +44,28 @@ except ImportError:
 
 # Import Core
 try:
-    from .enhanced_mycoder_v2 import EnhancedMyCoderV2
-    from .config_manager import ConfigManager
+    from .agents import AgentOrchestrator, AgentType
     from .api_providers import APIProviderType
     from .command_parser import CommandParser
+    from .config_manager import ConfigManager
+    from .enhanced_mycoder_v2 import EnhancedMyCoderV2
+    from .mcp_bridge import MCPBridge
+    from .self_evolve import SelfEvolveManager
+    from .todo_tracker import TodoTracker
     from .tool_registry import ToolExecutionContext
+    from .web_tools import WebFetcher, WebSearcher
 except ImportError:
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-    from mycoder.enhanced_mycoder_v2 import EnhancedMyCoderV2
-    from mycoder.config_manager import ConfigManager
+    from mycoder.agents import AgentOrchestrator, AgentType
     from mycoder.api_providers import APIProviderType
     from mycoder.command_parser import CommandParser
+    from mycoder.config_manager import ConfigManager
+    from mycoder.enhanced_mycoder_v2 import EnhancedMyCoderV2
+    from mycoder.mcp_bridge import MCPBridge
+    from mycoder.self_evolve import SelfEvolveManager
+    from mycoder.todo_tracker import TodoTracker
     from mycoder.tool_registry import ToolExecutionContext
+    from mycoder.web_tools import WebFetcher, WebSearcher
 
 try:
     from .tts_engine import TTSEngine
@@ -280,6 +290,46 @@ class InteractiveCLI:
                 rate=tts_config.get("rate", 150),
             )
 
+        self.self_evolve_manager = SelfEvolveManager(self.coder, Path.cwd())
+        self.todo_tracker = TodoTracker(Path.cwd() / ".mycoder" / "todo.json")
+        self.plan_task: Optional[str] = None
+        self.plan_content: Optional[str] = None
+        self.plan_status: str = "idle"
+        self.agent_orchestrator = AgentOrchestrator(self.coder, Path.cwd())
+        cache_dir = Path.cwd() / ".mycoder" / "web_cache"
+        self.web_fetcher = WebFetcher(cache_dir=cache_dir)
+        self.web_searcher = WebSearcher(api_key=os.getenv("MYCODER_WEB_SEARCH_KEY"))
+        self.mcp_bridge: Optional[MCPBridge] = None
+
+    async def _self_evolve_approval(self, proposal) -> bool:
+        """Show proposal diff and request user approval."""
+        self.console.print(Markdown(f"```diff\n{proposal.diff}\n```"))
+        if proposal.summary:
+            self.console.print(f"[{COLOR_INFO}]Summary:[/] {proposal.summary}")
+        if proposal.rationale:
+            self.console.print(f"[{COLOR_INFO}]Rationale:[/] {proposal.rationale}")
+        if proposal.risk_notes:
+            risk_pct = proposal.risk_score * 100
+            self.console.print(
+                f"[{COLOR_INFO}]Risk:[/] {risk_pct:.0f}% ({', '.join(proposal.risk_notes)})"
+            )
+        return Confirm.ask(
+            f"Apply proposal {proposal.proposal_id} and run tests?", default=False
+        )
+
+    def _build_plan_prompt(self, task: str) -> str:
+        return (
+            "You are a software architect. Create an implementation plan for:\n\n"
+            f"Task: {task}\n\n"
+            "Provide:\n"
+            "1. Summary of approach\n"
+            "2. Step-by-step implementation (no time estimates)\n"
+            "3. Critical files to modify\n"
+            "4. Potential risks\n"
+            "5. Dependencies to add (if any)\n\n"
+            "Format as structured markdown."
+        )
+
     def print_banner(self) -> None:
         """Render the stylized MyCoder banner at startup."""
         banner = r"""
@@ -388,9 +438,7 @@ class InteractiveCLI:
             if isinstance(data, list):
                 self.chat_history = data[-500:]
         except Exception as exc:
-            self.console.print(
-                f"[bold yellow]History load failed: {exc}[/]"
-            )
+            self.console.print(f"[bold yellow]History load failed: {exc}[/]")
 
     def _save_history(self) -> None:
         """Persist chat history to disk."""
@@ -401,9 +449,7 @@ class InteractiveCLI:
                 json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
             )
         except Exception as exc:
-            self.console.print(
-                f"[bold yellow]History save failed: {exc}[/]"
-            )
+            self.console.print(f"[bold yellow]History save failed: {exc}[/]")
 
     def _export_history(self, path: Path) -> None:
         """Export chat history as Markdown."""
@@ -452,7 +498,10 @@ class InteractiveCLI:
                         output_text += f"```\n{result.data['output']}\n```"
                     else:
                         import json
-                        output_text += f"```json\n{json.dumps(result.data, indent=2)}\n```"
+
+                        output_text += (
+                            f"```json\n{json.dumps(result.data, indent=2)}\n```"
+                        )
                 else:
                     output_text += f"```\n{result.data}\n```"
 
@@ -664,6 +713,445 @@ class InteractiveCLI:
                     "[bold red]Usage: /history save|clear|export <path>|prev|next|home|end[/]"
                 )
                 return
+        elif cmd == "/self-evolve":
+            if not args:
+                self.console.print(
+                    "[bold red]Usage: /self-evolve propose|issue <desc>|apply <id>|dry-run <id>|status|show <id>[/]"
+                )
+                return
+            action = args[0].lower()
+            if action == "propose":
+                self.console.print(
+                    f"[{COLOR_INFO}]Running self-evolve diagnostics and proposal...[/]"
+                )
+                self.monitor.add_log("SELF_EVOLVE", "propose")
+                proposal = await self.self_evolve_manager.propose()
+                if proposal is None:
+                    self.console.print(
+                        f"[{COLOR_SUCCESS}]No failing tests detected. No proposal generated.[/]"
+                    )
+                    return
+                if proposal.status == "failed":
+                    self.console.print(
+                        f"[bold red]Proposal failed:[/] {proposal.error or 'Unknown error'}"
+                    )
+                    return
+                self.console.print(
+                    f"[{COLOR_SUCCESS}]Proposal ready:[/] {proposal.proposal_id}"
+                )
+                if proposal.summary:
+                    self.console.print(f"[{COLOR_INFO}]Summary:[/] {proposal.summary}")
+                if proposal.rationale:
+                    self.console.print(
+                        f"[{COLOR_INFO}]Rationale:[/] {proposal.rationale}"
+                    )
+                if proposal.risk_notes:
+                    risk_pct = proposal.risk_score * 100
+                    self.console.print(
+                        f"[{COLOR_INFO}]Risk:[/] {risk_pct:.0f}% ({', '.join(proposal.risk_notes)})"
+                    )
+                self.console.print(
+                    f"[{COLOR_INFO}]Review diff with /self-evolve show {proposal.proposal_id}[/]"
+                )
+            elif action == "apply":
+                if len(args) < 2:
+                    self.console.print(
+                        "[bold red]Usage: /self-evolve apply <proposal_id>[/]"
+                    )
+                    return
+                proposal_id = args[1]
+                self.console.print(
+                    f"[{COLOR_INFO}]Applying proposal {proposal_id} and running tests...[/]"
+                )
+                self.monitor.add_log("SELF_EVOLVE", f"apply:{proposal_id}")
+                result = await self.self_evolve_manager.apply(
+                    proposal_id,
+                    require_approval=True,
+                    approval_callback=self._self_evolve_approval,
+                )
+                status = result.status.replace("_", " ")
+                self.console.print(f"[{COLOR_SUCCESS}]Self-evolve result:[/] {status}")
+                if result.risk_notes:
+                    risk_pct = result.risk_score * 100
+                    self.console.print(
+                        f"[{COLOR_INFO}]Risk:[/] {risk_pct:.0f}% ({', '.join(result.risk_notes)})"
+                    )
+                if result.error:
+                    self.console.print(f"[bold red]Error:[/] {result.error}")
+            elif action == "dry-run":
+                if len(args) < 2:
+                    self.console.print(
+                        "[bold red]Usage: /self-evolve dry-run <proposal_id>[/]"
+                    )
+                    return
+                proposal_id = args[1]
+                self.console.print(
+                    f"[{COLOR_INFO}]Running dry-run for proposal {proposal_id}...[/]"
+                )
+                self.monitor.add_log("SELF_EVOLVE", f"dry-run:{proposal_id}")
+                try:
+                    result = await self.self_evolve_manager.dry_run(proposal_id)
+                except ValueError as exc:
+                    self.console.print(f"[bold red]{exc}[/]")
+                    return
+                if not result.get("success", False):
+                    error = result.get("error")
+                    if error:
+                        self.console.print(f"[bold red]Dry-run failed:[/] {error}")
+                    else:
+                        self.console.print("[bold red]Dry-run tests failed.[/]")
+                else:
+                    self.console.print("[bold green]Dry-run succeeded.[/]")
+                test_results = result.get("test_results") or {}
+                results = test_results.get("results") or []
+                failures = [r for r in results if r.get("exit_code") != 0]
+                if results:
+                    self.console.print(
+                        f"[{COLOR_INFO}]Tests:[/] {len(results)} commands, {len(failures)} failures"
+                    )
+                affected = result.get("affected_files") or []
+                if affected:
+                    self.console.print(
+                        f"[{COLOR_INFO}]Affected files:[/] {', '.join(affected)}"
+                    )
+            elif action == "issue":
+                if len(args) < 2:
+                    self.console.print(
+                        "[bold red]Usage: /self-evolve issue <description>[/]"
+                    )
+                    return
+                issue_text = " ".join(args[1:]).strip()
+                self.console.print(
+                    f"[{COLOR_INFO}]Creating proposal from user issue...[/]"
+                )
+                self.monitor.add_log("SELF_EVOLVE", "issue")
+                proposal = await self.self_evolve_manager.propose_from_issue(issue_text)
+                if proposal.status == "failed":
+                    self.console.print(
+                        f"[bold red]Proposal failed:[/] {proposal.error or 'Unknown error'}"
+                    )
+                    return
+                self.console.print(
+                    f"[{COLOR_SUCCESS}]Proposal ready:[/] {proposal.proposal_id}"
+                )
+                if proposal.summary:
+                    self.console.print(f"[{COLOR_INFO}]Summary:[/] {proposal.summary}")
+                if proposal.rationale:
+                    self.console.print(
+                        f"[{COLOR_INFO}]Rationale:[/] {proposal.rationale}"
+                    )
+                if proposal.risk_notes:
+                    risk_pct = proposal.risk_score * 100
+                    self.console.print(
+                        f"[{COLOR_INFO}]Risk:[/] {risk_pct:.0f}% ({', '.join(proposal.risk_notes)})"
+                    )
+                self.console.print(
+                    f"[{COLOR_INFO}]Review diff with /self-evolve show {proposal.proposal_id}[/]"
+                )
+            elif action == "status":
+                proposals = self.self_evolve_manager.list_proposals()
+                if not proposals:
+                    self.console.print(
+                        f"[{COLOR_INFO}]No self-evolve proposals found.[/]"
+                    )
+                    return
+                table = Table(title="Self-Evolve Proposals", box=box.ROUNDED)
+                table.add_column("ID", style="cyan", no_wrap=True)
+                table.add_column("Status", style="white")
+                table.add_column("Summary", style="green")
+                table.add_column("Created", style="magenta")
+                for proposal in proposals[-10:]:
+                    table.add_row(
+                        proposal.proposal_id,
+                        proposal.status,
+                        proposal.summary or "-",
+                        proposal.created_at,
+                    )
+                self.console.print(table)
+            elif action == "show":
+                if len(args) < 2:
+                    self.console.print(
+                        "[bold red]Usage: /self-evolve show <proposal_id>[/]"
+                    )
+                    return
+                proposal_id = args[1]
+                diff = self.self_evolve_manager.show_patch(proposal_id)
+                if not diff:
+                    self.console.print(
+                        f"[bold red]Proposal not found:[/] {proposal_id}"
+                    )
+                    return
+                self.console.print(Markdown(f"```diff\n{diff}\n```"))
+            else:
+                self.console.print(
+                    "[bold red]Usage: /self-evolve propose|issue <desc>|apply <id>|dry-run <id>|status|show <id>[/]"
+                )
+                return
+        elif cmd == "/plan":
+            if not args:
+                self.console.print(
+                    "[bold red]Usage: /plan <task> | /plan approve | /plan cancel | /plan execute | /plan show[/]"
+                )
+                return
+            action = args[0].lower()
+            if action in {"approve", "cancel", "execute", "show"}:
+                if action == "show":
+                    if not self.plan_content:
+                        self.console.print(f"[{COLOR_INFO}]No active plan.[/]")
+                        return
+                    self.console.print(Markdown(self.plan_content))
+                    return
+                if action == "cancel":
+                    self.plan_task = None
+                    self.plan_content = None
+                    self.plan_status = "idle"
+                    self.console.print(f"[{COLOR_SUCCESS}]Plan cleared.[/]")
+                    return
+                if action == "approve":
+                    if not self.plan_content:
+                        self.console.print(f"[{COLOR_INFO}]No plan to approve.[/]")
+                        return
+                    self.plan_status = "approved"
+                    self.console.print(f"[{COLOR_SUCCESS}]Plan approved.[/]")
+                    return
+                if action == "execute":
+                    if not self.plan_content:
+                        self.console.print(f"[{COLOR_INFO}]No plan to execute.[/]")
+                        return
+                    if self.plan_status != "approved":
+                        self.console.print(
+                            "[bold red]Plan is not approved. Use /plan approve first.[/]"
+                        )
+                        return
+                    confirm = Confirm.ask(
+                        "Execute the approved plan now?", default=False
+                    )
+                    if not confirm:
+                        self.console.print("[yellow]Cancelled.[/]")
+                        return
+                    execution_prompt = (
+                        "Execute this plan step-by-step. Ask before any destructive action.\n\n"
+                        f"{self.plan_content}"
+                    )
+                    self.console.print(f"[{COLOR_INFO}]Executing approved plan...[/]")
+                    self.monitor.add_log("PLAN", "execute")
+                    await self.process_chat(execution_prompt)
+                    return
+            task = " ".join(args).strip()
+            if not task:
+                self.console.print("[bold red]Usage: /plan <task>[/]")
+                return
+            self.plan_task = task
+            self.plan_status = "pending"
+            plan_prompt = self._build_plan_prompt(task)
+            self.console.print(f"[{COLOR_INFO}]Generating plan for: {task}[/]")
+            self.monitor.add_log("PLAN", "generate")
+            with self.console.status(
+                "[bold magenta]Generuji plan...[/]", spinner="dots"
+            ):
+                response = await self.coder.process_request(
+                    plan_prompt,
+                    preferred_provider=self.preferred_provider,
+                    use_tools=False,
+                )
+            content = (
+                response.get("content", str(response))
+                if isinstance(response, dict)
+                else str(response)
+            )
+            self.plan_content = content
+            self._append_chat_entry("ai", content)
+            self.console.print(Markdown(content))
+        elif cmd == "/agent":
+            if not args:
+                self.console.print(
+                    "[bold red]Usage: /agent explore <task> | /agent plan <task> | /agent bash <command> | /agent general <task>[/]"
+                )
+                return
+            agent_key = args[0].lower()
+            task = " ".join(args[1:]).strip()
+            if not task:
+                self.console.print("[bold red]Task/command is required.[/]")
+                return
+            context = {"agent": agent_key}
+            if agent_key == "explore":
+                agent_type = AgentType.EXPLORE
+            elif agent_key == "plan":
+                agent_type = AgentType.PLAN
+            elif agent_key == "bash":
+                agent_type = AgentType.BASH
+            elif agent_key == "general":
+                agent_type = AgentType.GENERAL
+            else:
+                self.console.print("[bold red]Unknown agent type.[/]")
+                return
+            self.monitor.add_log("AGENT", agent_key)
+            result = await self.agent_orchestrator.get_agent(agent_type).execute(
+                task, context=context
+            )
+            if result.success:
+                self.console.print(result.content)
+                self._append_chat_entry("ai", result.content)
+            else:
+                self.console.print(f"[bold red]{result.error or 'Agent failed'}[/]")
+        elif cmd == "/web":
+            if not args:
+                self.console.print(
+                    "[bold red]Usage: /web fetch <url> [prompt] | /web search <query>[/]"
+                )
+                return
+            action = args[0].lower()
+            if action == "fetch":
+                if len(args) < 2:
+                    self.console.print("[bold red]Usage: /web fetch <url> [prompt][/]")
+                    return
+                url = args[1]
+                prompt = " ".join(args[2:]).strip()
+                self.monitor.add_log("WEB", f"fetch:{url}")
+                result = await self.web_fetcher.fetch(url, prompt=prompt)
+                if not result.get("success"):
+                    self.console.print(
+                        f"[bold red]Fetch failed:[/] {result.get('error', 'Unknown error')}"
+                    )
+                    return
+                content = result.get("content", "")
+                self.console.print(content)
+                self._append_chat_entry("ai", content)
+            elif action == "search":
+                query = " ".join(args[1:]).strip()
+                if not query:
+                    self.console.print("[bold red]Usage: /web search <query>[/]")
+                    return
+                self.monitor.add_log("WEB", "search")
+                results = await self.web_searcher.search(query)
+                if not results:
+                    self.console.print(f"[{COLOR_INFO}]No results.[/]")
+                    return
+                for item in results:
+                    self.console.print(
+                        f"- {item.title}\n  {item.url}\n  {item.snippet}"
+                    )
+            else:
+                self.console.print(
+                    "[bold red]Usage: /web fetch <url> [prompt] | /web search <query>[/]"
+                )
+                return
+        elif cmd == "/mcp":
+            if not args:
+                self.console.print(
+                    "[bold red]Usage: /mcp connect <url> | /mcp tools | /mcp call <tool> <json>[/]"
+                )
+                return
+            action = args[0].lower()
+            if action == "connect":
+                if len(args) < 2:
+                    self.console.print("[bold red]Usage: /mcp connect <url>[/]")
+                    return
+                url = args[1]
+                self.mcp_bridge = MCPBridge(mcp_url=url, auto_start=False)
+                self.console.print(f"[{COLOR_INFO}]Connecting to MCP at {url}...[/]")
+                if await self.mcp_bridge.initialize():
+                    self.console.print(f"[{COLOR_SUCCESS}]MCP connected.[/]")
+                else:
+                    self.console.print("[bold red]MCP connect failed.[/]")
+            elif action == "tools":
+                bridge = self.mcp_bridge or getattr(self.coder, "mcp_bridge", None)
+                if not bridge:
+                    self.console.print("[bold red]MCP bridge not initialized.[/]")
+                    return
+                if not bridge.is_initialized:
+                    if not await bridge.initialize():
+                        self.console.print("[bold red]MCP init failed.[/]")
+                        return
+                tools = bridge.mcp_tools or {}
+                if not tools:
+                    self.console.print(f"[{COLOR_INFO}]No MCP tools available.[/]")
+                    return
+                for name, info in tools.items():
+                    desc = info.get("description") or ""
+                    self.console.print(f"- {name}: {desc}")
+            elif action == "call":
+                if len(args) < 3:
+                    self.console.print("[bold red]Usage: /mcp call <tool> <json>[/]")
+                    return
+                tool_name = args[1]
+                payload = " ".join(args[2:]).strip()
+                try:
+                    arguments = json.loads(payload)
+                except json.JSONDecodeError as exc:
+                    self.console.print(f"[bold red]Invalid JSON:[/] {exc}")
+                    return
+                bridge = self.mcp_bridge or getattr(self.coder, "mcp_bridge", None)
+                if not bridge:
+                    self.console.print("[bold red]MCP bridge not initialized.[/]")
+                    return
+                if not bridge.is_initialized:
+                    if not await bridge.initialize():
+                        self.console.print("[bold red]MCP init failed.[/]")
+                        return
+                result = await bridge.call_mcp_tool(tool_name, arguments)
+                self.console.print(str(result))
+            else:
+                self.console.print(
+                    "[bold red]Usage: /mcp connect <url> | /mcp tools | /mcp call <tool> <json>[/]"
+                )
+                return
+        elif cmd == "/todo":
+            if not args:
+                items = self.todo_tracker.list_items()
+                if not items:
+                    self.console.print(f"[{COLOR_INFO}]No todo items.[/]")
+                    return
+                table = Table(title="Todo List", box=box.ROUNDED)
+                table.add_column("#", style="cyan", no_wrap=True)
+                table.add_column("Status", style="white")
+                table.add_column("Task", style="green")
+                for idx, item in enumerate(items, start=1):
+                    table.add_row(str(idx), item.status, item.task)
+                self.console.print(table)
+                return
+            action = args[0].lower()
+            if action == "add":
+                if len(args) < 2:
+                    self.console.print("[bold red]Usage: /todo add <task>[/]")
+                    return
+                task = " ".join(args[1:])
+                try:
+                    item = self.todo_tracker.add(task)
+                except ValueError as exc:
+                    self.console.print(f"[bold red]{exc}[/]")
+                    return
+                self.console.print(f"[{COLOR_SUCCESS}]Added:[/] {item.task}")
+            elif action == "done":
+                if len(args) < 2:
+                    self.console.print("[bold red]Usage: /todo done <n>[/]")
+                    return
+                try:
+                    item = self.todo_tracker.done(int(args[1]))
+                except (ValueError, IndexError) as exc:
+                    self.console.print(f"[bold red]{exc}[/]")
+                    return
+                self.console.print(f"[{COLOR_SUCCESS}]Done:[/] {item.task}")
+            elif action == "start":
+                if len(args) < 2:
+                    self.console.print("[bold red]Usage: /todo start <n>[/]")
+                    return
+                try:
+                    item = self.todo_tracker.start(int(args[1]))
+                except (ValueError, IndexError) as exc:
+                    self.console.print(f"[bold red]{exc}[/]")
+                    return
+                self.console.print(f"[{COLOR_SUCCESS}]In progress:[/] {item.task}")
+            elif action == "clear":
+                removed = self.todo_tracker.clear_done()
+                self.console.print(
+                    f"[{COLOR_SUCCESS}]Cleared {removed} done item(s).[/]"
+                )
+            else:
+                self.console.print(
+                    "[bold red]Usage: /todo | /todo add <task> | /todo start <n> | /todo done <n> | /todo clear[/]"
+                )
+                return
         elif cmd == "/speak":
             if not self.tts_engine:
                 self.console.print(
@@ -691,7 +1179,10 @@ class InteractiveCLI:
                 raw_input=f"/voice {action}",
             )
 
-            if hasattr(self.coder, "tool_orchestrator") and self.coder.tool_orchestrator:
+            if (
+                hasattr(self.coder, "tool_orchestrator")
+                and self.coder.tool_orchestrator
+            ):
                 result = await self.coder.tool_orchestrator.execute_command(
                     command, self._build_execution_context()
                 )
@@ -708,9 +1199,7 @@ class InteractiveCLI:
                 else:
                     self.console.print(f"[bold red]Error: {result.error}[/]")
             else:
-                self.console.print(
-                    "[bold yellow]Tool orchestrator not initialized.[/]"
-                )
+                self.console.print("[bold yellow]Tool orchestrator not initialized.[/]")
         elif cmd == "/clear":
             self.console.clear()
             self.print_banner()
@@ -729,6 +1218,16 @@ class InteractiveCLI:
         table.add_row("/providers", "List AI providers")
         table.add_row("/setup", "Configure provider & API key")
         table.add_row("/history ...", "Save/export/scroll chat history")
+        table.add_row(
+            "/self-evolve ...",
+            "Self-evolve (propose|issue <desc>|apply <id>|status|show <id>)",
+        )
+        table.add_row("/plan ...", "Plan mode (create/approve/show/execute)")
+        table.add_row("/todo ...", "Todo list tracking")
+        table.add_row("/edit ...", "Edit file with unique match validation")
+        table.add_row("/agent ...", "Run specialized agent (explore/plan/bash/general)")
+        table.add_row("/web ...", "Web fetch/search tools")
+        table.add_row("/mcp ...", "MCP connect/tools/call")
         table.add_row("/voice start|stop|status", "Voice dictation control")
         table.add_row("/speak <text>", "Text-to-speech playback")
         table.add_row("/exit", "Shutdown")
@@ -779,9 +1278,9 @@ class InteractiveCLI:
                 )
                 self._append_chat_entry("ai", content)
                 self.monitor.add_log("RESPONSE_OK", f"{len(content)} chars")
-                if self.tts_engine and getattr(
-                    self.config, "text_to_speech", {}
-                ).get("auto_read_responses", False):
+                if self.tts_engine and getattr(self.config, "text_to_speech", {}).get(
+                    "auto_read_responses", False
+                ):
                     plain_text = self._strip_markdown(content)
                     await self.tts_engine.speak_async(plain_text)
                 return content
@@ -1077,14 +1576,19 @@ class InteractiveCLI:
                             self.monitor.add_log("EXEC_TOOL", command.tool)
 
                             # Execute tool if orchestrator is available
-                            if hasattr(self.coder, "tool_orchestrator") and self.coder.tool_orchestrator:
+                            if (
+                                hasattr(self.coder, "tool_orchestrator")
+                                and self.coder.tool_orchestrator
+                            ):
                                 try:
                                     result = await self.coder.tool_orchestrator.execute_command(
                                         command, self._build_execution_context()
                                     )
                                     self._display_tool_result(result)
                                 except Exception as e:
-                                    self.console.print(f"[bold red]Tool execution error: {e}[/]")
+                                    self.console.print(
+                                        f"[bold red]Tool execution error: {e}[/]"
+                                    )
                             else:
                                 self.console.print(
                                     f"[bold yellow]Tool orchestrator not initialized. Run in initialized mode.[/]"

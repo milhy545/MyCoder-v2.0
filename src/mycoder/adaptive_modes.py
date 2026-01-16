@@ -16,10 +16,10 @@ import aiohttp
 
 try:
     from claude_cli_auth import (  # type: ignore
+        AuthConfig,
         AuthManager,
         ClaudeAuthError,
         ClaudeAuthManager,
-        AuthConfig,
     )
 except Exception:
     # Temporary local definitions for Docker development

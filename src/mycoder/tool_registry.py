@@ -17,8 +17,8 @@ import time
 from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Callable, Set
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Set
 
 try:
     from .mcp_connector import MCPConnector
@@ -27,6 +27,14 @@ except ImportError:
         from mcp_connector import MCPConnector  # type: ignore
     except ImportError:
         MCPConnector = None  # type: ignore
+try:
+    from .tools.edit_tool import EditResult, EditTool
+except ImportError:
+    try:
+        from tools.edit_tool import EditResult, EditTool  # type: ignore
+    except ImportError:
+        EditTool = None  # type: ignore
+        EditResult = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -202,7 +210,7 @@ class BaseTool(ABC):
 class FileOperationTool(BaseTool):
     """File operation tool implementation"""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, on_read: Optional[Callable[[str], None]] = None):
         capabilities = ToolCapabilities(
             requires_filesystem=True, max_execution_time=10, supports_caching=True
         )
@@ -213,6 +221,7 @@ class FileOperationTool(BaseTool):
             priority=ToolPriority.HIGH,
             capabilities=capabilities,
         )
+        self.on_read = on_read
 
     async def execute(
         self,
@@ -253,6 +262,8 @@ class FileOperationTool(BaseTool):
             if operation == "read":
                 if file_path.exists():
                     result_data = file_path.read_text(encoding="utf-8")
+                    if self.on_read:
+                        self.on_read(str(file_path))
                 else:
                     raise FileNotFoundError(f"File not found: {file_path}")
 
@@ -297,6 +308,87 @@ class FileOperationTool(BaseTool):
 
     async def validate_context(self, context: ToolExecutionContext) -> bool:
         """Validate file operation context"""
+        if self.capabilities.requires_filesystem:
+            return (
+                context.working_directory is not None
+                and context.working_directory.exists()
+            )
+        return True
+
+
+class FileEditTool(BaseTool):
+    """File edit tool implementation."""
+
+    def __init__(self, name: str, edit_tool: EditTool):
+        capabilities = ToolCapabilities(
+            requires_filesystem=True, max_execution_time=10, supports_caching=False
+        )
+        super().__init__(
+            name=name,
+            category=ToolCategory.FILE_OPERATIONS,
+            availability=ToolAvailability.ALWAYS,
+            priority=ToolPriority.HIGH,
+            capabilities=capabilities,
+        )
+        self.edit_tool = edit_tool
+
+    async def execute(
+        self,
+        context: ToolExecutionContext,
+        path: Optional[str] = None,
+        old_string: Optional[str] = None,
+        new_string: Optional[str] = None,
+        replace_all: bool = False,
+        **kwargs,
+    ) -> ToolResult:
+        start_time = time.time()
+        self.execution_count += 1
+
+        if not path or old_string is None or new_string is None:
+            duration_ms = int((time.time() - start_time) * 1000)
+            self.error_count += 1
+            return ToolResult(
+                success=False,
+                data=None,
+                tool_name=self.name,
+                duration_ms=duration_ms,
+                error='Usage: /edit <path> "old" "new" [--all]',
+            )
+
+        file_path = Path(path)
+        if context.working_directory:
+            file_path = context.working_directory / file_path
+
+        edit_result = self.edit_tool.edit(
+            str(file_path),
+            old_string,
+            new_string,
+            replace_all=replace_all,
+        )
+
+        duration_ms = int((time.time() - start_time) * 1000)
+        self.total_execution_time += duration_ms
+        self.last_execution = time.time()
+
+        if edit_result.success:
+            return ToolResult(
+                success=True,
+                data=edit_result.message,
+                tool_name=self.name,
+                duration_ms=duration_ms,
+                metadata={"path": str(file_path)},
+            )
+
+        self.error_count += 1
+        return ToolResult(
+            success=False,
+            data=None,
+            tool_name=self.name,
+            duration_ms=duration_ms,
+            error=edit_result.message,
+        )
+
+    async def validate_context(self, context: ToolExecutionContext) -> bool:
         if self.capabilities.requires_filesystem:
             return (
                 context.working_directory is not None
@@ -481,7 +573,15 @@ class ToolRegistry:
         """Initialize core system tools"""
 
         # File operations
-        self.register_tool(FileOperationTool("file_read"))
+        edit_tool = EditTool(Path.cwd()) if EditTool else None
+        if edit_tool:
+            self.register_tool(FileEditTool("file_edit", edit_tool))
+            file_read_tool = FileOperationTool(
+                "file_read", on_read=edit_tool.mark_as_read
+            )
+        else:
+            file_read_tool = FileOperationTool("file_read")
+        self.register_tool(file_read_tool)
         self.register_tool(FileOperationTool("file_write"))
         self.register_tool(FileOperationTool("file_list"))
 
@@ -501,6 +601,13 @@ class ToolRegistry:
         """Register a new tool in the registry"""
         if tool.name in self.tools:
             logger.warning(f"Tool {tool.name} already registered, replacing")
+            existing = self.tools[tool.name]
+            if existing.category in self.categories:
+                self.categories[existing.category] = [
+                    name
+                    for name in self.categories[existing.category]
+                    if name != tool.name
+                ]
 
         self.tools[tool.name] = tool
 
@@ -513,6 +620,12 @@ class ToolRegistry:
 
         # Emit registration event
         self._emit_event("tool_registered", {"tool": tool})
+
+    def reset(self) -> None:
+        """Reset registry state and re-register core tools."""
+        self.tools = {}
+        self.categories = {}
+        self._initialize_core_tools()
 
     def get_available_tools(self) -> List[str]:
         """Get list of all available tool names"""

@@ -1,0 +1,224 @@
+{
+  "prompt_engineering": [
+    {
+      "name": "simple_file_read",
+      "prompt": "Read mycoder_config.json",
+      "expected_tool": "file_read",
+      "confidence_min": 0.8,
+      "tags": ["file_ops", "common"]
+    },
+    {
+      "name": "multi_step_update_test",
+      "prompt": "Update dependencies and run tests",
+      "expected_tool": "multi_step",
+      "confidence_min": 0.7,
+      "tags": ["multi_step", "workflow"]
+    },
+    {
+      "name": "ambiguous_request",
+      "prompt": "Fix the bug",
+      "expected_tool": "ask_user",
+      "confidence_min": 0.0,
+      "tags": ["ambiguous"]
+    },
+    {
+      "name": "multi_step_read_then_test",
+      "prompt": "Read README.md and run tests",
+      "expected_tool": "multi_step",
+      "confidence_min": 0.7,
+      "tags": ["multi_step", "workflow"]
+    },
+    {
+      "name": "config_review",
+      "prompt": "Show the contents of pyproject.toml",
+      "expected_tool": "file_read",
+      "confidence_min": 0.8,
+      "tags": ["file_ops", "config"]
+    },
+    {
+      "name": "empty_prompt",
+      "prompt": "",
+      "expected_tool": "ask_user",
+      "confidence_min": 0.0,
+      "tags": ["edge_case"]
+    },
+    {
+      "name": "long_prompt_summary",
+      "prompt": "Summarize the README and then show the config file",
+      "expected_tool": "multi_step",
+      "confidence_min": 0.7,
+      "tags": ["multi_step", "edge_case"]
+    }
+  ],
+  "tool_selection": [
+    {
+      "name": "file_list",
+      "prompt": "List files in src/",
+      "expected_tool": "file_list",
+      "confidence_min": 0.8
+    },
+    {
+      "name": "git_status",
+      "prompt": "Check git status",
+      "expected_tool": "bash",
+      "confidence_min": 0.8
+    },
+    {
+      "name": "bash_run",
+      "prompt": "Run pytest tests/",
+      "expected_tool": "bash",
+      "confidence_min": 0.8
+    },
+    {
+      "name": "file_write",
+      "prompt": "Write output to results.txt",
+      "expected_tool": "file_write",
+      "confidence_min": 0.8
+    },
+    {
+      "name": "thermal_status_check",
+      "prompt": "Check current thermal status",
+      "expected_tool": "bash",
+      "confidence_min": 0.7,
+      "tags": ["thermal", "system"]
+    },
+    {
+      "name": "provider_fallback",
+      "prompt": "Retry using fallback provider",
+      "expected_tool": "ask_user",
+      "confidence_min": 0.0,
+      "tags": ["provider", "fallback", "ambiguous"]
+    },
+    {
+      "name": "lint_command",
+      "prompt": "Run flake8 src/",
+      "expected_tool": "bash",
+      "confidence_min": 0.8,
+      "tags": ["lint", "command"]
+    },
+    {
+      "name": "docker_compose_read",
+      "prompt": "Show docker-compose.yml",
+      "expected_tool": "file_read",
+      "confidence_min": 0.8,
+      "tags": ["file_ops", "docker"]
+    },
+    {
+      "name": "create_markdown_report",
+      "prompt": "Create report.md with summary",
+      "expected_tool": "file_write",
+      "confidence_min": 0.8,
+      "tags": ["file_ops", "write"]
+    }
+  ],
+  "context_awareness": [
+    {
+      "name": "current_file_reference",
+      "prompt": "Show the current file",
+      "expected_tool": "file_read",
+      "confidence_min": 0.8,
+      "context": {
+        "current_file": "api_providers.py",
+        "working_directory": "/project"
+      }
+    },
+    {
+      "name": "working_directory_reference",
+      "prompt": "List files in the current folder",
+      "expected_tool": "file_list",
+      "confidence_min": 0.8,
+      "context": {
+        "working_directory": "/project"
+      }
+    },
+    {
+      "name": "thermal_context_reference",
+      "prompt": "Adjust behavior based on current temperature",
+      "expected_tool": "ask_user",
+      "confidence_min": 0.0,
+      "context": {
+        "thermal_status": {
+          "cpu_temp": 82,
+          "safe_operation": false
+        }
+      }
+    },
+    {
+      "name": "current_config_reference",
+      "prompt": "Show the current config file",
+      "expected_tool": "file_read",
+      "confidence_min": 0.8,
+      "context": {
+        "current_file": "mycoder_config.json",
+        "working_directory": "/project"
+      }
+    },
+    {
+      "name": "cwd_list_reference",
+      "prompt": "List files in the working directory",
+      "expected_tool": "file_list",
+      "confidence_min": 0.8,
+      "context": {
+        "working_directory": "/project"
+      }
+    },
+    {
+      "name": "current_config_again",
+      "prompt": "Open the config file again",
+      "expected_tool": "file_read",
+      "confidence_min": 0.8,
+      "context": {
+        "current_file": "mycoder_config.json",
+        "working_directory": "/project"
+      }
+    }
+  ],
+  "error_handling": [
+    {
+      "name": "nonexistent_file",
+      "prompt": "Read nonexistent_file.txt",
+      "expected_tool": "file_read",
+      "confidence_min": 0.8
+    },
+    {
+      "name": "invalid_command",
+      "prompt": "Run foobar123",
+      "expected_tool": "bash",
+      "confidence_min": 0.8
+    },
+    {
+      "name": "ambiguous_error",
+      "prompt": "Make it better",
+      "expected_tool": "ask_user",
+      "confidence_min": 0.0
+    },
+    {
+      "name": "provider_timeout",
+      "prompt": "Handle provider timeout error",
+      "expected_tool": "ask_user",
+      "confidence_min": 0.0,
+      "tags": ["provider", "timeout", "recovery"]
+    },
+    {
+      "name": "thermal_overheat_error",
+      "prompt": "CPU is overheating, reduce workload",
+      "expected_tool": "ask_user",
+      "confidence_min": 0.0,
+      "tags": ["thermal", "safety"]
+    },
+    {
+      "name": "unknown_tool_request",
+      "prompt": "Use the magic_tool to fix it",
+      "expected_tool": "ask_user",
+      "confidence_min": 0.0,
+      "tags": ["unknown", "ambiguous"]
+    },
+    {
+      "name": "conflicting_instructions",
+      "prompt": "Delete the file but keep it",
+      "expected_tool": "ask_user",
+      "confidence_min": 0.0,
+      "tags": ["conflict", "ambiguous"]
+    }
+  ]
+}

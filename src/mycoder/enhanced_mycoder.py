@@ -17,16 +17,17 @@ except Exception:
     from .adaptive_modes import ClaudeAuthError
 
 try:
-    from .adaptive_modes import AdaptiveModeManager, OperationalMode, ClaudeNetworkError
+    from .adaptive_modes import AdaptiveModeManager, ClaudeNetworkError, OperationalMode
     from .mcp_connector import MCPConnector, MCPToolRouter
     from .mycoder import MyCoder
 except ImportError:
     from adaptive_modes import (  # type: ignore
         AdaptiveModeManager,
-        OperationalMode,
         ClaudeNetworkError,
+        OperationalMode,
     )
     from mcp_connector import MCPConnector, MCPToolRouter  # type: ignore
+
     from mycoder import MyCoder  # type: ignore
 
 logger = logging.getLogger(__name__)

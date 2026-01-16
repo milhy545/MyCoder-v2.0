@@ -6,20 +6,20 @@ and real-world API interactions in controlled scenarios.
 """
 
 import asyncio
-import pytest
-import os
-import tempfile
 import json
-from pathlib import Path
-from unittest.mock import patch, Mock, AsyncMock
-
+import os
 import sys
+import tempfile
+from pathlib import Path
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from mycoder.api_providers import (
-    APIProviderRouter,
     APIProviderConfig,
+    APIProviderRouter,
     APIProviderType,
     ClaudeAnthropicProvider,
     ClaudeOAuthProvider,

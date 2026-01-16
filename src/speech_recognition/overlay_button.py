@@ -6,19 +6,19 @@ Provides a draggable, always-on-top button for starting/stopping dictation.
 
 import logging
 from enum import Enum
-from typing import Optional, Callable
+from typing import Callable, Optional
 
 try:
+    from PyQt5.QtCore import QEasingCurve, QPoint, QPropertyAnimation, Qt, QTimer
+    from PyQt5.QtGui import QColor, QCursor, QFont, QPalette
     from PyQt5.QtWidgets import (
         QApplication,
-        QPushButton,
-        QWidget,
-        QLabel,
-        QVBoxLayout,
         QHBoxLayout,
+        QLabel,
+        QPushButton,
+        QVBoxLayout,
+        QWidget,
     )
-    from PyQt5.QtCore import Qt, QTimer, QPoint, QPropertyAnimation, QEasingCurve
-    from PyQt5.QtGui import QFont, QColor, QPalette, QCursor
 
     PYQT_AVAILABLE = True
 except ImportError:

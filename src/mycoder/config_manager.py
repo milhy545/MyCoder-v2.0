@@ -8,9 +8,9 @@ and system settings with support for multiple configuration sources.
 import json
 import logging
 import os
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
-from dataclasses import dataclass, asdict
 
 logger = logging.getLogger(__name__)
 

@@ -19,16 +19,16 @@ Usage:
     python tests/stress/run_stress_tests.py --report-only
 """
 
-import subprocess
 import argparse
-import time
 import json
 import os
+import subprocess
 import sys
-from pathlib import Path
-from datetime import datetime
+import time
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Any
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 @dataclass

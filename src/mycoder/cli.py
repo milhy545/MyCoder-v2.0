@@ -12,9 +12,9 @@ from typing import Optional
 import click
 
 from . import (
-    MyCoder,
-    EnhancedMyCoder,
     AdaptiveModeManager,
+    EnhancedMyCoder,
+    MyCoder,
     OperationalMode,
     __version__,
 )

@@ -7,17 +7,17 @@ Modes: GUI overlay (background app) or CLI inline (record -> transcribe -> retur
 
 import asyncio
 import logging
-import time
 import threading
+import time
 from typing import Any, Dict, Optional, Tuple
 
 from .tool_registry import (
     BaseTool,
-    ToolCategory,
     ToolAvailability,
-    ToolPriority,
     ToolCapabilities,
+    ToolCategory,
     ToolExecutionContext,
+    ToolPriority,
     ToolResult,
 )
 
@@ -190,8 +190,10 @@ class SpeechTool(BaseTool):
         """Record audio and transcribe it using the requested provider."""
         from speech_recognition.audio_recorder import AudioRecorder
         from speech_recognition.gemini_transcriber import GeminiTranscriber
-        from speech_recognition.whisper_transcriber import WhisperTranscriber
-        from speech_recognition.whisper_transcriber import WhisperProvider
+        from speech_recognition.whisper_transcriber import (
+            WhisperProvider,
+            WhisperTranscriber,
+        )
 
         recorder = AudioRecorder(max_duration=duration)
         recorder.start_recording()
@@ -210,7 +212,9 @@ class SpeechTool(BaseTool):
             return text, "gemini"
 
         whisper_provider = (
-            WhisperProvider.LOCAL if provider == "whisper_local" else WhisperProvider.API
+            WhisperProvider.LOCAL
+            if provider == "whisper_local"
+            else WhisperProvider.API
         )
         transcriber = WhisperTranscriber(
             provider=whisper_provider,

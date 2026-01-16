@@ -1,12 +1,12 @@
-from unittest.mock import Mock, patch
 import sys
 import types
+from unittest.mock import Mock, patch
 
 import pytest
 
 from mycoder.speech_tool import SpeechTool
-from mycoder.tts_engine import TTSEngine
 from mycoder.tool_registry import ToolExecutionContext
+from mycoder.tts_engine import TTSEngine
 
 
 @pytest.mark.asyncio

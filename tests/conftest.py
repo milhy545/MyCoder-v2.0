@@ -5,8 +5,8 @@ Provides common fixtures and configuration for all test modules.
 
 import asyncio
 import os
-import tempfile
 import sys
+import tempfile
 from pathlib import Path
 from typing import AsyncGenerator, Generator
 from unittest.mock import MagicMock, patch
@@ -81,7 +81,7 @@ async def initialized_mycoder(enhanced_mycoder):
 @pytest.fixture
 def mock_api_response():
     """Mock successful API response."""
-    from mycoder.api_providers import APIResponse, APIProviderType
+    from mycoder.api_providers import APIProviderType, APIResponse
 
     return APIResponse(
         success=True,
@@ -95,7 +95,7 @@ def mock_api_response():
 @pytest.fixture
 def mock_failed_response():
     """Mock failed API response."""
-    from mycoder.api_providers import APIResponse, APIProviderType
+    from mycoder.api_providers import APIProviderType, APIResponse
 
     return APIResponse(
         success=False,
