@@ -77,7 +77,7 @@ class WebFetcher:
     def _html_to_markdown(self, html: str) -> str:
         import re
 
-        html = re.sub(r"<script[^>]*>[\s\S]*?</script>", "", html, flags=re.I)
+        html = re.sub(r"<script[^>]*>.*?</script[^>]*>", "", html, flags=re.I | re.S)
         html = re.sub(r"<style[^>]*>[\s\S]*?</style>", "", html, flags=re.I)
 
         html = re.sub(r"<h1[^>]*>(.*?)</h1>", r"# \1\n", html, flags=re.I)
