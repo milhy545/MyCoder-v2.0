@@ -76,10 +76,7 @@ class TestThermalSettings:
         assert settings.check_interval == 30
         assert settings.throttle_on_high is True
         assert settings.emergency_shutdown is False
-        assert (
-            "/PowerManagement/scripts/performance_manager.sh"
-            in settings.performance_script
-        )
+        assert settings.performance_script == ""  # Set via env var or config
 
     def test_custom_thermal_settings(self):
         """Test custom thermal settings"""

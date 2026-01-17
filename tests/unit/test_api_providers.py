@@ -793,8 +793,12 @@ class TestOllamaProvider:
         assert thermal_status["should_throttle"] is False
 
     @pytest.mark.asyncio
+    @patch("os.path.exists", return_value=True)
+    @patch("os.environ.get", return_value="/fake/thermal_script.sh")
     @patch("subprocess.run")
-    async def test_check_thermal_status_critical(self, mock_subprocess):
+    async def test_check_thermal_status_critical(
+        self, mock_subprocess, mock_env, mock_exists
+    ):
         """Test thermal status check with critical temperature"""
         # Mock thermal script with critical temperature
         mock_result = Mock()
@@ -809,8 +813,10 @@ class TestOllamaProvider:
         assert thermal_status["reason"] == "critical_temp"
 
     @pytest.mark.asyncio
+    @patch("os.path.exists", return_value=True)
+    @patch("os.environ.get", return_value="/fake/thermal_script.sh")
     @patch("subprocess.run")
-    async def test_thermal_aware_query(self, mock_subprocess):
+    async def test_thermal_aware_query(self, mock_subprocess, mock_env, mock_exists):
         """Test query with thermal monitoring"""
         # Mock thermal script indicating high temperature
         mock_result = Mock()

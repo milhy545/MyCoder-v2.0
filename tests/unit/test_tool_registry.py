@@ -628,8 +628,12 @@ class TestThermalAwareTool:
         assert is_safe is True
 
     @pytest.mark.asyncio
+    @patch("os.path.exists", return_value=True)
+    @patch("os.environ.get", return_value="/fake/thermal_script.sh")
     @patch("subprocess.run")
-    async def test_check_thermal_status_script_critical(self, mock_subprocess):
+    async def test_check_thermal_status_script_critical(
+        self, mock_subprocess, mock_env, mock_exists
+    ):
         """Test thermal status check with critical temperature"""
         # Mock thermal script indicating critical temperature
         mock_result = Mock()
