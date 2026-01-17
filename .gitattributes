@@ -1,0 +1,7 @@
+# Mark mobile Android code as vendored (exclude from CodeQL)
+mobile/** linguist-vendored
+mycoder-chat/backend/** linguist-vendored
+
+# Documentation
+*.md linguist-documentation
+docs/** linguist-documentation

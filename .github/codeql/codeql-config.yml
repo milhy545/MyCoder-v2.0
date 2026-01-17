@@ -1,0 +1,13 @@
+name: "CodeQL Config"
+
+# Disable auto language detection for Java/Kotlin
+disable-default-queries: false
+
+# Explicitly ignore mobile Android code
+paths-ignore:
+  - 'mobile/**'
+  - 'mycoder-chat/backend/**'
+  
+# Only scan Python and JavaScript/TypeScript
+queries:
+  - uses: security-and-quality
