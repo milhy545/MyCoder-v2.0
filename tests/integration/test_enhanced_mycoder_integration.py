@@ -469,13 +469,18 @@ class TestEnhancedMyCoderIntegration:
                 def mock_response(prompt, **kwargs):
                     # Simulate different response times
                     import random
+                    import re
 
                     delay = random.uniform(0.1, 0.5)
                     time.sleep(delay)
 
+                    # Extract request number from prompt (handles system message prefix)
+                    match = re.search(r"Request (\d+)", prompt)
+                    req_id = match.group(0) if match else "Request"
+
                     return APIResponse(
                         success=True,
-                        content=f"Response to: {prompt[:20]}...",
+                        content=f"Response to: {req_id}",
                         provider=APIProviderType.OLLAMA_LOCAL,
                         duration_ms=int(delay * 1000),
                     )

@@ -43,9 +43,7 @@ class ThermalSettings:
     check_interval: int = 30
     throttle_on_high: bool = True
     emergency_shutdown: bool = False
-    performance_script: str = (
-        "/home/milhy777/Develop/Production/PowerManagement/scripts/performance_manager.sh"
-    )
+    performance_script: str = ""  # Set via MYCODER_THERMAL_SCRIPT env var or config
 
 
 @dataclass
@@ -202,7 +200,7 @@ class ConfigManager:
                 "check_interval": 30,
                 "throttle_on_high": True,
                 "emergency_shutdown": False,
-                "performance_script": "/home/milhy777/Develop/Production/PowerManagement/scripts/performance_manager.sh",
+                "performance_script": "",
             },
             "system": {
                 "log_level": "INFO",

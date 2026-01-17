@@ -493,7 +493,7 @@ class EnhancedMyCoderV2:
         )
         thermal_script = thermal_config.get(
             "performance_script",
-            "/home/milhy777/Develop/Production/PowerManagement/scripts/performance_manager.sh",
+            os.environ.get("MYCODER_THERMAL_SCRIPT", ""),
         )
         thermal_settings = {
             "enabled": bool(thermal_enabled),

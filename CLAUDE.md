@@ -188,25 +188,21 @@ export MYCODER_PREFERRED_PROVIDER=claude_oauth
 - `docker-compose*.yml` - Three deployment modes (dev, prod, lightweight)
 - `dictation_config_local.json` - Speech recognition configuration
 
-## Q9550 Thermal Management
+## Thermal Management
 
-Real-time CPU temperature tracking with automatic throttling (>75°C reduces workload, 85°C emergency shutdown). Integrates with PowerManagement scripts at `/home/milhy777/Develop/Production/PowerManagement/`.
+Real-time CPU temperature tracking with automatic throttling (>75°C reduces workload, 85°C emergency shutdown). Configure thermal scripts path via `MYCODER_THERMAL_SCRIPT` env var or in `mycoder_config.json`.
 
-**Testing:** `python tests/stress/run_stress_tests.py --suite thermal` (requires Q9550 hardware)
+**Testing:** `python tests/stress/run_stress_tests.py --suite thermal` (requires thermal sensors)
 
 ## Hardware Profiles
 
-### MiniPC (ssh `MiniPC`)
-Debian 12 (32-bit i686), Intel Atom N280 @ 1.66 GHz (1 core/2 threads), 2GB RAM, 3GB swap, 62GB free storage. Use `mycoder_config_minipc_32bit.json`, run `poetry install --extras http`, avoid Docker, skip thermal/stress tests.
+For resource-constrained systems (32-bit, low RAM), use `mycoder_config_minipc_32bit.json`, run `poetry install --extras http`, avoid Docker, skip thermal/stress tests with `-m "not thermal"`.
 
-### Q9550 Development System
-Intel Core 2 Quad Q9550 @ 2.83GHz (4 cores), thermal monitoring enabled (max 75°C, critical 85°C), 4GB+ RAM recommended. Use for thermal testing, stress testing, full development workflow.
-
-## Performance Benchmarks (Q9550 @ 2.83GHz)
+## Performance Benchmarks
 - Simple Query: 0.5-2.0s (Claude OAuth, cached auth)
 - File Analysis: 2.0-5.0s (Ollama Local inference)
 - Complex Task: 5.0-15.0s (Claude Anthropic API)
-- Thermal Check: <0.1s (Q9550 sensors, hardware direct)
+- Thermal Check: <0.1s (hardware sensors)
 
 ## Adding API Providers
 
@@ -218,7 +214,7 @@ Intel Core 2 Quad Q9550 @ 2.83GHz (4 cores), thermal monitoring enabled (max 75�
 ## Troubleshooting
 
 **Common Issues:**
-- Thermal tests failing → Ensure Q9550 system with PowerManagement scripts at `/home/milhy777/Develop/Production/PowerManagement/`
+- Thermal tests failing → Ensure thermal sensors available and `MYCODER_THERMAL_SCRIPT` configured
 - Provider timeouts → Check API keys (`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) and network connectivity
 - Memory errors → Ensure 4GB+ RAM for full test suite; use lightweight profile for constrained systems
 - Docker build issues → Run `make clean` then rebuild

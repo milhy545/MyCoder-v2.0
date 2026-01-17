@@ -1441,14 +1441,14 @@ class OllamaProvider(BaseAPIProvider):
     async def _check_thermal_status(self) -> Dict[str, Any]:
         """Check thermal status for local instances (Q9550 integration)"""
         try:
-            # Import thermal management from PowerManagement system
             import subprocess
 
+            thermal_script = os.environ.get("MYCODER_THERMAL_SCRIPT", "")
+            if not thermal_script or not os.path.exists(thermal_script):
+                return {"should_throttle": False}  # No script configured
+
             result = subprocess.run(
-                [
-                    "/home/milhy777/Develop/Production/PowerManagement/scripts/performance_manager.sh",
-                    "status",
-                ],
+                [thermal_script, "status"],
                 capture_output=True,
                 text=True,
                 timeout=5,

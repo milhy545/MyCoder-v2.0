@@ -639,11 +639,12 @@ class ThermalAwareTool(BaseTool):
             # Fallback: check PowerManagement system directly
             import subprocess
 
+            thermal_script = os.environ.get("MYCODER_THERMAL_SCRIPT", "")
+            if not thermal_script or not os.path.exists(thermal_script):
+                return True  # Assume safe if no script configured
+
             result = subprocess.run(
-                [
-                    "/home/milhy777/Develop/Production/PowerManagement/scripts/performance_manager.sh",
-                    "status",
-                ],
+                [thermal_script, "status"],
                 capture_output=True,
                 text=True,
                 timeout=5,
