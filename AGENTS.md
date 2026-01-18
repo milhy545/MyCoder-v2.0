@@ -2,7 +2,7 @@
 
 **Note:** This file is the primary source of truth for all AI agents (Claude Code, Jules/Gemini, Codex) working on this project. It defines the project's architecture, conventions, and operational protocols.
 
--## Recent Changes & Updates
+## Recent Changes & Updates
 *Agents: Add entries here when making significant changes*
 - 2026-01-21: Codex - Replaced shell=True command execution in BashAgent, EnhancedMyCoder local fallback, and self_evolve test runner; switched web cache key to sha256 to satisfy CodeQL; tests run: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
 - 2026-01-21: Codex - Fixed CodeQL blockers (tool_registry import guard to avoid None callables, overlay_button PyQt guards, adaptive_modes explicit fallback returns, removed unused imports); tests run: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
@@ -16,6 +16,9 @@
 - 2026-01-20: Jules - Added `src/mycoder/triage_agent.py` and `mycoder-triage` command for automated issue triage based on "Goat Principle" (Functionality > Aesthetics); added unit tests in `tests/unit/test_triage_agent.py`.
 - 2026-01-20: Codex - Ensured CI pipeline exports `PYTHONPATH=src` for the quality/test job and updated `tests/unit/test_context_manager.py` to import `ContextManager` directly; tests run: `poetry run flake8 src/ tests/`, `poetry run pytest tests/unit/test_context_manager.py`.
 - 2026-01-20: Codex - Added a default thermal performance script path so config validation/debug info always report on the configured script and trigger warnings when the expected file is missing; tests run: `poetry run pytest tests/unit/test_config_manager.py`.
+- 2026-01-18: Claude Code - Fixed UI rendering bug in `cli_interactive.py`: removed infinite `live.update()` loop (line 1865) and unnecessary `live.refresh()` calls. Tool orchestrator now initializes without MCP bridge if MCP fails. All 338 unit tests passing ✅
+- 2026-01-18: Gemini - Implemented and verified Model Router (Triad System) components: `ModelRouter`, `IntentClassifier` (with improved logic), and adapters for Claude/OpenAI/Gemini using `aiohttp`. Achieved full coverage with unit tests and integration tests mocking the orchestration flow. Codebase type-checked with `mypy` and formatted.
+- 2026-01-18: Claude Code - Created Model Router & Orchestrator (Triad System) spec at `docs/specs/MODEL_ROUTER_SPEC.md`. Features: 3-role system (Architect/Worker/Reviewer), intent classification, budget tiers (MINIMAL→UNLIMITED), FailureMemory constraint injection, automatic handoffs, BaseModelAdapter interface. 63 implementation steps for Codex.
 - 2026-01-18: Codex - Implemented Failure Memory (Reflexion) module, integrated it into `ToolRegistry`, and added unit/integration tests to enforce advisory warnings/blocks; tests run: `poetry run pytest tests/unit/test_failure_memory.py -v`, `poetry run pytest tests/integration/test_failure_memory_integration.py -v`.
 - 2026-01-18: Claude Code - Created comprehensive Failure Memory (Reflexion Mechanism) implementation spec at `docs/specs/FAILURE_MEMORY_SPEC.md`. Features SQLite storage, Advisor Pattern with ALLOW/WARN/BLOCK rules, environment-aware retry logic, TTL expiration (HARD=7d, SOFT=1h), and tool_registry integration. Ready for Codex implementation.
 - 2026-01-18: Gemini - Resolved CI failures in `main` and `alert-autofix-6` (formatting issues). CI Pipeline is GREEN for both.
@@ -138,4 +141,4 @@ poetry run pytest tests/providers/ -v
 - `tests/`: Comprehensive test suite.
 
 ---
-*Last Updated: 2026-01-20 by Agent Jules*
+*Last Updated: 2026-01-21 by Agent Jules*

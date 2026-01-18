@@ -544,14 +544,13 @@ class EnhancedMyCoderV2:
 
             if not success:
                 logger.warning(
-                    "MCP bridge initialization failed - tool execution will be limited"
+                    "MCP bridge initialization failed - continuing without MCP bridge"
                 )
                 self.mcp_bridge = None
-                self.tool_orchestrator = None
-                return
-
-            # Register MCP tools in tool registry
-            await self.mcp_bridge.register_mcp_tools_in_registry(self.tool_registry)
+                # Continue with tool orchestrator without MCP
+            else:
+                # Register MCP tools in tool registry if MCP is available
+                await self.mcp_bridge.register_mcp_tools_in_registry(self.tool_registry)
 
             # Initialize tool orchestrator (lazy import to avoid cyclic dependency)
             from .tool_orchestrator import ToolExecutionOrchestrator

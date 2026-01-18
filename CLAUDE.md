@@ -112,7 +112,12 @@ poetry run dictation      # Launch speech recognition
 - **Thermal Management** - Q9550 CPU protection with automatic throttling
 - **Self-Evolve System** - Automated test failure detection with approval workflow and sandbox testing
 
-### Testing
+## Testing
+
+### Running Tests
+
+**CRITICAL:** Always use `poetry run pytest` - pytest is NOT in PATH without Poetry.
+
 ```bash
 # By test category
 poetry run pytest tests/unit/ -v          # Unit tests
@@ -129,7 +134,24 @@ python tests/stress/run_stress_tests.py --suite thermal  # Requires Q9550
 poetry run pytest -m unit
 poetry run pytest -m thermal           # Q9550 only
 poetry run pytest -m "not thermal"     # Skip thermal tests
+
+# Run specific test file
+poetry run pytest -q tests/unit/test_xyz.py
 ```
+
+### Test Structure
+
+**Categories:** `tests/unit/` (core functionality), `tests/integration/` (API interactions), `tests/functional/` (end-to-end), `tests/e2e/` (simulation-based), `tests/stress/` (system limits + thermal)
+
+**Markers:** `unit`, `integration`, `functional`, `stress`, `performance`, `slow`, `network`, `thermal` (Q9550 required), `auth` (Claude CLI auth required)
+
+### Testing Protocol
+
+**MANDATORY FOR ALL CHANGES:**
+1. Write/modify code
+2. Immediately run relevant tests: `poetry run pytest`
+3. Show test results to user
+4. Only then mark task as complete
 
 ### Code Quality
 ```bash
@@ -138,7 +160,7 @@ poetry run flake8 src/ tests/             # Lint
 poetry run mypy src/                      # Type check (strict mode)
 ```
 
-### Docker Development (Czech Makefile)
+## Docker Development (Czech Makefile)
 
 **Important:** Development mode uses bind mounts for live reload - code changes in `src/` appear instantly without container rebuild. Only rebuild when modifying `pyproject.toml`, Dockerfile, or system dependencies.
 
@@ -164,12 +186,6 @@ make build-dev / make build-prod / make rebuild
 make venv / make test-local / make lint-local / make format-local
 ```
 
-## Test Structure
-
-**Categories:** `tests/unit/` (core functionality), `tests/integration/` (API interactions), `tests/functional/` (end-to-end), `tests/e2e/` (simulation-based), `tests/stress/` (system limits + thermal)
-
-**Markers:** `unit`, `integration`, `functional`, `stress`, `performance`, `slow`, `network`, `thermal` (Q9550 required), `auth` (Claude CLI auth required)
-
 ## Configuration
 
 ### Environment Variables
@@ -188,6 +204,34 @@ export MYCODER_PREFERRED_PROVIDER=claude_oauth
 - `docker-compose*.yml` - Three deployment modes (dev, prod, lightweight)
 - `dictation_config_local.json` - Speech recognition configuration
 
+## Critical Implementation Details
+
+### File Edit Tool Flow
+The file edit system requires specific sequencing:
+1. Files must be read via `file_read` tool before editing
+2. `EditTool.validate_edit()` normalizes both relative and absolute paths
+3. `file_write` automatically marks files as read for immediate editing
+4. Enhanced edit tool validates unique string matches to prevent ambiguous edits
+
+**Bug History (v2.2.0):**
+- Fixed: file_write now marks files as read via `on_read` callback
+- Fixed: EditTool path normalization handles relative/absolute paths
+- Fixed: Sequential edits work properly with working_directory context
+
+### Auto-Execute Flow
+The interactive CLI can auto-execute file operations:
+- Parses responses for file_read/file_write/file_edit commands
+- Streams execution with progress callbacks
+- Activity Panel shows real-time CPU/RAM/TEMP metrics
+- Keyboard scrolling (↑/↓) for chat history navigation
+
+### Function Calling API Support
+API providers (Claude Anthropic, Gemini) support Function Calling with tool schemas:
+- Tool definitions exported from tool_registry
+- Responses normalized (tool_use/functionCall → tool_calls)
+- Edge cases: multiple tools, missing functionCall field handled
+- Unit tests: `test_api_providers.py` covers function calling scenarios
+
 ## Thermal Management
 
 Real-time CPU temperature tracking with automatic throttling (>75°C reduces workload, 85°C emergency shutdown). Configure thermal scripts path via `MYCODER_THERMAL_SCRIPT` env var or in `mycoder_config.json`.
@@ -196,6 +240,12 @@ Real-time CPU temperature tracking with automatic throttling (>75°C reduces wor
 
 ## Hardware Profiles
 
+### Q9550 Development System
+- CPU: Intel Core 2 Quad Q9550 @ 2.83GHz (4 cores)
+- Thermal monitoring enabled
+- Use for: Full development, thermal testing, stress testing
+
+### MiniPC (32-bit Intel Atom)
 For resource-constrained systems (32-bit, low RAM), use `mycoder_config_minipc_32bit.json`, run `poetry install --extras http`, avoid Docker, skip thermal/stress tests with `-m "not thermal"`.
 
 ## Performance Benchmarks
@@ -210,6 +260,20 @@ For resource-constrained systems (32-bit, low RAM), use `mycoder_config_minipc_3
 2. Add provider to `APIProviderRouter` routing logic
 3. Create unit and integration tests
 4. Add provider configuration schema to config system
+5. Update fallback chain priority in `select_provider()`
+
+## CI/CD Integration
+
+GitHub Actions workflow includes:
+- Credential gating for tests requiring API keys
+- Black/isort formatting checks
+- Unit/integration test suites
+- Coverage reporting
+
+**Recent fixes (2026-01-18):**
+- Resolved CI failures in `main` and `alert-autofix-6` branches
+- Fixed log injection vulnerability (PR #42)
+- All tests passing, CI pipeline GREEN
 
 ## Troubleshooting
 
@@ -219,6 +283,7 @@ For resource-constrained systems (32-bit, low RAM), use `mycoder_config_minipc_3
 - Memory errors → Ensure 4GB+ RAM for full test suite; use lightweight profile for constrained systems
 - Docker build issues → Run `make clean` then rebuild
 - Live reload not working → Check mounted volumes: `docker-compose -f docker-compose.dev.yml config | grep -A5 volumes`
+- "pytest not in PATH" → Always use `poetry run pytest`
 
 **Debug Mode:**
 ```bash
@@ -227,3 +292,17 @@ poetry run python -m mycoder.enhanced_mycoder_v2       # Enable debug logging
 poetry run pytest tests/unit/ -v -s --tb=long          # Detailed pytest output
 make dev-shell                                         # Docker debug shell
 ```
+
+## Recent Major Changes (v2.2.0)
+
+- Released v2.2.0 with unified versioning across all components
+- Fixed critical file_edit bugs (3 bugs) in sequential edit workflow
+- Formatted all code with black/isort (314 tests passing)
+- Added 7-tier API provider fallback (Mercury, Termux Ollama added)
+- Implemented Activity Panel with CPU/RAM/TEMP monitoring
+- Added auto-execute flow with streaming callbacks
+- Integrated agent orchestration (Explore, Plan, Bash, General)
+- Added self-evolve system with approval workflow and sandbox
+- Implemented circuit breaker and rate limiter for API resilience
+- Added MCP (Model Context Protocol) client support
+- Created comprehensive E2E AI simulation testing framework

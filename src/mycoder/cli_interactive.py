@@ -1976,7 +1976,6 @@ class InteractiveCLI:
             ) as live:
                 self._live = live
                 while True:
-                    live.update(self._create_layout())
                     live.stop()
                     if session:
                         user_input = (await session.prompt_async("You> ")).strip()
@@ -2014,20 +2013,16 @@ class InteractiveCLI:
                                 )
 
                             live.update(self._create_layout())
-                            live.refresh()
                             continue
 
                         # Slash command (existing logic for /exit, /help, etc.)
                         await self.handle_slash_command(user_input)
                         live.update(self._create_layout())
-                        live.refresh()
                         continue
                     self._append_chat_entry("user", user_input)
                     live.update(self._create_layout())
-                    live.refresh()
                     await self.process_chat(user_input)
                     live.update(self._create_layout())
-                    live.refresh()
         except (KeyboardInterrupt, EOFError):
             self.console.print(
                 "\n[bold yellow]⛔ Shutting down MyCoder... Goodbye![/bold yellow]"
