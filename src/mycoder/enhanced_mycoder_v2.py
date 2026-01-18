@@ -24,7 +24,10 @@ import time
 import urllib.parse
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
+
+if TYPE_CHECKING:
+    from .tool_orchestrator import ToolExecutionOrchestrator
 
 try:
     from .adaptive_modes import AdaptiveModeManager, OperationalMode
@@ -39,7 +42,6 @@ try:
         OllamaProvider,
     )
     from .mcp_bridge import MCPBridge
-    from .tool_orchestrator import ToolExecutionOrchestrator
     from .tool_registry import (
         ToolAvailability,
         ToolCategory,
@@ -49,7 +51,6 @@ try:
 except ImportError:
     from adaptive_modes import AdaptiveModeManager, OperationalMode  # type: ignore
     from mcp_bridge import MCPBridge  # type: ignore
-    from tool_orchestrator import ToolExecutionOrchestrator  # type: ignore
 
     from mycoder.api_providers import (  # type: ignore
         APIProviderConfig,
@@ -471,7 +472,9 @@ class EnhancedMyCoderV2:
             # Register MCP tools in tool registry
             await self.mcp_bridge.register_mcp_tools_in_registry(self.tool_registry)
 
-            # Initialize tool orchestrator
+            # Initialize tool orchestrator (lazy import to avoid cyclic dependency)
+            from .tool_orchestrator import ToolExecutionOrchestrator
+
             self.tool_orchestrator = ToolExecutionOrchestrator(
                 tool_registry=self.tool_registry,
                 mcp_bridge=self.mcp_bridge,

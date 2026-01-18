@@ -344,6 +344,8 @@ class OverlayApp:
         Returns:
             Application exit code
         """
+        if self.app is None:
+            raise RuntimeError("QApplication not initialized - PyQt5 not available")
         self.button.show()
         return self.app.exec_()
 

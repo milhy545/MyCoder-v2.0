@@ -649,8 +649,6 @@ class InteractiveCLI:
                     elif "output" in result.data:
                         output_text += f"```\n{result.data['output']}\n```"
                     else:
-                        import json
-
                         output_text += (
                             f"```json\n{json.dumps(result.data, indent=2)}\n```"
                         )
@@ -1583,10 +1581,10 @@ class InteractiveCLI:
         """Strip markdown formatting for TTS output."""
         import re
 
-        text = re.sub(r"```[\\s\\S]*?```", "", text)
+        text = re.sub(r"```[\s\S]*?```", "", text)
         text = re.sub(r"`[^`]*`", "", text)
         text = re.sub(r"[*_~`]", "", text)
-        text = re.sub(r"^#+\\s+", "", text, flags=re.MULTILINE)
+        text = re.sub(r"^#+\s+", "", text, flags=re.MULTILINE)
         return text.strip()
 
     def _create_layout(self) -> Layout:
