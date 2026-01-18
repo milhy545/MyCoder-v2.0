@@ -187,6 +187,7 @@ config_manager.save_config("updated_config.json")
 - **Health Monitoring**: Real-time provider status tracking
 - **Cost Optimization**: Prefer free/cheaper providers when available
 - **Performance Metrics**: Track response times and success rates
+- **Circuit Breaker & Rate Limiting**: Resilient API management with automatic recovery
 
 ### Thermal Management (Q9550)
 
@@ -297,6 +298,11 @@ MyCoder-v2.0/
 │   │   ├── api_providers.py         # API provider implementations
 │   │   ├── config_manager.py        # Configuration management
 │   │   ├── tool_registry.py         # Tool registry system
+│   │   ├── agents/                  # Agent orchestration
+│   │   ├── mcp/                     # MCP client support
+│   │   ├── tools/                   # Enhanced tools
+│   │   ├── ui_activity_panel.py     # Activity Panel UI
+│   │   ├── ui_dynamic_panels.py     # Dynamic UI components
 │   │   └── __init__.py              # Package initialization
 │   └── speech_recognition/      # Dictation module
 ├── tests/                       # Test suites

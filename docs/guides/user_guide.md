@@ -1,6 +1,6 @@
 # User Guide
 
-Comprehensive user guide for Enhanced MyCoder v2.1.0.
+Comprehensive user guide for Enhanced MyCoder v2.2.0.
 
 ## Table of Contents
 
@@ -49,9 +49,9 @@ asyncio.run(main())
 
 ## Core Concepts
 
-### 5-Tier API Provider System
+### 7-Tier API Provider System
 
-Enhanced MyCoder v2.1.0 uses a sophisticated fallback system:
+Enhanced MyCoder v2.2.0 uses a sophisticated fallback system:
 
 1. **Claude Anthropic API** (Premium)
    - Highest quality responses
@@ -60,7 +60,7 @@ Enhanced MyCoder v2.1.0 uses a sophisticated fallback system:
 
 2. **Claude OAuth** (Authenticated)
    - High quality responses
-   - Free with authentication
+   - Free with authentication via `claude-cli-auth`
    - Recommended for daily use
 
 3. **Gemini API** (Alternative)
@@ -68,12 +68,20 @@ Enhanced MyCoder v2.1.0 uses a sophisticated fallback system:
    - Different strengths and perspective
    - Good fallback option
 
-4. **Ollama Local** (Private)
+4. **Mercury** (Diffusion LLM)
+   - Inception Labs diffusion-based LLM
+   - High-speed Czech-optimized output
+
+5. **Ollama Local** (Private)
    - Runs on your machine
    - Complete privacy
    - Good for sensitive data
 
-5. **Ollama Remote** (Distributed)
+6. **Termux Ollama** (Mobile)
+   - Runs on Android device via Termux
+   - Connect via WiFi or USB
+
+7. **Ollama Remote** (Distributed)
    - Remote Ollama instances
    - Load distribution
    - Backup when local fails
@@ -105,6 +113,7 @@ response = await mycoder.process_request("Analyze this code")
 # API Keys
 export ANTHROPIC_API_KEY="your_key"
 export GEMINI_API_KEY="your_key"
+export INCEPTION_API_KEY="your_key"
 
 # System Settings
 export MYCODER_DEBUG=1                    # Enable debug logging
@@ -140,11 +149,21 @@ Create `mycoder_config.json`:
       "model": "gemini-1.5-pro",
       "max_tokens": 4096
     },
+    "mercury": {
+      "enabled": true,
+      "model": "mercury",
+      "diffusing": true
+    },
     "ollama_local": {
       "enabled": true,
       "base_url": "http://localhost:11434",
       "model": "tinyllama",
       "timeout_seconds": 60
+    },
+    "termux_ollama": {
+      "enabled": true,
+      "base_url": "http://192.168.1.100:11434",
+      "model": "tinyllama"
     },
     "ollama_remote": {
       "enabled": true,
@@ -170,12 +189,6 @@ Create `mycoder_config.json`:
     "enable_mcp_integration": true,
     "max_concurrent_requests": 5,
     "default_timeout": 60
-  },
-  "session_management": {
-    "max_sessions": 100,
-    "session_timeout_hours": 24,
-    "auto_cleanup": true,
-    "persistence_enabled": true
   }
 }
 ```
