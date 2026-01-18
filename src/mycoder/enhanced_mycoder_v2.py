@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 if TYPE_CHECKING:
-    from .tool_orchestrator import ToolExecutionOrchestrator
+    pass
 
 try:
     from .adaptive_modes import AdaptiveModeManager, OperationalMode
