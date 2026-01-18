@@ -733,6 +733,8 @@ class EnhancedMyCoderV2:
             )
             if use_tools:
                 context["tool_registry"] = self.tool_registry
+                # Add SYSTEM_PROMPT to context for providers to use as system message
+                context["system_prompt"] = SYSTEM_PROMPT
 
             # Get thermal status if monitoring enabled
             if self.thermal_monitor and self.thermal_monitor["enabled"]:
