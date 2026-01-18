@@ -473,7 +473,7 @@ class TestEnhancedMyCoderIntegration:
 
                     delay = random.uniform(0.1, 0.5)
                     time.sleep(delay)
-                    
+
                     # Extract request ID from prompt if present
                     match = re.search(r"Request \d+", prompt)
                     content_echo = match.group(0) if match else prompt[:20]
