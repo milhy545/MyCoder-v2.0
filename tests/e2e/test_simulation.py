@@ -44,9 +44,7 @@ class MockLLMHandler(http.server.BaseHTTPRequestHandler):
         request_json = json.loads(post_data.decode("utf-8"))
 
         # Sanitize user-controlled request data before logging to avoid log injection
-        safe_request_json = json.dumps(request_json, ensure_ascii=False)
-        safe_request_json = safe_request_json.replace("\r", "").replace("\n", "")
-        logger.info(f"Mock Server received POST: {safe_request_json}")
+        logger.info(f"Mock Server received POST: {repr(json.dumps(request_json, ensure_ascii=False))}")
 
         # Determine response based on prompt
         prompt = request_json.get("prompt", "").lower()
