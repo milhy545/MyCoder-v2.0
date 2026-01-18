@@ -37,6 +37,8 @@ except ImportError:
         EditTool = None  # type: ignore
         EditResult = None  # type: ignore
 
+from .self_evolve.failure_memory import AdvisoryResult, FailureMemory
+
 logger = logging.getLogger(__name__)
 
 
@@ -677,6 +679,7 @@ class ToolRegistry:
         self.tools: Dict[str, BaseTool] = {}
         self.categories: Dict[ToolCategory, List[str]] = {}
         self.event_handlers: Dict[str, List[Callable]] = {}
+        self.failure_memory = FailureMemory()
         self._initialize_core_tools()
 
     def _initialize_core_tools(self):
@@ -805,6 +808,47 @@ class ToolRegistry:
             )
 
         tool = self.tools[tool_name]
+        file_context = (
+            context.metadata.get("file_context") if context.metadata else None
+        )
+        env_hash = FailureMemory.compute_env_snapshot_hash(
+            working_directory=context.working_directory,
+            file_context=file_context,
+        )
+
+        advisory = self.failure_memory.check_advisory(
+            tool_name=tool_name, params=kwargs, env_snapshot_hash=env_hash
+        )
+
+        if advisory.result == AdvisoryResult.BLOCK:
+            logger.warning(
+                "Tool execution blocked by FailureMemory: %s", advisory.reason
+            )
+            return ToolResult(
+                success=False,
+                data=None,
+                tool_name=tool_name,
+                duration_ms=0,
+                error=f"BLOCKED by FailureMemory: {advisory.reason}",
+                metadata={
+                    "advisory": advisory.result.value,
+                    "retry_count": advisory.retry_count,
+                },
+            )
+
+        if advisory.result == AdvisoryResult.WARN:
+            logger.warning(
+                "Tool execution warning from FailureMemory: %s", advisory.reason
+            )
+            self._emit_event(
+                "failure_memory_warning",
+                {
+                    "tool_name": tool_name,
+                    "advisory": advisory.result.value,
+                    "reason": advisory.reason,
+                    "context": context,
+                },
+            )
 
         # Check if tool can execute in current mode
         if not tool.can_execute_in_mode(context.mode):
@@ -850,10 +894,31 @@ class ToolRegistry:
                 {"tool_name": tool_name, "result": result, "context": context},
             )
 
+            if not result.success:
+                self.failure_memory.record_failure(
+                    tool_name=tool_name,
+                    params=kwargs,
+                    error_message=result.error or "Unknown error",
+                    env_snapshot_hash=env_hash,
+                )
+            else:
+                self.failure_memory.clear_failure(
+                    tool_name=tool_name,
+                    params=kwargs,
+                    env_snapshot_hash=env_hash,
+                )
+
             return result
 
         except Exception as e:
             logger.error(f"Tool execution failed: {tool_name} - {e}")
+
+            self.failure_memory.record_failure(
+                tool_name=tool_name,
+                params=kwargs,
+                error_message=str(e),
+                env_snapshot_hash=env_hash,
+            )
 
             error_result = ToolResult(
                 success=False,

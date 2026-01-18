@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from enum import Enum
 from typing import Dict, List, Optional
 
 
@@ -96,3 +97,81 @@ class EvolveProposal:
     @staticmethod
     def now_iso() -> str:
         return datetime.now(timezone.utc).isoformat()
+
+
+class ErrorType(Enum):
+    """Error classification for TTL rules."""
+
+    HARD = "HARD"
+    SOFT = "SOFT"
+
+
+class EvolutionStatus(Enum):
+    """Status of recorded failure resolution."""
+
+    PENDING = "PENDING"
+    RESOLVED = "RESOLVED"
+    IGNORED = "IGNORED"
+
+
+class AdvisoryResult(Enum):
+    """Result of the FailureMemory advisory check."""
+
+    ALLOW = "ALLOW"
+    WARN = "WARN"
+    BLOCK = "BLOCK"
+
+
+@dataclass
+class FailureRecord:
+    """Represents a stored failure event."""
+
+    id: int
+    tool_signature: str
+    env_snapshot_hash: str
+    error_type: ErrorType
+    retry_count: int
+    created_at: str
+    updated_at: str
+    error_message: Optional[str]
+    tool_name: str
+    evolution_status: EvolutionStatus
+
+    def is_expired(self) -> bool:
+        """Check TTL expiration."""
+        from datetime import timedelta
+
+        updated = datetime.fromisoformat(self.updated_at.replace("Z", "+00:00"))
+        now = datetime.now(timezone.utc)
+        ttl = (
+            timedelta(days=7)
+            if self.error_type == ErrorType.HARD
+            else timedelta(hours=1)
+        )
+
+        return (now - updated) > ttl
+
+    @staticmethod
+    def from_row(row: tuple) -> "FailureRecord":
+        return FailureRecord(
+            id=row[0],
+            tool_signature=row[1],
+            env_snapshot_hash=row[2],
+            error_type=ErrorType(row[3]),
+            retry_count=row[4],
+            created_at=row[5],
+            updated_at=row[6],
+            error_message=row[7],
+            tool_name=row[8],
+            evolution_status=EvolutionStatus(row[9]),
+        )
+
+
+@dataclass
+class Advisory:
+    """Advisory response from FailureMemory."""
+
+    result: AdvisoryResult
+    reason: str
+    failure_record: Optional[FailureRecord] = None
+    retry_count: int = 0

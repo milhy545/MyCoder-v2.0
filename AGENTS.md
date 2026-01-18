@@ -2,8 +2,11 @@
 
 **Note:** This is a collaborative file maintained by all AI agents working on this project (Claude Code, Jules/Gemini, Codex). When you make significant changes to the project, document them in the Recent Changes section below.
 
-## Recent Changes & Updates
+-## Recent Changes & Updates
 *Agents: Add entries here when making significant changes*
+- 2026-01-18: Codex - Implemented Failure Memory (Reflexion) module, integrated it into `ToolRegistry`, and added unit/integration tests to enforce advisory warnings/blocks; tests run: `poetry run pytest tests/unit/test_failure_memory.py -v`, `poetry run pytest tests/integration/test_failure_memory_integration.py -v`.
+- 2026-01-18: Claude Code - Created comprehensive Failure Memory (Reflexion Mechanism) implementation spec at `docs/specs/FAILURE_MEMORY_SPEC.md`. Features SQLite storage, Advisor Pattern with ALLOW/WARN/BLOCK rules, environment-aware retry logic, TTL expiration (HARD=7d, SOFT=1h), and tool_registry integration. Ready for Codex implementation.
+- 2026-01-18: Gemini - Resolved CI failures in `main` and `alert-autofix-6` (formatting issues). CI Pipeline is GREEN for both.
 - 2026-01-18: Gemini - Resolved PR #42 CI failure (log injection + black formatting) and updated user guide to v2.2.0.
 - 2026-01-18: Gemini - Updated user guide to v2.2.0 (7-tier API, new features) and fixed `test_concurrent_requests_integration` failure by making mock response robust to system prompts.
 - 2026-01-16: Claude Code - Released MyCoder v2.2.0: Unified versioning, fixed critical file_edit bugs (3 bugs), formatted all code with black/isort, 314 tests passing, pushed to GitHub ✅
