@@ -473,14 +473,14 @@ class TestEnhancedMyCoderIntegration:
 
                     delay = random.uniform(0.1, 0.5)
                     time.sleep(delay)
-
-                    # Extract request number from prompt (handles system message prefix)
-                    match = re.search(r"Request (\d+)", prompt)
-                    req_id = match.group(0) if match else "Request"
+                    
+                    # Extract request ID from prompt if present
+                    match = re.search(r"Request \d+", prompt)
+                    content_echo = match.group(0) if match else prompt[:20]
 
                     return APIResponse(
                         success=True,
-                        content=f"Response to: {req_id}",
+                        content=f"Response to: {content_echo}...",
                         provider=APIProviderType.OLLAMA_LOCAL,
                         duration_ms=int(delay * 1000),
                     )

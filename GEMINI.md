@@ -1,17 +1,21 @@
-# GEMINI.md: Project Overview - Enhanced MyCoder v2.1.0
+# GEMINI.md: Project Overview - Enhanced MyCoder v2.2.0
 
 **Note:** Also check `AGENTS.md` for latest project updates and shared context written by all AI agents (Claude, Jules/Gemini, Codex). When you make significant changes, document them in AGENTS.md's "Recent Changes" section.
 
 ## Project Overview
 
-Enhanced MyCoder v2.1.0 is a robust, production-ready AI development assistant designed for high availability, performance, and thermal safety. It features a sophisticated 5-tier API provider fallback system, unique thermal management tailored for Intel Q9550 processors, and a modular architecture inspired by Federated Event Infrastructure (FEI) patterns. The project is primarily developed in Python, leveraging Docker for consistent environments and a comprehensive testing suite for reliability.
+Enhanced MyCoder v2.2.0 is a robust, production-ready AI development assistant designed for high availability, performance, and thermal safety. It features a sophisticated 7-tier API provider fallback system, unique thermal management tailored for Intel Q9550 processors, and a modular architecture inspired by Federated Event Infrastructure (FEI) patterns. The project is primarily developed in Python, leveraging Docker for consistent environments and a comprehensive testing suite for reliability.
 
 **Key Features:**
 
-*   **5-Tier API Provider Fallback:** Intelligent routing and automatic failover across Claude Anthropic, Claude OAuth, Google Gemini, and Ollama (local and remote) based on health, cost, and performance.
+*   **7-Tier API Provider Fallback:** Intelligent routing and automatic failover across Claude Anthropic, Claude OAuth, Gemini, Mercury, Ollama (local and remote), and Termux Ollama based on health, cost, and performance.
 *   **Q9550 Thermal Management:** Real-time CPU temperature monitoring, automatic throttling of AI workloads, and emergency shutdown for Intel Q9550 systems to prevent hardware damage.
 *   **Modular (FEI-inspired) Architecture:** Utilizes a Tool Registry Pattern, Service Layer Pattern, and Event-Based Architecture for flexible and scalable development.
+*   **Agent Orchestration:** Specialized agents (Explore, Plan, Bash, General) coordinated by an intelligent orchestrator.
+*   **Self-Evolve System:** Automated test failure detection, patch generation, approval workflow, and dry-run sandbox.
+*   **Circuit Breaker & Rate Limiting:** Resilient API provider management with automatic recovery to prevent cascade failures.
 *   **Speech Recognition & Dictation:** Includes capabilities for voice commands and dictation through its `speech_recognition` module, leveraging technologies like Whisper.
+*   **Activity Panel:** Dynamic UI for real-time monitoring of system status and agent activities.
 *   **Docker Support:** Provides `docker-compose` configurations for development (with live reload), production, and lightweight deployments optimized for various hardware capabilities.
 
 ## Technologies Used
@@ -19,10 +23,10 @@ Enhanced MyCoder v2.1.0 is a robust, production-ready AI development assistant d
 *   **Programming Language:** Python (3.10-3.13)
 *   **Dependency Management:** Poetry (`pyproject.toml`)
 *   **Containerization:** Docker, Docker Compose
-*   **AI Providers:** Anthropic Claude, Google Gemini, Ollama (local and remote LLMs)
-*   **Testing Frameworks:** Pytest (with `pytest-asyncio`, `pytest-cov`)
+*   **AI Providers:** Anthropic Claude, Google Gemini, Mercury (Inception Labs), Ollama (local/remote/Termux)
+*   **Testing Frameworks:** Pytest (with `pytest-asyncio`, `pytest-cov`, `pytest-mock`)
 *   **Code Quality Tools:** Black (code formatter), isort (import sorter), flake8 (linter), MyPy (static type checker)
-*   **CLI Libraries:** `click`, `prompt-toolkit`
+*   **CLI Libraries:** `click`, `prompt-toolkit`, `rich`
 *   **Logging:** `structlog`
 *   **System Utilities:** `psutil`
 *   **Optional UI/Audio:** PyQt5, sounddevice, numpy, openai-whisper, torch (for speech recognition features)
@@ -157,12 +161,20 @@ MyCoder-v2.0/
 │   │   ├── api_providers.py         # API provider implementations and router
 │   │   ├── config_manager.py        # Configuration handling
 │   │   ├── tool_registry.py         # Tool management system
-│   │   └── adaptive_modes.py        # Adaptive mode logic (thermal, etc.)
+│   │   ├── adaptive_modes.py        # Adaptive mode logic (thermal, etc.)
+│   │   ├── agents/                  # Agent orchestration (Explore, Plan, Bash, General)
+│   │   ├── self_evolve/             # Self-evolution system
+│   │   ├── mcp/                     # Model Context Protocol client
+│   │   ├── tools/                   # Enhanced tools
+│   │   ├── ui_activity_panel.py     # Activity Panel UI
+│   │   ├── ui_dynamic_panels.py     # Dynamic UI components
+│   │   ├── web_tools.py             # Web fetch/search tools
 │   └── speech_recognition/      # Dictation and speech-related modules
 ├── tests/                       # Comprehensive test suites
 │   ├── unit/                    # Unit tests
 │   ├── integration/             # Integration tests
 │   ├── functional/              # Functional tests
+│   ├── e2e/                     # End-to-end simulation tests
 │   └── stress/                  # Stress and thermal tests
 ├── docs/                        # Project documentation and guides
 ├── examples/                    # Code examples and demos
