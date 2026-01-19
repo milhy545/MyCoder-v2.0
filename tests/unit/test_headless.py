@@ -3,8 +3,6 @@ import json
 import logging
 import sys
 
-import pytest
-
 from mycoder.headless import JsonlHandler
 
 
