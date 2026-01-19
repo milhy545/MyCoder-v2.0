@@ -12,7 +12,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Set
-from dataclasses import dataclass, field
+from typing import Dict, Any, List, Optional
 
 # Try importing toml support
 try:
