@@ -48,9 +48,15 @@ try:
         ToolExecutionContext,
         get_tool_registry,
     )
+    from .context_manager import ContextManager
+    from .storage import StorageManager
+    from .security import FileSecurityManager, SecurityError
 except ImportError:
     from adaptive_modes import AdaptiveModeManager, OperationalMode  # type: ignore
     from mcp_bridge import MCPBridge  # type: ignore
+    from context_manager import ContextManager
+    from storage import StorageManager
+    from security import FileSecurityManager, SecurityError
 
     from mycoder.api_providers import (  # type: ignore
         APIProviderConfig,
@@ -140,16 +146,33 @@ class EnhancedMyCoderV2:
             working_directory: Base directory for operations
             config: Configuration dictionary for API providers and settings
         """
-        self.working_directory = working_directory or Path.cwd()
-        if config and is_dataclass(config):
-            self.config = asdict(config)
-        else:
-            self.config = config or {}
+        self.working_directory = (working_directory or Path.cwd()).resolve()
+
+        # Initialize Core Managers
+        self.context_manager = ContextManager(self.working_directory)
+        self.storage_manager = StorageManager(self.working_directory)
+        self.security_manager = FileSecurityManager(self.working_directory)
+
+        # Load Config/Context
+        context_data = self.context_manager.get_context()
+        self.system_prompt_context = context_data.system_prompt
+
+        # Use provided config override or loaded config
+        loaded_config = context_data.config
+        if config:
+            if is_dataclass(config):
+                config = asdict(config)
+            # Merge provided config on top of loaded
+            loaded_config.update(config)
+
+        self.config = loaded_config
+
         self.session_store: Dict[str, Dict] = {}
         self.thermal_monitor = None
         self._initialized = False
-        self.history_file = self.working_directory / "history.json"
-        self.history = self._load_history()
+
+        # History is now managed by StorageManager, but we keep a local buffer for current run compatibility
+        self.history = []
 
         # Initialize API provider router
         self.provider_router = None
@@ -174,15 +197,8 @@ class EnhancedMyCoderV2:
         )
 
     def _load_history(self) -> List[Dict[str, Any]]:
-        """Load conversation history from file"""
-        if not self.history_file.exists():
-            return []
-        try:
-            with open(self.history_file, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as e:
-            logger.error(f"Failed to load history: {e}")
-            return []
+        """Deprecated: History is loaded via StorageManager on demand."""
+        return []
 
     @property
     def session(self) -> Dict[str, Dict]:
@@ -209,12 +225,8 @@ class EnhancedMyCoderV2:
         self.tool_registry = value
 
     def _save_history(self):
-        """Save conversation history to file"""
-        try:
-            with open(self.history_file, "w", encoding="utf-8") as f:
-                json.dump(self.history, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            logger.error(f"Failed to save history: {e}")
+        """Deprecated: History is saved via StorageManager transactionally."""
+        pass
 
     async def initialize(self):
         """Initialize Enhanced MyCoder system with multi-API providers"""
@@ -621,7 +633,8 @@ class EnhancedMyCoderV2:
 
             full_prompt = prompt
             if use_tools:
-                full_prompt = f"{SYSTEM_PROMPT}\n\nUser: {prompt}"
+                # Inject AGENTS.md context
+                full_prompt = f"{SYSTEM_PROMPT}\n{self.system_prompt_context}\n\nUser: {prompt}"
 
             # Execute request with multi-API system
             max_attempts = int(self.config.get("request_retry_attempts", 2))
@@ -680,7 +693,22 @@ class EnhancedMyCoderV2:
                 response["error"] = api_response.error
                 response["recovery_suggestions"] = self._get_recovery_suggestions()
 
-            # Append to history and save
+            # Append to history and save (StorageManager)
+            # We save the interaction pair
+            metadata = {
+                "response_meta": response,
+                "session_id": session_id or "default"
+            }
+            # Save User Prompt
+            self.storage_manager.save_interaction(
+                session_id or "default", "user", prompt, metadata
+            )
+            # Save AI Response
+            self.storage_manager.save_interaction(
+                session_id or "default", "ai", api_response.content, metadata
+            )
+
+            # Keep local history buffer for UI if needed (though UI handles its own history usually)
             self.history.append(
                 {
                     "timestamp": time.time(),
@@ -688,7 +716,6 @@ class EnhancedMyCoderV2:
                     "response": response,
                 }
             )
-            self._save_history()
 
             logger.info(
                 f"Request completed in {duration:.1f}s using {api_response.provider.value}"
@@ -920,6 +947,15 @@ class EnhancedMyCoderV2:
                         tool_results.append("ERR Read failed: missing path")
                         index += 1
                         continue
+
+                    # Security Check
+                    try:
+                        self.security_manager.validate_path(path)
+                    except SecurityError as e:
+                        tool_results.append(f"ERR Security: {e}")
+                        index += 1
+                        continue
+
                     result = await self.tool_registry.execute_tool(
                         "file_read",
                         tool_context,
@@ -948,6 +984,19 @@ class EnhancedMyCoderV2:
                         index += 1
                         continue
                     path, old_str, new_str = filtered[0], filtered[1], filtered[2]
+
+                    # Security Check
+                    try:
+                        self.security_manager.validate_path(path)
+                    except SecurityError as e:
+                        tool_results.append(f"ERR Security: {e}")
+                        index += 1
+                        continue
+
+                    # Snapshot before edit
+                    step_id = f"edit_{int(time.time())}"
+                    self.storage_manager.create_snapshot(step_id, path)
+
                     result = await self.tool_registry.execute_tool(
                         "file_edit",
                         tool_context,
@@ -977,6 +1026,23 @@ class EnhancedMyCoderV2:
                         index += 1
                         continue
                     path = parts[0]
+
+                    # Security Check
+                    try:
+                        self.security_manager.validate_path(path)
+                    except SecurityError as e:
+                        tool_results.append(f"ERR Security: {e}")
+                        # Skip content lines
+                        scan_index = index + 1
+                        while scan_index < len(lines):
+                            next_line = lines[scan_index]
+                            next_stripped = next_line.strip()
+                            if any(next_stripped.startswith(prefix) for prefix in ("/read ", "/edit ", "/write ")):
+                                break
+                            scan_index += 1
+                        index = scan_index
+                        continue
+
                     content_lines = []
                     scan_index = index + 1
                     while scan_index < len(lines):
@@ -990,6 +1056,11 @@ class EnhancedMyCoderV2:
                         content_lines.append(next_line)
                         scan_index += 1
                     write_content = "\n".join(content_lines)
+
+                    # Snapshot before write
+                    step_id = f"write_{int(time.time())}"
+                    self.storage_manager.create_snapshot(step_id, path)
+
                     result = await self.tool_registry.execute_tool(
                         "file_write",
                         tool_context,
