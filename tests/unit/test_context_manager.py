@@ -1,9 +1,8 @@
 import json
-from importlib import import_module
 
 import pytest
 
-ContextManager = import_module("mycoder.context_manager").ContextManager
+from mycoder.context_manager import ContextManager
 
 
 class FakeTime:

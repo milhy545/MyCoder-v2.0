@@ -13,6 +13,16 @@ import structlog
 logger = structlog.get_logger(__name__)
 
 
+def _default_performance_script_path() -> str:
+    """Resolve the default thermal performance script path."""
+    env_path = os.environ.get("MYCODER_PERFORMANCE_SCRIPT")
+    if env_path:
+        return env_path
+
+    default_path = Path.home() / ".config" / "mycoder" / "performance_manager.sh"
+    return str(default_path)
+
+
 @dataclass
 class APIProviderSettings:
     """Encapsulates provider-specific configuration."""
@@ -140,7 +150,7 @@ class ConfigManager:
                 "check_interval": 30,
                 "throttle_on_high": True,
                 "emergency_shutdown": False,
-                "performance_script": os.environ.get("MYCODER_PERFORMANCE_SCRIPT", ""),
+                "performance_script": _default_performance_script_path(),
             },
             "system": {
                 "working_directory": None,

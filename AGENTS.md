@@ -4,6 +4,8 @@
 
 -## Recent Changes & Updates
 *Agents: Add entries here when making significant changes*
+- 2026-01-20: Codex - Ensured CI pipeline exports `PYTHONPATH=src` for the quality/test job and updated `tests/unit/test_context_manager.py` to import `ContextManager` directly; tests run: `poetry run flake8 src/ tests/`, `poetry run pytest tests/unit/test_context_manager.py`.
+- 2026-01-20: Codex - Added a default thermal performance script path so config validation/debug info always report on the configured script and trigger warnings when the expected file is missing; tests run: `poetry run pytest tests/unit/test_config_manager.py`.
 - 2026-01-18: Codex - Implemented Failure Memory (Reflexion) module, integrated it into `ToolRegistry`, and added unit/integration tests to enforce advisory warnings/blocks; tests run: `poetry run pytest tests/unit/test_failure_memory.py -v`, `poetry run pytest tests/integration/test_failure_memory_integration.py -v`.
 - 2026-01-18: Claude Code - Created comprehensive Failure Memory (Reflexion Mechanism) implementation spec at `docs/specs/FAILURE_MEMORY_SPEC.md`. Features SQLite storage, Advisor Pattern with ALLOW/WARN/BLOCK rules, environment-aware retry logic, TTL expiration (HARD=7d, SOFT=1h), and tool_registry integration. Ready for Codex implementation.
 - 2026-01-18: Gemini - Resolved CI failures in `main` and `alert-autofix-6` (formatting issues). CI Pipeline is GREEN for both.
