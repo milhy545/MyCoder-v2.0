@@ -161,7 +161,8 @@ class LocalMCPServer:
         except (FileNotFoundError, ValueError) as exc:
             return web.json_response({"error": str(exc)}, status=400)
         except Exception as exc:
-            logger.exception("Local MCP tool failure: %s", tool)
+            safe_tool = str(tool).replace("\r", " ").replace("\n", " ")
+            logger.exception("Local MCP tool failure: %s", safe_tool)
             return web.json_response({"error": str(exc)}, status=500)
 
         return web.json_response(result)
