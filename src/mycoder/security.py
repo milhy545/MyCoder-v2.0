@@ -7,7 +7,6 @@ Responsibility:
 3. Prevention of Path Traversal Attacks
 """
 
-import os
 import logging
 from pathlib import Path
 from typing import List, Optional, Union
