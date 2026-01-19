@@ -40,6 +40,8 @@ jobs:
         run: poetry install --no-interaction
 
       - name: Lint (flake8, black)
+        env:
+          PYTHONPATH: src
         run: |
           poetry run flake8 src/ tests/
           poetry run black --check src/ tests/
