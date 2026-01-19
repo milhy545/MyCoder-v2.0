@@ -8,7 +8,6 @@ Input: stdin or args
 """
 
 import sys
-import os
 import json
 import asyncio
 import logging
