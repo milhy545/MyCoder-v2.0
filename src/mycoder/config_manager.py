@@ -187,7 +187,9 @@ class ConfigManager:
 
         return value
 
-    def _apply_env_entry(self, config: Dict[str, Any], name: str, parsed_value: Any) -> None:
+    def _apply_env_entry(
+        self, config: Dict[str, Any], name: str, parsed_value: Any
+    ) -> None:
         """Normalize env keys and write them into the config dictionary."""
         normalized = name.lower()
         prefix = self._env_prefix.lower()
@@ -198,7 +200,11 @@ class ConfigManager:
             return
 
         matched_section = next(
-            (section for section in self._ENV_SECTIONS if normalized.startswith(section + "_")),
+            (
+                section
+                for section in self._ENV_SECTIONS
+                if normalized.startswith(section + "_")
+            ),
             None,
         )
 
@@ -212,7 +218,9 @@ class ConfigManager:
 
         config[normalized] = parsed_value
 
-    def _merge_deep(self, base: Dict[str, Any], overlay: Dict[str, Any]) -> Dict[str, Any]:
+    def _merge_deep(
+        self, base: Dict[str, Any], overlay: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Deep merge `overlay` into `base` and return the result."""
         merged = dict(base)
         for key, value in overlay.items():
@@ -276,7 +284,9 @@ class ConfigManager:
         if self.config_path:
             candidates.append(self.config_path)
         else:
-            candidates.extend(Path(location) for location in self.DEFAULT_CONFIG_LOCATIONS)
+            candidates.extend(
+                Path(location) for location in self.DEFAULT_CONFIG_LOCATIONS
+            )
 
         for candidate in candidates:
             if not candidate.exists():
@@ -289,7 +299,9 @@ class ConfigManager:
             except json.JSONDecodeError as exc:
                 logger.warning("Unable to parse config file %s (%s)", candidate, exc)
             except OSError:
-                logger.warning("Unable to open config file %s", candidate, exc_info=True)
+                logger.warning(
+                    "Unable to open config file %s", candidate, exc_info=True
+                )
         return None
 
     def _dict_to_config(self, config_dict: Dict[str, Any]) -> MyCoderConfig:
@@ -336,7 +348,9 @@ class ConfigManager:
             ollama_remote_urls=remote_urls,
             thermal=ThermalSettings(**thermal_raw),
             system=SystemSettings(**system_raw),
-            preferred_provider=config_dict.get("preferred_provider", "claude_anthropic"),
+            preferred_provider=config_dict.get(
+                "preferred_provider", "claude_anthropic"
+            ),
             fallback_enabled=config_dict.get("fallback_enabled", True),
             debug_mode=config_dict.get("debug_mode", False),
         )
@@ -416,9 +430,7 @@ class ConfigManager:
                 setattr(provider, key, value)
                 success = True
             else:
-                logger.warning(
-                    "Unknown provider setting %s for %s", key, provider_name
-                )
+                logger.warning("Unknown provider setting %s for %s", key, provider_name)
 
         return success
 
