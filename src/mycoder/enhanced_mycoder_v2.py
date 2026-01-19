@@ -939,6 +939,21 @@ class EnhancedMyCoderV2:
             tool_metadata = []
 
             index = 0
+            working_dir_value = tool_context.working_directory or self.working_directory
+            if isinstance(working_dir_value, Path):
+                base_dir = working_dir_value
+            elif isinstance(working_dir_value, str):
+                base_dir = Path(working_dir_value)
+            else:
+                base_dir = self.working_directory
+            base_dir = base_dir.resolve()
+
+            def _resolve_for_security(relative_path: str) -> Path:
+                candidate = Path(relative_path)
+                if not candidate.is_absolute():
+                    candidate = base_dir / candidate
+                return candidate.resolve(strict=False)
+
             while index < len(lines):
                 raw_line = lines[index]
                 line = raw_line.strip()
@@ -952,7 +967,10 @@ class EnhancedMyCoderV2:
 
                     # Security Check
                     try:
-                        self.security_manager.validate_path(path)
+                        target_path = _resolve_for_security(path)
+                        self.security_manager.validate_path(
+                            target_path, extra_allowed_paths=[base_dir]
+                        )
                     except SecurityError as e:
                         tool_results.append(f"ERR Security: {e}")
                         index += 1
@@ -989,7 +1007,10 @@ class EnhancedMyCoderV2:
 
                     # Security Check
                     try:
-                        self.security_manager.validate_path(path)
+                        target_path = _resolve_for_security(path)
+                        self.security_manager.validate_path(
+                            target_path, extra_allowed_paths=[base_dir]
+                        )
                     except SecurityError as e:
                         tool_results.append(f"ERR Security: {e}")
                         index += 1
@@ -1031,7 +1052,10 @@ class EnhancedMyCoderV2:
 
                     # Security Check
                     try:
-                        self.security_manager.validate_path(path)
+                        target_path = _resolve_for_security(path)
+                        self.security_manager.validate_path(
+                            target_path, extra_allowed_paths=[base_dir]
+                        )
                     except SecurityError as e:
                         tool_results.append(f"ERR Security: {e}")
                         # Skip content lines

@@ -53,7 +53,12 @@ class FileSecurityManager:
             f"Security Sandbox initialized. Allowed paths: {self.allowed_paths}"
         )
 
-    def validate_path(self, path: Union[str, Path], mode: str = "r") -> Path:
+    def validate_path(
+        self,
+        path: Union[str, Path],
+        mode: str = "r",
+        extra_allowed_paths: Optional[List[Path]] = None,
+    ) -> Path:
         """
         Validates if the path is within allowed directories.
         Returns the resolved absolute path.
@@ -68,7 +73,14 @@ class FileSecurityManager:
 
         # Check against whitelist
         allowed = False
-        for parent in self.allowed_paths:
+        allowed_paths = list(self.allowed_paths)
+        if extra_allowed_paths:
+            for extra in extra_allowed_paths:
+                try:
+                    allowed_paths.append(extra.resolve())
+                except Exception:
+                    logger.warning(f"Unable to resolve extra allowed path: {extra}")
+        for parent in allowed_paths:
             if self._is_subpath(target, parent):
                 allowed = True
                 break
