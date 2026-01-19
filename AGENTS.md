@@ -9,7 +9,8 @@
 - 2026-01-18: Gemini - Resolved CI failures in `main` and `alert-autofix-6` (formatting issues). CI Pipeline is GREEN for both.
 - 2026-01-18: Gemini - Resolved PR #42 CI failure (log injection + black formatting) and updated user guide to v2.2.0.
 - 2026-01-18: Gemini - Updated user guide to v2.2.0 (7-tier API, new features) and fixed `test_concurrent_requests_integration` failure by making mock response robust to system prompts.
-- 2026-01-16: Claude Code - Released MyCoder v2.2.0: Unified versioning, fixed critical file_edit bugs (3 bugs), formatted all code with black/isort, 314 tests passing, pushed to GitHub ✅
+ - 2026-01-19: Codex - Fixed flake8 blockers (E302/E999/F821 and indentation) on `upgrade/next-gen-architecture-17998078356808151236` by adding the missing imports, blank lines, and indentation tweaks in `context_manager.py`, `headless.py`, `security.py`, and `storage.py`, then confirmed `poetry run flake8 src/ tests/` passes.
+ - 2026-01-16: Claude Code - Released MyCoder v2.2.0: Unified versioning, fixed critical file_edit bugs (3 bugs), formatted all code with black/isort, 314 tests passing, pushed to GitHub ✅
 - 2026-01-16: Claude Code - Verified MyCoder editing works in practice: sequential edits, /read,/edit,/write commands all functional
 - 2026-01-16: Codex - Rozsiril unit testy pro function calling edge-cases (vice tool calls, zadny functionCall) v API providerech
 - 2026-01-16: Codex - Dopsal unit testy pro function calling tool_use/functionCall v Claude/Gemini providerech

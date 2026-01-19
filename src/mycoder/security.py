@@ -13,16 +13,23 @@ from typing import List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
+
 class SecurityError(PermissionError):
     """Raised when an operation violates security policies."""
+
     pass
+
 
 class FileSecurityManager:
     """
     Enforces file access policies.
     """
 
-    def __init__(self, working_directory: Optional[Path] = None, additional_allowed_paths: Optional[List[Path]] = None):
+    def __init__(
+        self,
+        working_directory: Optional[Path] = None,
+        additional_allowed_paths: Optional[List[Path]] = None,
+    ):
         self.allowed_paths: List[Path] = []
 
         # Primary Allowed Path: Working Directory
@@ -42,7 +49,9 @@ class FileSecurityManager:
 
         # Deduplicate
         self.allowed_paths = list(set(self.allowed_paths))
-        logger.info(f"Security Sandbox initialized. Allowed paths: {self.allowed_paths}")
+        logger.info(
+            f"Security Sandbox initialized. Allowed paths: {self.allowed_paths}"
+        )
 
     def validate_path(self, path: Union[str, Path], mode: str = "r") -> Path:
         """
@@ -85,6 +94,7 @@ class FileSecurityManager:
 
     def guard_tool(self, tool_func):
         """Decorator/Middleware for tool functions."""
+
         def wrapper(*args, **kwargs):
             # Inspect args for 'path' or 'file_path'
             # This is a heuristic; robust implementation depends on tool signature
@@ -93,4 +103,5 @@ class FileSecurityManager:
                     if isinstance(value, (str, Path)):
                         self.validate_path(value)
             return tool_func(*args, **kwargs)
+
         return wrapper

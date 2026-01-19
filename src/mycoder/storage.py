@@ -17,6 +17,7 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class ChatEntry:
     role: str
@@ -24,6 +25,7 @@ class ChatEntry:
     timestamp: float
     metadata: Dict[str, Any] = None
     session_id: str = "default"
+
 
 class StorageManager:
     """
@@ -43,7 +45,8 @@ class StorageManager:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 # Chat History Table
-                conn.execute("""
+                conn.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS chat_history (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         session_id TEXT NOT NULL,
@@ -52,10 +55,12 @@ class StorageManager:
                         timestamp REAL NOT NULL,
                         metadata TEXT
                     )
-                """)
+                """
+                )
 
                 # File Snapshots Table (for Undo/Rollback)
-                conn.execute("""
+                conn.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS file_snapshots (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         step_id TEXT NOT NULL,
@@ -63,25 +68,34 @@ class StorageManager:
                         content BLOB,
                         timestamp REAL NOT NULL
                     )
-                """)
+                """
+                )
 
                 # Indices
-                conn.execute("CREATE INDEX IF NOT EXISTS idx_chat_session ON chat_history(session_id)")
-                conn.execute("CREATE INDEX IF NOT EXISTS idx_chat_timestamp ON chat_history(timestamp)")
-                conn.execute("CREATE INDEX IF NOT EXISTS idx_snapshot_step ON file_snapshots(step_id)")
+                conn.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_chat_session ON chat_history(session_id)"
+                )
+                conn.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_chat_timestamp ON chat_history(timestamp)"
+                )
+                conn.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_snapshot_step ON file_snapshots(step_id)"
+                )
 
         except sqlite3.Error as e:
             logger.error(f"Failed to initialize database at {self.db_path}: {e}")
             raise
 
-    def save_interaction(self, session_id: str, role: str, content: str, metadata: Dict[str, Any] = None) -> int:
+    def save_interaction(
+        self, session_id: str, role: str, content: str, metadata: Dict[str, Any] = None
+    ) -> int:
         """Saves a chat message."""
         try:
             meta_json = json.dumps(metadata) if metadata else "{}"
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.execute(
                     "INSERT INTO chat_history (session_id, role, content, timestamp, metadata) VALUES (?, ?, ?, ?, ?)",
-                    (session_id, role, content, time.time(), meta_json)
+                    (session_id, role, content, time.time(), meta_json),
                 )
                 return cursor.lastrowid
         except sqlite3.Error as e:
@@ -95,18 +109,22 @@ class StorageManager:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.execute(
                     "SELECT * FROM chat_history WHERE session_id = ? ORDER BY timestamp ASC LIMIT ?",
-                    (session_id, limit)
+                    (session_id, limit),
                 )
                 rows = cursor.fetchall()
 
                 history = []
                 for row in rows:
-                    history.append({
-                        "role": row["role"],
-                        "content": row["content"],
-                        "timestamp": row["timestamp"],
-                        "metadata": json.loads(row["metadata"]) if row["metadata"] else {}
-                    })
+                    history.append(
+                        {
+                            "role": row["role"],
+                            "content": row["content"],
+                            "timestamp": row["timestamp"],
+                            "metadata": (
+                                json.loads(row["metadata"]) if row["metadata"] else {}
+                            ),
+                        }
+                    )
                 return history
         except sqlite3.Error as e:
             logger.error(f"Failed to retrieve history: {e}")
@@ -135,7 +153,7 @@ class StorageManager:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute(
                     "INSERT INTO file_snapshots (step_id, file_path, content, timestamp) VALUES (?, ?, ?, ?)",
-                    (step_id, str(full_path), content, time.time())
+                    (step_id, str(full_path), content, time.time()),
                 )
             return True
         except sqlite3.Error as e:
@@ -152,7 +170,7 @@ class StorageManager:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.execute(
                     "SELECT file_path, content FROM file_snapshots WHERE step_id = ?",
-                    (step_id,)
+                    (step_id,),
                 )
                 rows = cursor.fetchall()
 
@@ -189,7 +207,9 @@ class StorageManager:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute("DELETE FROM chat_history WHERE timestamp < ?", (cutoff,))
-                conn.execute("DELETE FROM file_snapshots WHERE timestamp < ?", (cutoff,))
+                conn.execute(
+                    "DELETE FROM file_snapshots WHERE timestamp < ?", (cutoff,)
+                )
                 conn.execute("VACUUM")
         except sqlite3.Error as e:
             logger.error(f"Cleanup failed: {e}")

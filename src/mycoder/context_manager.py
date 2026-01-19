@@ -10,6 +10,7 @@ Responsibility:
 import os
 import json
 import logging
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
@@ -24,13 +25,16 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class ContextData:
     """Holds the assembled context and configuration."""
+
     config: Dict[str, Any] = field(default_factory=dict)
     system_prompt: str = ""
     project_root: Path = field(default_factory=Path.cwd)
     loaded_files: List[str] = field(default_factory=list)
+
 
 class ContextManager:
     """
@@ -84,7 +88,7 @@ class ContextManager:
             config=merged_config,
             system_prompt=system_prompt,
             project_root=project_root,
-            loaded_files=loaded_files
+            loaded_files=loaded_files,
         )
 
         self._cache[cache_key] = context_data
@@ -132,7 +136,9 @@ class ContextManager:
                 return parent
         return current_path
 
-    def _load_config_from_dir(self, directory: Path) -> tuple[Dict[str, Any], Optional[Path]]:
+    def _load_config_from_dir(
+        self, directory: Path
+    ) -> tuple[Dict[str, Any], Optional[Path]]:
         """Loads config from a directory, checking supported filenames."""
         # Check for TOML first if supported
         if toml:
@@ -146,7 +152,8 @@ class ContextManager:
 
         # Check for JSON
         for name in self.CONFIG_FILENAMES:
-            if name.endswith(".toml"): continue
+            if name.endswith(".toml"):
+                continue
 
             p = directory / name
             if p.exists():
@@ -175,11 +182,17 @@ class ContextManager:
                     logger.error(f"Failed to read context file {p}: {e}")
         return content, loaded_path
 
-    def _deep_merge(self, base: Dict[str, Any], update: Dict[str, Any]) -> Dict[str, Any]:
+    def _deep_merge(
+        self, base: Dict[str, Any], update: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Recursively merges two dictionaries."""
         result = base.copy()
         for key, value in update.items():
-            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            if (
+                key in result
+                and isinstance(result[key], dict)
+                and isinstance(value, dict)
+            ):
                 result[key] = self._deep_merge(result[key], value)
             else:
                 result[key] = value
@@ -191,26 +204,21 @@ class ContextManager:
             "claude_anthropic": {
                 "enabled": True,
                 "model": "claude-3-5-sonnet-20241022",
-                "timeout_seconds": 30
+                "timeout_seconds": 30,
             },
             "ollama_local": {
                 "enabled": True,
                 "base_url": "http://localhost:11434",
-                "timeout_seconds": 60
+                "timeout_seconds": 60,
             },
             "thermal": {
                 "enabled": True,
                 "max_temp": 80,
                 "critical_temp": 85,
-                "check_interval": 30
+                "check_interval": 30,
             },
-            "security": {
-                "sandbox_enabled": True,
-                "allowed_paths": []
-            },
-            "system": {
-                "working_directory": str(self.start_path)
-            }
+            "security": {"sandbox_enabled": True, "allowed_paths": []},
+            "system": {"working_directory": str(self.start_path)},
         }
 
     def save_config(self, config: Dict[str, Any], path: Optional[Path] = None):
@@ -230,9 +238,11 @@ class ContextManager:
             config["preferred_provider"] = os.environ["MYCODER_PREFERRED_PROVIDER"]
 
         if os.environ.get("ANTHROPIC_API_KEY"):
-             config.setdefault("claude_anthropic", {})["api_key"] = os.environ["ANTHROPIC_API_KEY"]
+            config.setdefault("claude_anthropic", {})["api_key"] = os.environ[
+                "ANTHROPIC_API_KEY"
+            ]
 
         if os.environ.get("GEMINI_API_KEY"):
-             config.setdefault("gemini", {})["api_key"] = os.environ["GEMINI_API_KEY"]
+            config.setdefault("gemini", {})["api_key"] = os.environ["GEMINI_API_KEY"]
 
         return config

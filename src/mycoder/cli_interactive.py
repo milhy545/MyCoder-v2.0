@@ -97,6 +97,7 @@ COLOR_BORDER = "blue"
 
 class ConfigWrapper:
     """Helper to access dict via dot notation for backward compatibility."""
+
     def __init__(self, data):
         object.__setattr__(self, "_data", data)
 
@@ -700,9 +701,8 @@ class InteractiveCLI:
         self.config.preferred_provider = selected
         if selected == "inception_mercury" and not self.realtime_mode:
             self.diffusing_mode = False
-                    self.config_dict.setdefault(option["key"], {})
-                    self.config_dict[option["key"]]["api_key"] = None
-                    self.config_dict[option["key"]]["enabled"] = True
+            self.config_dict.setdefault("inception_mercury", {})["api_key"] = None
+            self.config_dict["inception_mercury"]["enabled"] = True
             self.config_dict.setdefault("claude_oauth", {})["enabled"] = False
 
         if selected == "ollama_remote":
@@ -716,22 +716,30 @@ class InteractiveCLI:
                 ]
 
         if selected == "ollama_local":
-            current_base = self.config.ollama_local.base_url if self.config.ollama_local else ""
+            current_base = (
+                self.config.ollama_local.base_url if self.config.ollama_local else ""
+            )
             base_url = Prompt.ask(
                 "Zadej Ollama local URL (Enter=nechat)",
                 default=current_base or "",
             )
             if base_url.strip():
-                self.config_dict.setdefault("ollama_local", {})["base_url"] = base_url.strip()
+                self.config_dict.setdefault("ollama_local", {})[
+                    "base_url"
+                ] = base_url.strip()
 
         if selected == "termux_ollama":
-            current_base = self.config.termux_ollama.base_url if self.config.termux_ollama else ""
+            current_base = (
+                self.config.termux_ollama.base_url if self.config.termux_ollama else ""
+            )
             base_url = Prompt.ask(
                 "Zadej Termux Ollama URL (Enter=nechat)",
                 default=current_base or "",
             )
             if base_url.strip():
-                self.config_dict.setdefault("termux_ollama", {})["base_url"] = base_url.strip()
+                self.config_dict.setdefault("termux_ollama", {})[
+                    "base_url"
+                ] = base_url.strip()
 
         for option in self._provider_options():
             if option["key"] != selected:
@@ -754,7 +762,9 @@ class InteractiveCLI:
                     self.config_dict.setdefault(option["key"], {})["api_key"] = None
                     self.config_dict[option["key"]]["enabled"] = True
                 elif api_key.strip():
-                    self.config_dict.setdefault(option["key"], {})["api_key"] = api_key.strip()
+                    self.config_dict.setdefault(option["key"], {})[
+                        "api_key"
+                    ] = api_key.strip()
                     self.config_dict[option["key"]]["enabled"] = True
             else:
                 if option["key"] in {"claude_oauth", "ollama_local", "termux_ollama"}:
@@ -1817,7 +1827,9 @@ class InteractiveCLI:
                 header_label = "MyCoder AI"
 
                 # Split content into thinking and response blocks
-                parts = re.split(r"(<thinking>.*?</thinking>)", content, flags=re.DOTALL)
+                parts = re.split(
+                    r"(<thinking>.*?</thinking>)", content, flags=re.DOTALL
+                )
 
                 ai_content_group = []
 
@@ -1835,7 +1847,7 @@ class InteractiveCLI:
                                     title="Chain of Thought",
                                     border_style="dim blue",
                                     title_align="left",
-                                    expand=False
+                                    expand=False,
                                 )
                             )
                         else:
@@ -1843,9 +1855,11 @@ class InteractiveCLI:
                             summary = thought_content[:60].replace("\n", " ") + "..."
                             ai_content_group.append(
                                 Panel(
-                                    Text(f"Thinking: {summary}", style="dim italic blue"),
+                                    Text(
+                                        f"Thinking: {summary}", style="dim italic blue"
+                                    ),
                                     border_style="dim blue",
-                                    expand=False
+                                    expand=False,
                                 )
                             )
                     else:

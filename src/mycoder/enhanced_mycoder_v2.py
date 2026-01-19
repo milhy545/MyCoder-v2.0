@@ -634,7 +634,9 @@ class EnhancedMyCoderV2:
             full_prompt = prompt
             if use_tools:
                 # Inject AGENTS.md context
-                full_prompt = f"{SYSTEM_PROMPT}\n{self.system_prompt_context}\n\nUser: {prompt}"
+                full_prompt = (
+                    f"{SYSTEM_PROMPT}\n{self.system_prompt_context}\n\nUser: {prompt}"
+                )
 
             # Execute request with multi-API system
             max_attempts = int(self.config.get("request_retry_attempts", 2))
@@ -697,7 +699,7 @@ class EnhancedMyCoderV2:
             # We save the interaction pair
             metadata = {
                 "response_meta": response,
-                "session_id": session_id or "default"
+                "session_id": session_id or "default",
             }
             # Save User Prompt
             self.storage_manager.save_interaction(
@@ -1037,7 +1039,10 @@ class EnhancedMyCoderV2:
                         while scan_index < len(lines):
                             next_line = lines[scan_index]
                             next_stripped = next_line.strip()
-                            if any(next_stripped.startswith(prefix) for prefix in ("/read ", "/edit ", "/write ")):
+                            if any(
+                                next_stripped.startswith(prefix)
+                                for prefix in ("/read ", "/edit ", "/write ")
+                            ):
                                 break
                             scan_index += 1
                         index = scan_index

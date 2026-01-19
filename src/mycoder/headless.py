@@ -20,15 +20,17 @@ sys.path.append(str(Path(__file__).parent.parent))
 from mycoder.enhanced_mycoder_v2 import EnhancedMyCoderV2
 from mycoder.context_manager import ContextManager
 
+
 class JsonlHandler(logging.Handler):
     """Logs events as JSONL lines for machine parsing."""
+
     def emit(self, record):
         try:
             log_entry = {
                 "timestamp": record.created,
                 "level": record.levelname,
                 "logger": record.name,
-                "message": record.getMessage()
+                "message": record.getMessage(),
             }
             # Avoid using logging to print to stdout to prevent recursion if configured wrong,
             # but here we just print to stdout (or stderr).
@@ -37,10 +39,16 @@ class JsonlHandler(logging.Handler):
         except Exception:
             self.handleError(record)
 
+
 async def main():
     parser = argparse.ArgumentParser(description="MyCoder Headless Runner")
     parser.add_argument("prompt", nargs="?", help="Task description")
-    parser.add_argument("--auto-approve", "-y", action="store_true", help="Execute tools without confirmation")
+    parser.add_argument(
+        "--auto-approve",
+        "-y",
+        action="store_true",
+        help="Execute tools without confirmation",
+    )
     parser.add_argument("--working-dir", "-w", default=".", help="Working directory")
 
     args = parser.parse_args()
@@ -75,8 +83,7 @@ async def main():
 
         # Initialize Agent
         coder = EnhancedMyCoderV2(
-            working_directory=working_dir,
-            config=context_data.config
+            working_directory=working_dir, config=context_data.config
         )
 
         await coder.initialize()
@@ -87,9 +94,7 @@ async def main():
 
         logging.info("Processing request...")
         response = await coder.process_request(
-            prompt,
-            use_tools=use_tools,
-            continue_session=False
+            prompt, use_tools=use_tools, continue_session=False
         )
 
         # Output result
@@ -98,7 +103,7 @@ async def main():
             "success": response.get("success", False),
             "content": response.get("content", ""),
             "metadata": response.get("metadata", {}),
-            "error": response.get("error")
+            "error": response.get("error"),
         }
 
         # Use a distinct prefix or file for output if mixed with logs?
@@ -117,6 +122,7 @@ async def main():
     except Exception as e:
         logging.exception("Fatal error in headless runner")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
