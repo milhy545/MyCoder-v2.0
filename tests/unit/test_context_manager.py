@@ -2,8 +2,6 @@ import json
 
 import pytest
 
-from mycoder.context_manager import ContextManager
-
 
 class FakeTime:
     def __init__(self, start: float = 0.0):
