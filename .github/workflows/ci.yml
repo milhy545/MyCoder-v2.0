@@ -13,6 +13,8 @@ jobs:
   quality-check:
     name: Code Quality & Tests
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: src
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -37,8 +39,7 @@ jobs:
           key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
+        run: poetry install --no-interaction
 
       - name: Lint (flake8, black)
         run: |

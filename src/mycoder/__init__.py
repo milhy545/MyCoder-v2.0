@@ -72,15 +72,7 @@ from .api_providers import (
     GeminiProvider,
     OllamaProvider,
 )
-from .config_manager import (
-    APIProviderSettings,
-    ConfigManager,
-    MyCoderConfig,
-    SystemSettings,
-    ThermalSettings,
-    get_config_manager,
-    load_config,
-)
+from .context_manager import ContextManager
 from .enhanced_mycoder import EnhancedMyCoder
 from .enhanced_mycoder_v2 import EnhancedMyCoderV2
 from .mycoder import MyCoder
@@ -90,6 +82,8 @@ from .tool_registry import (
     ToolResult,
     get_tool_registry,
 )
+from .storage import StorageManager
+from .security import FileSecurityManager, SecurityError
 
 # Version info
 __version__ = "2.2.0"
@@ -115,14 +109,11 @@ __all__ = [
     "ClaudeOAuthProvider",
     "GeminiProvider",
     "OllamaProvider",
-    # Configuration Management
-    "ConfigManager",
-    "MyCoderConfig",
-    "APIProviderSettings",
-    "ThermalSettings",
-    "SystemSettings",
-    "load_config",
-    "get_config_manager",
+    # Context & Persistence
+    "ContextManager",
+    "StorageManager",
+    "FileSecurityManager",
+    "SecurityError",
     # Tool Registry
     "get_tool_registry",
     "ToolRegistry",

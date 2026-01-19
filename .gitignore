@@ -64,3 +64,5 @@ tmp/
 .gemini/
 gha-creds-*.json
 history.json
+*.db
+session.db

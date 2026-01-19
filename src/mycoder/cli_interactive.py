@@ -7,6 +7,7 @@ Left: Chat History (Auto-scrolling Markdown). Right: Activity Panel (Live Activi
 import asyncio
 import json
 import os
+import re
 import shutil
 import sys
 from contextlib import suppress
@@ -48,7 +49,7 @@ try:
     from .api_providers import APIProviderType
     from .auto_executor import ActionType, AutoExecutor
     from .command_parser import Command, CommandParser
-    from .config_manager import ConfigManager
+    from .context_manager import ContextManager
     from .enhanced_mycoder_v2 import EnhancedMyCoderV2
     from .mcp_bridge import MCPBridge
     from .project_init import (
@@ -92,6 +93,24 @@ COLOR_USER = "bold green"
 COLOR_SUCCESS = "bold magenta"
 COLOR_INFO = "italic yellow"
 COLOR_BORDER = "blue"
+
+
+class ConfigWrapper:
+    """Helper to access dict via dot notation for backward compatibility."""
+
+    def __init__(self, data):
+        object.__setattr__(self, "_data", data)
+
+    def __getattr__(self, name):
+        if name in self._data:
+            val = self._data[name]
+            if isinstance(val, dict):
+                return ConfigWrapper(val)
+            return val
+        return None
+
+    def __setattr__(self, name, value):
+        self._data[name] = value
 
 
 class ExecutionMonitor:
@@ -263,17 +282,22 @@ class InteractiveCLI:
         self.console = Console()
         # Force Silent Thermal Mode for clean UI
         os.environ["MYCODER_THERMAL_ENABLED"] = "false"
-        self.config_manager = ConfigManager()
-        self.config = self.config_manager.load_config()
         self.working_directory = self._resolve_working_directory()
+
+        self.context_manager = ContextManager(self.working_directory)
+        context_data = self.context_manager.get_context()
+        self.config_dict = context_data.config
+        self.config = ConfigWrapper(self.config_dict)
+
         self.coder = EnhancedMyCoderV2(
-            working_directory=self.working_directory, config=self.config
+            working_directory=self.working_directory, config=self.config_dict
         )
         self.diffusing_mode = True
         self.realtime_mode = False
         self.active_provider = self.config.preferred_provider or "ollama_local"
         self.preferred_provider = self._map_provider(self.active_provider)
         self.chat_history: List[Dict[str, str]] = []
+        self.show_thinking = False  # Toggle for displaying <thinking> blocks
         self.activity_panel = ActivityPanel()
         self.auto_executor = AutoExecutor(
             activity_panel=self.activity_panel, require_confirmation=True
@@ -677,10 +701,9 @@ class InteractiveCLI:
         self.config.preferred_provider = selected
         if selected == "inception_mercury" and not self.realtime_mode:
             self.diffusing_mode = False
-        if selected != "claude_oauth":
-            self.config_manager.update_provider_config(
-                "claude_oauth", {"enabled": False}
-            )
+            self.config_dict.setdefault("inception_mercury", {})["api_key"] = None
+            self.config_dict["inception_mercury"]["enabled"] = True
+            self.config_dict.setdefault("claude_oauth", {})["enabled"] = False
 
         if selected == "ollama_remote":
             urls = Prompt.ask(
@@ -693,58 +716,63 @@ class InteractiveCLI:
                 ]
 
         if selected == "ollama_local":
+            current_base = (
+                self.config.ollama_local.base_url if self.config.ollama_local else ""
+            )
             base_url = Prompt.ask(
                 "Zadej Ollama local URL (Enter=nechat)",
-                default=self.config.ollama_local.base_url or "",
+                default=current_base or "",
             )
             if base_url.strip():
-                self.config_manager.update_provider_config(
-                    "ollama_local", {"base_url": base_url.strip()}
-                )
+                self.config_dict.setdefault("ollama_local", {})[
+                    "base_url"
+                ] = base_url.strip()
 
         if selected == "termux_ollama":
+            current_base = (
+                self.config.termux_ollama.base_url if self.config.termux_ollama else ""
+            )
             base_url = Prompt.ask(
                 "Zadej Termux Ollama URL (Enter=nechat)",
-                default=self.config.termux_ollama.base_url or "",
+                default=current_base or "",
             )
             if base_url.strip():
-                self.config_manager.update_provider_config(
-                    "termux_ollama", {"base_url": base_url.strip()}
-                )
+                self.config_dict.setdefault("termux_ollama", {})[
+                    "base_url"
+                ] = base_url.strip()
 
         for option in self._provider_options():
             if option["key"] != selected:
                 continue
             if option["api_key"]:
-                current = self.config_manager.get_provider_config(option["key"])
-                if current and current.api_key:
+                current = self.config_dict.get(option["key"], {})
+                current_key = current.get("api_key")
+                if current_key:
                     self.console.print(
                         f"[{COLOR_INFO}]API klic uz je ulozen, ponechavam.[/]"
                     )
                     continue
                 prompt_label = (
                     "API klic (Enter=nechat, '-'=smazat)"
-                    if current and current.api_key
+                    if current_key
                     else "API klic (Enter=preskocit)"
                 )
                 api_key = Prompt.ask(prompt_label, password=True, default="")
                 if api_key.strip() == "-":
-                    self.config_manager.update_provider_config(
-                        option["key"], {"api_key": None, "enabled": True}
-                    )
+                    self.config_dict.setdefault(option["key"], {})["api_key"] = None
+                    self.config_dict[option["key"]]["enabled"] = True
                 elif api_key.strip():
-                    self.config_manager.update_provider_config(
-                        option["key"], {"api_key": api_key.strip(), "enabled": True}
-                    )
+                    self.config_dict.setdefault(option["key"], {})[
+                        "api_key"
+                    ] = api_key.strip()
+                    self.config_dict[option["key"]]["enabled"] = True
             else:
                 if option["key"] in {"claude_oauth", "ollama_local", "termux_ollama"}:
-                    self.config_manager.update_provider_config(
-                        option["key"], {"enabled": True}
-                    )
+                    self.config_dict.setdefault(option["key"], {})["enabled"] = True
 
-        self.config_manager.save_config()
+        self.context_manager.save_config(self.config_dict)
         self.coder = EnhancedMyCoderV2(
-            working_directory=self.working_directory, config=self.config_manager.config
+            working_directory=self.working_directory, config=self.config_dict
         )
         self._log_activity("PROVIDER_SWITCH", self.active_provider)
 
@@ -1797,11 +1825,53 @@ class InteractiveCLI:
             elif role == "ai":
                 header_style = "bold cyan"
                 header_label = "MyCoder AI"
-                try:
-                    body_renderable = Markdown(content)
-                except Exception:
-                    # Fallback if markdown fails
-                    body_renderable = Text(content, style="cyan")
+
+                # Split content into thinking and response blocks
+                parts = re.split(
+                    r"(<thinking>.*?</thinking>)", content, flags=re.DOTALL
+                )
+
+                ai_content_group = []
+
+                for part in parts:
+                    if part.startswith("<thinking>") and part.endswith("</thinking>"):
+                        thought_content = part[10:-11].strip()
+                        if not thought_content:
+                            continue
+
+                        if self.show_thinking:
+                            # Expanded view
+                            ai_content_group.append(
+                                Panel(
+                                    Markdown(thought_content),
+                                    title="Chain of Thought",
+                                    border_style="dim blue",
+                                    title_align="left",
+                                    expand=False,
+                                )
+                            )
+                        else:
+                            # Collapsed view
+                            summary = thought_content[:60].replace("\n", " ") + "..."
+                            ai_content_group.append(
+                                Panel(
+                                    Text(
+                                        f"Thinking: {summary}", style="dim italic blue"
+                                    ),
+                                    border_style="dim blue",
+                                    expand=False,
+                                )
+                            )
+                    else:
+                        if not part.strip():
+                            continue
+                        try:
+                            ai_content_group.append(Markdown(part))
+                        except Exception:
+                            ai_content_group.append(Text(part, style="cyan"))
+
+                body_renderable = Group(*ai_content_group)
+
             else:  # system
                 header_style = "bold yellow"
                 header_label = "System"
@@ -1850,6 +1920,11 @@ class InteractiveCLI:
             @key_bindings.add("end")
             def _scroll_bottom(event):
                 self.history_offset = 0
+                self._refresh_live()
+
+            @key_bindings.add("c-t")
+            def _toggle_thinking(event):
+                self.show_thinking = not self.show_thinking
                 self._refresh_live()
 
             session = PromptSession(key_bindings=key_bindings)
