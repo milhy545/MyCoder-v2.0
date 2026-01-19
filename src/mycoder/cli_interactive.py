@@ -700,7 +700,9 @@ class InteractiveCLI:
         self.config.preferred_provider = selected
         if selected == "inception_mercury" and not self.realtime_mode:
             self.diffusing_mode = False
-        if selected != "claude_oauth":
+                    self.config_dict.setdefault(option["key"], {})
+                    self.config_dict[option["key"]]["api_key"] = None
+                    self.config_dict[option["key"]]["enabled"] = True
             self.config_dict.setdefault("claude_oauth", {})["enabled"] = False
 
         if selected == "ollama_remote":
