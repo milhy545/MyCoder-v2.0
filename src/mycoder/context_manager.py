@@ -10,9 +10,10 @@ Responsibility:
 import os
 import json
 import logging
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Callable, Dict, Any, List, Optional, Tuple
 
 # Try importing toml support
 try:
@@ -43,11 +44,19 @@ class ContextManager:
 
     CONFIG_FILENAMES = ["config.json", "mycoder_config.json", "config.toml"]
     CONTEXT_FILENAMES = ["AGENTS.md", "PROJECT_CONTEXT.md", "CLAUDE.md", "GEMINI.md"]
+    CACHE_TTL_SECONDS = 300
 
-    def __init__(self, start_path: Optional[Path] = None):
+    def __init__(
+        self,
+        start_path: Optional[Path] = None,
+        cache_ttl_seconds: Optional[int] = None,
+        time_provider: Callable[[], float] = time.time,
+    ):
         self.start_path = start_path or Path.cwd()
         self.global_config_path = Path.home() / ".config" / "mycoder"
-        self._cache: Dict[str, ContextData] = {}
+        self._cache_ttl_seconds = cache_ttl_seconds or self.CACHE_TTL_SECONDS
+        self._time_provider = time_provider
+        self._cache: Dict[str, Tuple[ContextData, float]] = {}
 
     def get_context(self, force_reload: bool = False) -> ContextData:
         """
@@ -56,7 +65,12 @@ class ContextManager:
         """
         cache_key = str(self.start_path)
         if not force_reload and cache_key in self._cache:
-            return self._cache[cache_key]
+            cached_value = self._cache[cache_key]
+            context_data, timestamp = cached_value
+            if self._time_provider() - timestamp < self._cache_ttl_seconds:
+                return context_data
+            # Cache expired
+            del self._cache[cache_key]
 
         logger.info(f"Loading context for {self.start_path}...")
 
@@ -91,7 +105,7 @@ class ContextManager:
             loaded_files=loaded_files,
         )
 
-        self._cache[cache_key] = context_data
+        self._cache[cache_key] = (context_data, self._time_provider())
         return context_data
 
     def _discover_hierarchy(self) -> List[Path]:

@@ -140,10 +140,7 @@ class ConfigManager:
                 "check_interval": 30,
                 "throttle_on_high": True,
                 "emergency_shutdown": False,
-                "performance_script": (
-                    "/home/milhy777/Develop/Production/PowerManagement/scripts/"
-                    "performance_manager.sh"
-                ),
+                "performance_script": os.environ.get("MYCODER_PERFORMANCE_SCRIPT", ""),
             },
             "system": {
                 "working_directory": None,

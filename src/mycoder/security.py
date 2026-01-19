@@ -29,6 +29,7 @@ class FileSecurityManager:
         self,
         working_directory: Optional[Path] = None,
         additional_allowed_paths: Optional[List[Path]] = None,
+        allow_tmp: bool = True,
     ):
         self.allowed_paths: List[Path] = []
 
@@ -37,7 +38,8 @@ class FileSecurityManager:
         self.allowed_paths.append(cwd)
 
         # Secondary Allowed Path: /tmp for temporary operations
-        self.allowed_paths.append(Path("/tmp").resolve())
+        if allow_tmp:
+            self.allowed_paths.append(Path("/tmp").resolve())
 
         # Additional user-defined paths
         if additional_allowed_paths:

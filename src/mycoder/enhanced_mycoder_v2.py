@@ -702,11 +702,11 @@ class EnhancedMyCoderV2:
                 "session_id": session_id or "default",
             }
             # Save User Prompt
-            self.storage_manager.save_interaction(
+            await self.storage_manager.save_interaction(
                 session_id or "default", "user", prompt, metadata
             )
             # Save AI Response
-            self.storage_manager.save_interaction(
+            await self.storage_manager.save_interaction(
                 session_id or "default", "ai", api_response.content, metadata
             )
 
@@ -1018,7 +1018,7 @@ class EnhancedMyCoderV2:
 
                     # Snapshot before edit
                     step_id = f"edit_{int(time.time())}"
-                    self.storage_manager.create_snapshot(step_id, path)
+                    await self.storage_manager.create_snapshot(step_id, path)
 
                     result = await self.tool_registry.execute_tool(
                         "file_edit",
@@ -1088,7 +1088,7 @@ class EnhancedMyCoderV2:
 
                     # Snapshot before write
                     step_id = f"write_{int(time.time())}"
-                    self.storage_manager.create_snapshot(step_id, path)
+                    await self.storage_manager.create_snapshot(step_id, path)
 
                     result = await self.tool_registry.execute_tool(
                         "file_write",
