@@ -68,7 +68,6 @@ except ImportError:
     from mycoder.api_providers import APIProviderType
     from mycoder.auto_executor import ActionType, AutoExecutor
     from mycoder.command_parser import Command, CommandParser
-    from mycoder.config_manager import ConfigManager
     from mycoder.enhanced_mycoder_v2 import EnhancedMyCoderV2
     from mycoder.mcp_bridge import MCPBridge
     from mycoder.project_init import (
@@ -168,10 +167,12 @@ class ExecutionMonitor:
         try:
             metrics["cpu"] = psutil.cpu_percent(interval=None)
         except Exception:
+            # Best effort metrics; skip if psutil fails or is unavailable.
             pass
         try:
             metrics["ram"] = psutil.virtual_memory().percent
         except Exception:
+            # Best effort memory metric; ignore unexpected failures.
             pass
         try:
             temps = psutil.sensors_temperatures()
@@ -184,6 +185,7 @@ class ExecutionMonitor:
                         metrics["thermal"] = str(temp)
                     break
         except (AttributeError, Exception):
+            # Ignore sensor errors, not critical for UI rendering.
             pass
         return metrics
 

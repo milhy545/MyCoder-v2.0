@@ -1,5 +1,4 @@
 import unittest
-import re
 from mycoder.cli_interactive import (
     THINKING_REGEX,
     MD_CODE_BLOCK_REGEX,

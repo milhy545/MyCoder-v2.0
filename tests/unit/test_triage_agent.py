@@ -1,4 +1,3 @@
-import json
 import unittest
 from mycoder.triage_agent import triage_issues
 

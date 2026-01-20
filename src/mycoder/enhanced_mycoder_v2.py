@@ -15,7 +15,6 @@ Features:
 """
 
 import asyncio
-import json
 import logging
 import os
 import shlex
@@ -851,17 +850,19 @@ class EnhancedMyCoderV2:
                     port = parsed.port or (443 if parsed.scheme == "https" else 80)
                     return parsed.hostname, port
             except Exception:
+                # Ignore malformed local URL and try fallbacks.
                 pass
 
-        remote_urls = self.config.get("ollama_remote_urls", [])
-        if remote_urls:
-            try:
-                parsed = urllib.parse.urlparse(remote_urls[0])
-                if parsed.hostname:
-                    port = parsed.port or (443 if parsed.scheme == "https" else 80)
-                    return parsed.hostname, port
-            except Exception:
-                pass
+            remote_urls = self.config.get("ollama_remote_urls", [])
+            if remote_urls:
+                try:
+                    parsed = urllib.parse.urlparse(remote_urls[0])
+                    if parsed.hostname:
+                        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+                        return parsed.hostname, port
+                except Exception:
+                    # Ignore malformed remote URL and continue to defaults.
+                    pass
 
         return "1.1.1.1", 53
 
