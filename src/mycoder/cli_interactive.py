@@ -30,7 +30,7 @@ try:
     from rich.table import Table
     from rich.text import Text
 except ImportError:
-    print("CRITICAL: 'rich' library not found. Please run: poetry add rich")
+    sys.stderr.write("CRITICAL: 'rich' library not found. Please run: poetry add rich\n")
     sys.exit(1)
 
 # Optional prompt_toolkit for Tab-based selection.
@@ -1605,7 +1605,8 @@ class InteractiveCLI:
                 self.activity_panel.clear_thinking()
                 progress_task.cancel()
                 with suppress(asyncio.CancelledError):
-                    await progress_task
+                    if not progress_task.done():
+                        _ = await progress_task
 
     async def _update_progress_simulation(self) -> None:
         """Simulate progress updates while waiting for AI response."""

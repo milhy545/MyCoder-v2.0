@@ -11,7 +11,7 @@ import threading
 import time
 from typing import Any, Dict, Optional, Tuple
 
-from .tool_registry import (
+from .tools.core import (
     BaseTool,
     ToolAvailability,
     ToolCapabilities,
