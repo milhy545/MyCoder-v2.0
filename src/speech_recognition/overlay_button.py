@@ -299,7 +299,21 @@ if PYQT_AVAILABLE:
     
     
 else:
-    OverlayButton = None  # type: ignore
+    def _create_overlay_button(on_click: Optional[Callable[[], None]] = None) -> BaseWidget:
+        """
+        Fallback factory used when PyQt5 is not available.
+
+        This is defined as a callable so that static analysis tools
+        see `OverlayButton` as always callable, but any attempt to
+        actually create the overlay will fail with an ImportError,
+        consistent with the rest of this module.
+        """
+        raise ImportError(
+            "GUI overlay requires PyQt5. "
+            "Install with: poetry install --extras speech"
+        )
+
+    OverlayButton = _create_overlay_button  # type: ignore[assignment]
 
 
 class OverlayApp:
@@ -316,7 +330,7 @@ class OverlayApp:
         Args:
             on_click: Callback function when button is clicked
         """
-        if not PYQT_AVAILABLE or OverlayButton is None:
+        if not PYQT_AVAILABLE:
             raise ImportError(
                 "GUI overlay requires PyQt5. "
                 "Install with: poetry install --extras speech"
