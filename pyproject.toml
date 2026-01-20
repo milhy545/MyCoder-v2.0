@@ -58,6 +58,7 @@ pynput = { version = "^1.7.6", optional = true }
 python-xlib = { version = "^0.33", optional = true }
 pyperclip = { version = "^1.8.2", optional = true }
 pyttsx3 = { version = "^2.90", optional = true }
+toml = "^0.10.2"
 
 [tool.poetry.extras]
 http = ["httpx"]

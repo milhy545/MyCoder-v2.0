@@ -4,6 +4,7 @@
 
 -## Recent Changes & Updates
 *Agents: Add entries here when making significant changes*
+- 2026-01-21: Codex - Added `toml` to the main dependencies so the context manager can load TOML configs on Python 3.10 (resolved the GH CI dependency failure); tests run: `poetry run pytest tests/unit/test_context_manager.py tests/unit/test_storage.py -q`.
 - 2026-01-20: Jules - Added `src/mycoder/triage_agent.py` and `mycoder-triage` command for automated issue triage based on "Goat Principle" (Functionality > Aesthetics); added unit tests in `tests/unit/test_triage_agent.py`.
 - 2026-01-20: Codex - Ensured CI pipeline exports `PYTHONPATH=src` for the quality/test job and updated `tests/unit/test_context_manager.py` to import `ContextManager` directly; tests run: `poetry run flake8 src/ tests/`, `poetry run pytest tests/unit/test_context_manager.py`.
 - 2026-01-20: Codex - Added a default thermal performance script path so config validation/debug info always report on the configured script and trigger warnings when the expected file is missing; tests run: `poetry run pytest tests/unit/test_config_manager.py`.
