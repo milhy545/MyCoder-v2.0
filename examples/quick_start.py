@@ -163,6 +163,7 @@ async def configuration_example():
     # Method 1: Direct configuration
     print("Method 1: Direct Configuration")
     config1 = {"claude_oauth": {"enabled": True}, "thermal": {"enabled": False}}
+    print(f"   Temporary config sections: {len(config1)}")
 
     # Method 2: Environment variables
     print("Method 2: Environment Variables")

@@ -125,7 +125,8 @@ class WebFetcher:
             cached_at = datetime.fromisoformat(data["fetched_at"])
             if datetime.now() - cached_at < self.cache_ttl:
                 return data["content"]
-        except Exception:
+        except (json.JSONDecodeError, KeyError, ValueError):
+            # Ignore corrupted cache entries.
             pass
 
         return None

@@ -135,7 +135,6 @@ class TestConfigurationLimits:
             for i, config_change in enumerate(config_changes):
                 try:
                     # Update configuration
-                    new_config = {**mycoder.config, **config_change}
                     mycoder.config.update(config_change)
 
                     # Verify system still functions

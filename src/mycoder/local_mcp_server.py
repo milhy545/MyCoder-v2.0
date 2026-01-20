@@ -369,7 +369,7 @@ def main() -> None:
     try:
         asyncio.run(_run())
     except KeyboardInterrupt:
-        pass
+        logger.info("Local MCP server interrupted, shutting down")
 
 
 if __name__ == "__main__":

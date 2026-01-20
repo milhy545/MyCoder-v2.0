@@ -166,13 +166,13 @@ class ExecutionMonitor:
         metrics = {"cpu": 0.0, "ram": 0.0, "thermal": "N/A"}
         try:
             metrics["cpu"] = psutil.cpu_percent(interval=None)
-        except Exception:
-            # Best effort metrics; skip if psutil fails or is unavailable.
+        except (RuntimeError, OSError):
+            # Some platforms may not expose CPU metrics; ignore errors.
             pass
         try:
             metrics["ram"] = psutil.virtual_memory().percent
-        except Exception:
-            # Best effort memory metric; ignore unexpected failures.
+        except (RuntimeError, OSError):
+            # Skip if memory info is unavailable.
             pass
         try:
             temps = psutil.sensors_temperatures()
@@ -184,8 +184,8 @@ class ExecutionMonitor:
                     else:
                         metrics["thermal"] = str(temp)
                     break
-        except (AttributeError, Exception):
-            # Ignore sensor errors, not critical for UI rendering.
+        except (AttributeError, RuntimeError, OSError):
+            # Sensor access may fail on some hosts; ignore.
             pass
         return metrics
 
@@ -2007,7 +2007,8 @@ def main():
     try:
         asyncio.run(InteractiveCLI().run())
     except KeyboardInterrupt:
-        pass
+        # Graceful shutdown when user presses Ctrl+C during initialization.
+        print("\n[bold yellow]⛔ Interrupted before startup. Bye![/bold yellow]")
 
 
 if __name__ == "__main__":

@@ -205,11 +205,13 @@ class DynamicExecutionMonitor:
         metrics = {"cpu": 0.0, "ram": 0.0, "thermal": "N/A"}
         try:
             metrics["cpu"] = psutil.cpu_percent(interval=None)
-        except Exception:
+        except (RuntimeError, OSError):
+            # Some platforms may not expose CPU percent; ignore.
             pass
         try:
             metrics["ram"] = psutil.virtual_memory().percent
-        except Exception:
+        except (RuntimeError, OSError):
+            # Memory info may be restricted; skip on failure.
             pass
         try:
             temps = psutil.sensors_temperatures()
@@ -221,6 +223,7 @@ class DynamicExecutionMonitor:
                     else:
                         metrics["thermal"] = str(temp)
                     break
-        except (AttributeError, Exception):
+        except (AttributeError, RuntimeError, OSError):
+            # Sensor access may throw on unsupported systems.
             pass
         return metrics

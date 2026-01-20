@@ -101,7 +101,8 @@ class GeminiTranscriber:
 
                 try:
                     os.unlink(tmp_path)
-                except Exception:
+                except OSError:
+                    # Cleanup best effort; ignore permission/IO errors.
                     pass
 
         except Exception as e:

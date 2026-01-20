@@ -41,7 +41,9 @@ def test_force_reload_ignores_cache(tmp_path):
     config_file.write_text(json.dumps({"debug_mode": True}))
 
     manager = ContextManager(project, cache_ttl_seconds=60)
-    manager.get_context()
+    first = manager.get_context()
+    assert first.config["debug_mode"] is True
     config_file.write_text(json.dumps({"debug_mode": False}))
     second = manager.get_context(force_reload=True)
+    assert second.config["debug_mode"] is False
     manager.get_context()
