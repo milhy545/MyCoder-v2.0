@@ -1,11 +1,9 @@
 import unittest
 import re
 from mycoder.cli_interactive import (
-    InteractiveCLI,
     THINKING_REGEX,
     MD_CODE_BLOCK_REGEX,
     MD_INLINE_CODE_REGEX,
-    MD_STYLE_REGEX,
     MD_HEADER_REGEX
 )
 
