@@ -79,6 +79,7 @@ sphinx-rtd-theme = "^3.0.2"
 [tool.poetry.scripts]
 mycoder = "mycoder.cli_interactive:main"
 mycoder-demo = "mycoder.demo_mycoder:main"
+mycoder-triage = "mycoder.triage_agent:main"
 dictation = "speech_recognition.cli:main"
 
 [tool.black]
