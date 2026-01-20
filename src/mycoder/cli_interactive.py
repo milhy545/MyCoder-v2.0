@@ -94,6 +94,13 @@ COLOR_SUCCESS = "bold magenta"
 COLOR_INFO = "italic yellow"
 COLOR_BORDER = "blue"
 
+# Pre-compiled Regex Patterns for Performance
+THINKING_REGEX = re.compile(r"(<thinking>.*?</thinking>)", flags=re.DOTALL)
+MD_CODE_BLOCK_REGEX = re.compile(r"```[\s\S]*?```")
+MD_INLINE_CODE_REGEX = re.compile(r"`[^`]*`")
+MD_STYLE_REGEX = re.compile(r"[*_~`]")
+MD_HEADER_REGEX = re.compile(r"^#+\s+", flags=re.MULTILINE)
+
 
 class ConfigWrapper:
     """Helper to access dict via dot notation for backward compatibility."""
@@ -1607,12 +1614,11 @@ class InteractiveCLI:
 
     def _strip_markdown(self, text: str) -> str:
         """Strip markdown formatting for TTS output."""
-        import re
-
-        text = re.sub(r"```[\s\S]*?```", "", text)
-        text = re.sub(r"`[^`]*`", "", text)
-        text = re.sub(r"[*_~`]", "", text)
-        text = re.sub(r"^#+\s+", "", text, flags=re.MULTILINE)
+        # Bolt Optimization: Use pre-compiled regexes
+        text = MD_CODE_BLOCK_REGEX.sub("", text)
+        text = MD_INLINE_CODE_REGEX.sub("", text)
+        text = MD_STYLE_REGEX.sub("", text)
+        text = MD_HEADER_REGEX.sub("", text)
         return text.strip()
 
     def _create_layout(self) -> Layout:
@@ -1827,9 +1833,8 @@ class InteractiveCLI:
                 header_label = "MyCoder AI"
 
                 # Split content into thinking and response blocks
-                parts = re.split(
-                    r"(<thinking>.*?</thinking>)", content, flags=re.DOTALL
-                )
+                # Bolt Optimization: Use pre-compiled regex
+                parts = THINKING_REGEX.split(content)
 
                 ai_content_group = []
 
