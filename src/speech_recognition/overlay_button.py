@@ -47,17 +47,18 @@ class ButtonState(Enum):
 
 
 if PYQT_AVAILABLE:
+
     class OverlayButton(BaseWidget):
         """
         Floating overlay button for speech recognition control.
-    
+
         Features:
         - Always on top
         - Draggable
         - Visual feedback for recording state
         - Click to start/stop recording
         """
-    
+
         def __init__(
             self,
             on_click: Optional[Callable[[], None]] = None,
@@ -66,7 +67,7 @@ if PYQT_AVAILABLE:
         ):
             """
             Initialize the overlay button.
-    
+
             Args:
                 on_click: Callback function when button is clicked
                 size: Button diameter in pixels (default: 80)
@@ -77,70 +78,72 @@ if PYQT_AVAILABLE:
                     "GUI overlay requires PyQt5. "
                     "Install with: poetry install --extras speech"
                 )
-    
+
             super().__init__()
-    
+
             self.on_click = on_click
             self.size = size
             self.state = ButtonState.IDLE
-    
+
             # For dragging
             self.dragging = False
             self.drag_position = QPoint()
-    
+
             # Setup UI
             self._setup_ui()
             self._setup_styles()
-    
+
             # Set initial position
             if position:
                 self.move(*position)
             else:
                 self._move_to_bottom_right()
-    
+
             # Animation timer for recording pulse effect
             self.pulse_timer = QTimer()
             self.pulse_timer.timeout.connect(self._animate_pulse)
             self.pulse_opacity = 1.0
             self.pulse_direction = -1
-    
+
         def _setup_ui(self) -> None:
             """Setup the UI components."""
             # Window flags for floating overlay
-            self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.Tool)
+            self.setWindowFlags(
+                Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.Tool
+            )
             self.setAttribute(Qt.WA_TranslucentBackground)
-    
+
             # Set window size
             self.setFixedSize(self.size + 40, self.size + 60)
-    
+
             # Main layout
             layout = QVBoxLayout()
             layout.setContentsMargins(10, 10, 10, 10)
             layout.setSpacing(5)
-    
+
             # Microphone button
             self.button = QPushButton("🎤")
             self.button.setFixedSize(self.size, self.size)
             self.button.clicked.connect(self._handle_click)
             self.button.setCursor(QCursor(Qt.PointingHandCursor))
-    
+
             # Status label
             self.status_label = QLabel("Ready")
             self.status_label.setAlignment(Qt.AlignCenter)
             self.status_label.setWordWrap(True)
-    
+
             # Add widgets to layout
             layout.addWidget(self.button, alignment=Qt.AlignCenter)
             layout.addWidget(self.status_label)
-    
+
             self.setLayout(layout)
-    
+
         def _setup_styles(self) -> None:
             """Setup component styles."""
             # Button style
             self.button.setFont(QFont("Arial", 32))
             self._update_button_style()
-    
+
             # Status label style
             self.status_label.setFont(QFont("Arial", 10))
             self.status_label.setStyleSheet(
@@ -153,7 +156,7 @@ if PYQT_AVAILABLE:
                 }
             """
             )
-    
+
         def _update_button_style(self) -> None:
             """Update button style based on current state."""
             styles = {
@@ -192,45 +195,45 @@ if PYQT_AVAILABLE:
                     }
                 """,
             }
-    
+
             self.button.setStyleSheet(styles.get(self.state, styles[ButtonState.IDLE]))
-    
+
         def _move_to_bottom_right(self) -> None:
             """Move button to bottom-right corner of screen."""
             screen = QApplication.primaryScreen().geometry()
             x = screen.width() - self.width() - 20
             y = screen.height() - self.height() - 20
             self.move(x, y)
-    
+
         def _handle_click(self) -> None:
             """Handle button click."""
             logger.info(f"Button clicked in state: {self.state.value}")
-    
+
             if self.on_click:
                 self.on_click()
-    
+
         def _animate_pulse(self) -> None:
             """Animate button pulsing effect during recording."""
             self.pulse_opacity += 0.05 * self.pulse_direction
-    
+
             if self.pulse_opacity <= 0.5:
                 self.pulse_direction = 1
             elif self.pulse_opacity >= 1.0:
                 self.pulse_direction = -1
-    
+
             self.setWindowOpacity(self.pulse_opacity)
-    
+
         def set_state(self, state: ButtonState) -> None:
             """
             Set button state and update visuals.
-    
+
             Args:
                 state: New button state
             """
             logger.info(f"Button state changed: {self.state.value} -> {state.value}")
             self.state = state
             self._update_button_style()
-    
+
             # Update status label
             status_texts = {
                 ButtonState.IDLE: "Ready",
@@ -239,65 +242,66 @@ if PYQT_AVAILABLE:
                 ButtonState.ERROR: "Error",
             }
             self.status_label.setText(status_texts.get(state, "Unknown"))
-    
+
             # Start/stop pulse animation for recording
             if state == ButtonState.RECORDING:
                 self.pulse_timer.start(50)  # 50ms interval
             else:
                 self.pulse_timer.stop()
                 self.setWindowOpacity(1.0)
-    
+
         def set_status(self, text: str) -> None:
             """
             Set custom status text.
-    
+
             Args:
                 text: Status text to display
             """
             self.status_label.setText(text)
-    
+
         def mousePressEvent(self, event) -> None:
             """Handle mouse press for dragging."""
             if event.button() == Qt.LeftButton:
                 self.dragging = True
                 self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
                 event.accept()
-    
+
         def mouseMoveEvent(self, event) -> None:
             """Handle mouse move for dragging."""
             if self.dragging and event.buttons() == Qt.LeftButton:
                 self.move(event.globalPos() - self.drag_position)
                 event.accept()
-    
+
         def mouseReleaseEvent(self, event) -> None:
             """Handle mouse release for dragging."""
             if event.button() == Qt.LeftButton:
                 self.dragging = False
                 event.accept()
-    
+
         def show_notification(self, message: str, duration: int = 2000) -> None:
             """
             Show temporary notification message.
-    
+
             Args:
                 message: Message to display
                 duration: Duration in milliseconds
             """
             original_text = self.status_label.text()
-    
+
             self.status_label.setText(message)
-    
+
             # Restore original text after duration
-            QTimer.singleShot(duration, lambda: self.status_label.setText(original_text))
-    
+            QTimer.singleShot(
+                duration, lambda: self.status_label.setText(original_text)
+            )
+
         def flash_error(self) -> None:
             """Flash button to indicate error."""
             original_state = self.state
-    
+
             self.set_state(ButtonState.ERROR)
             QTimer.singleShot(500, lambda: self.set_state(original_state))
-    
-    
+
 else:
     def _create_overlay_button(on_click: Optional[Callable[[], None]] = None) -> BaseWidget:
         """

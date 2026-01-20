@@ -30,7 +30,9 @@ try:
     from rich.table import Table
     from rich.text import Text
 except ImportError:
-    sys.stderr.write("CRITICAL: 'rich' library not found. Please run: poetry add rich\n")
+    sys.stderr.write(
+        "CRITICAL: 'rich' library not found. Please run: poetry add rich\n"
+    )
     sys.exit(1)
 
 # Optional prompt_toolkit for Tab-based selection.
