@@ -14,7 +14,6 @@ Features:
 - Session persistence across provider transitions
 """
 
-import asyncio
 import logging
 import os
 import shlex
@@ -225,7 +224,6 @@ class EnhancedMyCoderV2:
 
     def _save_history(self):
         """Deprecated: History is saved via StorageManager transactionally."""
-        pass
 
     async def initialize(self):
         """Initialize Enhanced MyCoder system with multi-API providers"""

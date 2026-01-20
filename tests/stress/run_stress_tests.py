@@ -21,7 +21,6 @@ Usage:
 
 import argparse
 import json
-import os
 import subprocess
 import sys
 import time
@@ -128,7 +127,7 @@ class StressTestRunner:
 
         # Check Python packages
         try:
-            import pytest
+            pass
 
             requirements["pytest"] = True
         except ImportError:

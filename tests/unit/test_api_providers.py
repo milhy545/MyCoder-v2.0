@@ -5,15 +5,12 @@ Tests the multi-API provider system with all fallback scenarios,
 error handling, and thermal integration for Q9550 systems.
 """
 
-import asyncio
-import json
 import os
 import sys
-import time
 from contextlib import ExitStack
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 

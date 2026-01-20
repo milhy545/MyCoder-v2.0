@@ -18,7 +18,7 @@ except ImportError:
     CLICK_AVAILABLE = False
     click = None
 
-from .config import ConfigManager, DictationConfig, setup_logging
+from .config import ConfigManager, setup_logging
 from .dictation_app import GlobalDictationApp
 from .text_injector import InjectionMethod
 from .whisper_transcriber import WhisperProvider
@@ -44,7 +44,6 @@ def main() -> int:
 @click.version_option(version="1.0.0")
 def cli():
     """Global Dictation - System-wide speech recognition for Linux."""
-    pass
 
 
 @cli.command()
@@ -243,7 +242,7 @@ def test(config: Optional[Path]):
 def config_show(config: Optional[Path]):
     """Show current configuration."""
     config_manager = ConfigManager(config)
-    app_config = config_manager.load()
+    config_manager.load()
 
     print(config_manager.get_summary())
 

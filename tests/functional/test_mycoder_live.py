@@ -21,8 +21,6 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from mycoder import EnhancedMyCoderV2
-from mycoder.api_providers import APIProviderType
-from mycoder.config_manager import ConfigManager
 
 
 class TestMyCoderLiveFunctionality:
@@ -523,7 +521,7 @@ await mycoder.initialize()
         print("\n📁 Testing file operations...")
 
         # Create test file for operations
-        test_file = self.working_dir / "tool_test.txt"
+        self.working_dir / "tool_test.txt"
         test_content = f"Tool registry test file\nCreated at: {datetime.now()}\nMyCoder v2.1.0 functional test"
 
         from mycoder.tool_registry import ToolExecutionContext

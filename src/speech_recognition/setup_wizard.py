@@ -21,7 +21,7 @@ try:
 except ImportError:
     AUDIO_AVAILABLE = False
 
-from .config import AudioConfig, ConfigManager, DictationConfig, WhisperConfig
+from .config import ConfigManager, DictationConfig
 
 logger = logging.getLogger(__name__)
 

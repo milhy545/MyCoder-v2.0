@@ -4,9 +4,8 @@ Unit tests for ToolExecutionOrchestrator (v2.1.1)
 Tests orchestration of tool execution between CLI, tool_registry, and MCP.
 """
 
-import asyncio
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -328,4 +327,3 @@ class TestExecuteCommandQuick:
         """Test quick execution with valid command"""
         # This test requires complex mocking of EnhancedMyCoderV2
         # Better tested in integration tests
-        pass

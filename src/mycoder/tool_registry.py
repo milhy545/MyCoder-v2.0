@@ -11,7 +11,6 @@ Features:
 - Intelligent tool routing based on context and capabilities
 """
 
-import asyncio
 import logging
 import os
 import time
@@ -19,7 +18,7 @@ from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional
 
 try:
     from .mcp_connector import MCPConnector

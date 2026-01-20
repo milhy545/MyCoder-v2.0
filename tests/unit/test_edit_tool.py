@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import pytest
 
 from mycoder.tools.edit_tool import EditTool
 

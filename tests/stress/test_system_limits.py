@@ -14,14 +14,11 @@ Run with: pytest tests/stress/test_system_limits.py -v -s --tb=short
 
 import asyncio
 import json
-import os
 import sys
 import tempfile
-import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -29,12 +26,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from mycoder import EnhancedMyCoderV2
 from mycoder.api_providers import (
-    APIProviderConfig,
-    APIProviderStatus,
     APIProviderType,
     APIResponse,
 )
-from mycoder.config_manager import ConfigManager
 from mycoder.tool_registry import ToolExecutionContext
 
 

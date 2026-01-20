@@ -10,7 +10,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -856,7 +856,7 @@ class TestConfigManagerIntegration:
     def test_provider_config_updates_realistic(self):
         """Test realistic provider configuration updates"""
         manager = ConfigManager()
-        config = manager.load_config()
+        manager.load_config()
 
         # Test updating multiple provider settings
         updates = [

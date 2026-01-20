@@ -41,4 +41,3 @@ class TestCliRegexOpt(unittest.TestCase):
         # Let's just trust the unit tests above for the regexes,
         # and maybe try to patch the class to avoid init if we really wanted.
         # But for "Bolt", ensuring the regexes are correct is the main thing.
-        pass

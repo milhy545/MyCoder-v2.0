@@ -5,7 +5,6 @@ Self-test runner for AI testing framework.
 from __future__ import annotations
 
 import argparse
-from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional

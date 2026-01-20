@@ -1,5 +1,3 @@
-import time
-
 from mycoder.api_providers import CircuitBreaker, CircuitState
 
 

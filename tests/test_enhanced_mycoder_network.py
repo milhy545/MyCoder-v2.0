@@ -1,8 +1,7 @@
-import asyncio
 import os
 import sys
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 # Ensure the root directory is in sys.path
 sys.path.append(os.getcwd())

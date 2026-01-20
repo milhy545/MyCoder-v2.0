@@ -654,7 +654,6 @@ class InteractiveCLI:
 
     def _build_execution_context(self) -> ToolExecutionContext:
         """Build execution context for tool execution (v2.2.0)."""
-        from pathlib import Path
 
         return ToolExecutionContext(
             mode="FULL",

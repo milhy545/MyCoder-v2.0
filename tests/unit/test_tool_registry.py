@@ -6,12 +6,11 @@ execution contexts, and thermal-aware operations.
 """
 
 import asyncio
-import os
 import sys
 import time
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 

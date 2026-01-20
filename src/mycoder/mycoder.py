@@ -11,9 +11,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 try:
-    from claude_cli_auth import AuthConfig, ClaudeAuthError, ClaudeAuthManager
+    from claude_cli_auth import ClaudeAuthError
 except Exception:
-    from .adaptive_modes import AuthConfig, ClaudeAuthError, ClaudeAuthManager
+    from .adaptive_modes import ClaudeAuthError
 
 try:
     from .adaptive_modes import AdaptiveModeManager, OperationalMode
@@ -26,8 +26,6 @@ except ImportError:
 # Create custom network error that inherits from ClaudeAuthError
 class ClaudeNetworkError(ClaudeAuthError):
     """Network-related error for MyCoder operations."""
-
-    pass
 
 
 logger = logging.getLogger(__name__)

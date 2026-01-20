@@ -22,7 +22,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import aiohttp
 
@@ -201,12 +201,10 @@ class BaseAPIProvider(ABC):
         **kwargs,
     ) -> APIResponse:
         """Execute query with provider-specific implementation"""
-        pass
 
     @abstractmethod
     async def health_check(self) -> APIProviderStatus:
         """Check provider health and availability"""
-        pass
 
     async def can_handle_request(self, context: Dict[str, Any] = None) -> bool:
         """Check if provider can handle the request"""
@@ -572,7 +570,7 @@ class ClaudeOAuthProvider(BaseAPIProvider):
             # Execute query
             response = await auth_manager.query(prompt, **auth_kwargs)
 
-            duration_ms = int((time.time() - start_time) * 1000)
+            int((time.time() - start_time) * 1000)
 
             self.successful_requests += 1
             self.status = APIProviderStatus.HEALTHY

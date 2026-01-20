@@ -1,6 +1,5 @@
 import json
 
-import pytest
 
 from mycoder.context_manager import ContextManager
 
@@ -42,7 +41,7 @@ def test_force_reload_ignores_cache(tmp_path):
     config_file.write_text(json.dumps({"debug_mode": True}))
 
     manager = ContextManager(project, cache_ttl_seconds=60)
-    first = manager.get_context()
+    manager.get_context()
     config_file.write_text(json.dumps({"debug_mode": False}))
     second = manager.get_context(force_reload=True)
     manager.get_context()

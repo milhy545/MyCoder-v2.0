@@ -7,9 +7,8 @@ CommandParser → ToolOrchestrator → ToolRegistry → MCP Bridge
 These tests require MCP server to be running or mocked appropriately.
 """
 
-import asyncio
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 import pytest_asyncio
@@ -17,7 +16,6 @@ import pytest_asyncio
 from mycoder.command_parser import CommandParser
 from mycoder.enhanced_mycoder_v2 import EnhancedMyCoderV2
 from mycoder.mcp_bridge import MCPBridge
-from mycoder.tool_orchestrator import ToolExecutionOrchestrator
 from mycoder.tool_registry import ToolExecutionContext
 
 

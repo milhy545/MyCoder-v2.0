@@ -11,7 +11,7 @@ import logging
 import threading
 import time
 import wave
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 try:
     import numpy as np

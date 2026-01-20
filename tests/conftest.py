@@ -4,12 +4,10 @@ Provides common fixtures and configuration for all test modules.
 """
 
 import asyncio
-import os
 import sys
 import tempfile
 from pathlib import Path
-from typing import AsyncGenerator, Generator
-from unittest.mock import MagicMock, patch
+from typing import Generator
 
 import pytest
 

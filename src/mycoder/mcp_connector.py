@@ -278,7 +278,7 @@ class MCPConnector:
                             "tool": tool_name,
                             "mode": mode.value,
                         }
-                    except Exception as parse_error:
+                    except Exception:
                         # Handle non-JSON responses
                         text_result = await response.text()
                         return {

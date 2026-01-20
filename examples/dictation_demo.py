@@ -16,7 +16,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from speech_recognition import (
     GlobalDictationApp,
     WhisperProvider,
-    InjectionMethod,
     ConfigManager,
     setup_logging,
 )
@@ -252,7 +251,7 @@ def main():
 
     if choice in demos:
         _, demo_func = demos[choice]
-        print("\n" + "="*50 + "\n")
+        print("\n" + "=" * 50 + "\n")
         demo_func()
     else:
         print("Invalid choice!")
@@ -266,4 +265,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\nError: {e}")
         import traceback
+
         traceback.print_exc()

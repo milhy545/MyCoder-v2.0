@@ -5,7 +5,6 @@ Koordinuje exekuci nástrojů mezi CLI, tool_registry a MCP serverem.
 Poskytuje inteligentní routing a AI-assisted tool execution.
 """
 
-import asyncio
 import logging
 import time
 from pathlib import Path

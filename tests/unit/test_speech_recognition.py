@@ -4,8 +4,7 @@ Unit tests for speech recognition module.
 Tests core components without requiring audio hardware or API keys.
 """
 
-import io
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
 

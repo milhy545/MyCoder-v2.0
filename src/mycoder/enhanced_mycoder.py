@@ -6,15 +6,14 @@ enhanced capabilities including memory persistence, file operations,
 git integration, and research capabilities.
 """
 
-import asyncio
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 try:
-    from claude_cli_auth import ClaudeAuthError
+    pass
 except Exception:
-    from .adaptive_modes import ClaudeAuthError
+    pass
 
 try:
     from .adaptive_modes import AdaptiveModeManager, ClaudeNetworkError, OperationalMode

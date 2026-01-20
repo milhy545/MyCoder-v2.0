@@ -5,13 +5,12 @@ Tests integration between API providers, configuration management,
 and real-world API interactions in controlled scenarios.
 """
 
-import asyncio
 import json
 import os
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -22,8 +21,6 @@ from mycoder.api_providers import (
     APIProviderRouter,
     APIProviderType,
     ClaudeAnthropicProvider,
-    ClaudeOAuthProvider,
-    GeminiProvider,
     OllamaProvider,
 )
 from mycoder.config_manager import ConfigManager, load_config
@@ -809,7 +806,7 @@ class TestConfigurationPersistence:
 
             # Load and modify
             config_manager = ConfigManager(config_file)
-            config = config_manager.load_config()
+            config_manager.load_config()
 
             # Modify some values
             config_manager.update_provider_config(

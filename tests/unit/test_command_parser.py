@@ -4,8 +4,6 @@ Unit tests for CommandParser (v2.1.1)
 Tests parsing of CLI commands like /bash, /file, /git into structured Command objects.
 """
 
-import pytest
-
 from mycoder.command_parser import Command, CommandParser, parse_command
 
 

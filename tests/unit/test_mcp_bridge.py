@@ -4,8 +4,7 @@ Unit tests for MCPBridge (v2.1.1)
 Tests MCP bridge functionality for connecting tool_registry with MCP server.
 """
 
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -13,7 +12,6 @@ from mycoder.mcp_bridge import MCPBridge, MCPToolWrapper
 from mycoder.tool_registry import (
     ToolCategory,
     ToolExecutionContext,
-    ToolRegistry,
     ToolResult,
 )
 

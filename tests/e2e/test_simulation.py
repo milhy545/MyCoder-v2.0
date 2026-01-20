@@ -1,17 +1,13 @@
-import asyncio
 import http.server
 import json
 import logging
-import os
 import threading
 import time
-from pathlib import Path
 
 import pytest
 import pytest_asyncio
 
 from mycoder import EnhancedMyCoderV2
-from mycoder.api_providers import APIProviderType
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -49,7 +45,7 @@ class MockLLMHandler(http.server.BaseHTTPRequestHandler):
         )
 
         # Determine response based on prompt
-        prompt = request_json.get("prompt", "").lower()
+        request_json.get("prompt", "").lower()
         response_text = self.__class__.response_content
 
         response_data = {
@@ -71,7 +67,6 @@ class MockLLMHandler(http.server.BaseHTTPRequestHandler):
 
     def log_message(self, format, *args):
         """Silence server logging"""
-        pass
 
 
 class MockServerThread(threading.Thread):
