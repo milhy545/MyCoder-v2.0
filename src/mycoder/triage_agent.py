@@ -3,20 +3,57 @@ import os
 import sys
 from typing import List, Dict, Any
 
-def triage_issues(issues: List[Dict[str, Any]], available_labels: List[str]) -> List[Dict[str, Any]]:
+
+def triage_issues(
+    issues: List[Dict[str, Any]], available_labels: List[str]
+) -> List[Dict[str, Any]]:
     results = []
 
     # Keyword mappings for labels
-    bug_keywords = ["crash", "error", "fail", "broken", "exception", "traceback", "panic", "npe"]
-    enhancement_keywords = ["feature", "add", "request", "implement", "new capability", "support"]
+    bug_keywords = [
+        "crash",
+        "error",
+        "fail",
+        "broken",
+        "exception",
+        "traceback",
+        "panic",
+        "npe",
+    ]
+    enhancement_keywords = [
+        "feature",
+        "add",
+        "request",
+        "implement",
+        "new capability",
+        "support",
+    ]
     docs_keywords = ["doc", "readme", "typo", "clarify", "guide", "documentation"]
 
     # Priority keywords
-    high_priority_keywords = ["critical", "security", "auth", "panic", "crash", "blocker"]
+    high_priority_keywords = [
+        "critical",
+        "security",
+        "auth",
+        "panic",
+        "crash",
+        "blocker",
+    ]
     low_priority_keywords = ["style", "formatting", "color", "beautify", "hacky"]
 
     # Area keywords
-    android_keywords = ["android", "apk", "mobile", "phone", "kotlin", "viewbinding", "activity", "fragment", "gradle", "intent"]
+    android_keywords = [
+        "android",
+        "apk",
+        "mobile",
+        "phone",
+        "kotlin",
+        "viewbinding",
+        "activity",
+        "fragment",
+        "gradle",
+        "intent",
+    ]
     docker_keywords = ["docker", "container", "image", "compose", "k8s", "kubernetes"]
 
     for issue in issues:
@@ -58,7 +95,7 @@ def triage_issues(issues: List[Dict[str, Any]], available_labels: List[str]) -> 
             labels_to_set.add("area/docker")
 
         # Filter against available labels
-        final_labels = [l for l in labels_to_set if l in available_labels]
+        final_labels = [label for label in labels_to_set if label in available_labels]
 
         # Goat Principle: Ignore noise
         if not final_labels:
@@ -66,20 +103,23 @@ def triage_issues(issues: List[Dict[str, Any]], available_labels: List[str]) -> 
 
         # Goat Principle: Functionality > Aesthetics
         if "kind/bug" in final_labels and "priority/low" in final_labels:
-             # Re-evaluate: if it breaks functionality, it's not low priority unless it's just ugly
-             if "crash" in full_text or "panic" in full_text:
-                 final_labels.remove("priority/low")
-                 if "priority/high" in available_labels:
-                     final_labels.append("priority/high")
-                     explanation_parts.append("Elevated to high priority due to crash.")
+            # Re-evaluate: if it breaks functionality, it's not low priority unless it's just ugly
+            if "crash" in full_text or "panic" in full_text:
+                final_labels.remove("priority/low")
+                if "priority/high" in available_labels:
+                    final_labels.append("priority/high")
+                    explanation_parts.append("Elevated to high priority due to crash.")
 
-        results.append({
-            "issue_number": issue.get("number"),
-            "labels_to_set": sorted(list(set(final_labels))),
-            "explanation": " ".join(explanation_parts)
-        })
+        results.append(
+            {
+                "issue_number": issue.get("number"),
+                "labels_to_set": sorted(list(set(final_labels))),
+                "explanation": " ".join(explanation_parts),
+            }
+        )
 
     return results
+
 
 def main():
     # Read from environment variables
@@ -90,13 +130,16 @@ def main():
         # Fallback for testing/manual run if file path provided
         if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
             try:
-                with open(sys.argv[1], 'r') as f:
+                with open(sys.argv[1], "r") as f:
                     issues_env = f.read()
             except Exception as e:
                 print(f"Error reading file: {e}", file=sys.stderr)
                 return
         else:
-            print("No issues provided in ISSUES_TO_TRIAGE env var or file argument.", file=sys.stderr)
+            print(
+                "No issues provided in ISSUES_TO_TRIAGE env var or file argument.",
+                file=sys.stderr,
+            )
             return
 
     try:
@@ -108,18 +151,25 @@ def main():
     if labels_env:
         available_labels = labels_env.split(",")
         # Clean up whitespace
-        available_labels = [l.strip() for l in available_labels]
+        available_labels = [label.strip() for label in available_labels]
     else:
         # Default fallback set if not provided
         available_labels = [
-            "kind/bug", "kind/enhancement", "documentation", "wontfix",
-            "priority/high", "priority/low", "area/android", "area/docker"
+            "kind/bug",
+            "kind/enhancement",
+            "documentation",
+            "wontfix",
+            "priority/high",
+            "priority/low",
+            "area/android",
+            "area/docker",
         ]
 
     triage_results = triage_issues(issues, available_labels)
 
     # Output strictly JSON
     print(json.dumps(triage_results, indent=2))
+
 
 if __name__ == "__main__":
     main()
