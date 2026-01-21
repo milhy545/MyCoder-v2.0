@@ -52,22 +52,25 @@ class AzureSTTProvider(BaseSTTProvider):
                 # RecognizeOnceAsync is simpler for short audio
                 # Note: This is blocking in this synchronous method wrapper, but thread-safe
                 result = recognizer.recognize_once_async().get()
+                result_text = None
 
                 if result.reason == speechsdk.ResultReason.RecognizedSpeech:
-                    return result.text
+                    result_text = result.text
                 elif result.reason == speechsdk.ResultReason.NoMatch:
                     logger.warning("Azure: No speech recognized")
-                    return None
                 elif result.reason == speechsdk.ResultReason.Canceled:
                     cancellation = result.cancellation_details
                     logger.error(f"Azure canceled: {cancellation.reason}")
-                    return None
+
+                return result_text
 
             finally:
                 try:
                     os.unlink(tmp_path)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug(
+                        "Failed to remove temp audio file %s: %s", tmp_path, exc
+                    )
 
         except Exception as e:
             logger.error(f"Azure STT failed: {e}")

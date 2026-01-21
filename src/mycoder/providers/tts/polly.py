@@ -80,8 +80,8 @@ class AmazonPollyProvider(BaseTTSProvider):
 
             try:
                 os.unlink(tmp_path)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("Failed to remove temp audio file %s: %s", tmp_path, exc)
 
     def stop(self) -> None:
         # Cannot stop boto3 stream easily once downloaded and playing via subprocess unless we track process

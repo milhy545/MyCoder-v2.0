@@ -100,7 +100,7 @@ class TTSEngine:
             return
         result = self._speak_sync(text)
         if asyncio.iscoroutine(result):
-            await result
+            _ = await result
 
     def _speak_sync(self, text: str):
         """Internal helper for speaking text."""

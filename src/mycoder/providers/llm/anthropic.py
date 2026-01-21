@@ -211,7 +211,9 @@ class ClaudeAnthropicProvider(BaseAPIProvider):
                                 )
                             result = await response.json()
 
-            duration_ms = int((time.time() - start_time) * 1000)
+            duration_ms = getattr(response, "duration_ms", None)
+            if duration_ms is None:
+                duration_ms = int((time.time() - start_time) * 1000)
 
             self.successful_requests += 1
             self.status = APIProviderStatus.HEALTHY
@@ -341,7 +343,7 @@ class ClaudeOAuthProvider(BaseAPIProvider):
                 content=response.content,
                 provider=APIProviderType.CLAUDE_OAUTH,
                 cost=response.cost,
-                duration_ms=response.duration_ms,
+                duration_ms=duration_ms,
                 tokens_used=getattr(response, "tokens_used", 0),
                 session_id=response.session_id,
                 metadata={
