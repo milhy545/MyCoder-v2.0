@@ -366,7 +366,7 @@ class AdaptiveModeManager:
             try:
                 await self.monitoring_task
             except asyncio.CancelledError:
-                pass
+                logger.info("Health monitoring stop requested")
             logger.info("Health monitoring stopped")
 
     async def _monitor_health(self):

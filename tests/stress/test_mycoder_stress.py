@@ -878,7 +878,7 @@ class TestEdgeCaseStress:
                                 print(f"   ⚠️  Input {i:2d}: Unexpected response format")
                         else:
                             # Should handle type errors gracefully
-                            response = await mycoder.process_request(malformed_input)
+                            await mycoder.process_request(malformed_input)
                             print(f"   ⚠️  Input {i:2d}: Should have caught type error")
 
                     except Exception as e:

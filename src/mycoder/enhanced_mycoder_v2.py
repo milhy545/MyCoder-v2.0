@@ -41,8 +41,6 @@ try:
     )
     from .mcp_bridge import MCPBridge
     from .tool_registry import (
-        ToolAvailability,
-        ToolCategory,
         ToolExecutionContext,
         get_tool_registry,
     )
@@ -67,8 +65,6 @@ except ImportError:
         OllamaProvider,
     )
     from mycoder.tool_registry import (  # type: ignore
-        ToolAvailability,
-        ToolCategory,
         ToolExecutionContext,
         get_tool_registry,
     )

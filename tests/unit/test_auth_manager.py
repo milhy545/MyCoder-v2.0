@@ -224,7 +224,7 @@ class TestAuthManager:
     def test_update_session_cost_limit_exceeded(self, mock_auth_manager: AuthManager):
         """Test session update exceeding cost limit."""
         # Create session
-        session = mock_auth_manager.create_session(session_id="cost_limit_test")
+        mock_auth_manager.create_session(session_id="cost_limit_test")
 
         # Set low cost limit for test
         mock_auth_manager.config.max_cost_per_session = 0.10
