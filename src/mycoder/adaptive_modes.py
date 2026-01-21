@@ -589,6 +589,19 @@ class AdaptiveModeManager:
                         OperationalMode.DEGRADED, "claude query failed"
                     )
                     return await self.query_ai(prompt, **kwargs)  # Retry
+                if self.current_mode == OperationalMode.DEGRADED:
+                    await self.transition_to_mode(
+                        OperationalMode.AUTONOMOUS, "claude query failed"
+                    )
+                    return await self.query_ai(prompt, **kwargs)
+                return {
+                    "success": False,
+                    "content": (
+                        "Claude query failed in {} mode. "
+                        "No fallback providers available."
+                    ).format(self.current_mode.value),
+                    "source": "claude",
+                }
 
         elif config.local_llm:
             # Use local LLM

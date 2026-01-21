@@ -110,7 +110,7 @@ class WebFetcher:
         return f"Content summary for: {prompt}\n\n{content[:5000]}"
 
     def _cache_key(self, url: str) -> str:
-        return hashlib.md5(url.encode()).hexdigest()
+        return hashlib.sha256(url.encode()).hexdigest()
 
     def _get_cached(self, url: str) -> Optional[str]:
         if not self.cache_dir:

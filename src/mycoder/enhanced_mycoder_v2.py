@@ -34,10 +34,6 @@ try:
         APIProviderRouter,
         APIProviderType,
         APIResponse,
-        ClaudeAnthropicProvider,
-        ClaudeOAuthProvider,
-        GeminiProvider,
-        OllamaProvider,
     )
     from .mcp_bridge import MCPBridge
     from .tool_registry import (
@@ -59,10 +55,6 @@ except ImportError:
         APIProviderRouter,
         APIProviderType,
         APIResponse,
-        ClaudeAnthropicProvider,
-        ClaudeOAuthProvider,
-        GeminiProvider,
-        OllamaProvider,
     )
     from mycoder.tool_registry import (  # type: ignore
         ToolExecutionContext,

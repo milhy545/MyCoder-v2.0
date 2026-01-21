@@ -4,6 +4,8 @@
 
 -## Recent Changes & Updates
 *Agents: Add entries here when making significant changes*
+- 2026-01-21: Codex - Replaced shell=True command execution in BashAgent, EnhancedMyCoder local fallback, and self_evolve test runner; switched web cache key to sha256 to satisfy CodeQL; tests run: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
+- 2026-01-21: Codex - Fixed CodeQL blockers (tool_registry import guard to avoid None callables, overlay_button PyQt guards, adaptive_modes explicit fallback returns, removed unused imports); tests run: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
 - 2026-01-21: Codex - Restored TTS compatibility (voice/rate config, pyttsx3 voice resolution, speak_async hook) and exposed aiohttp in api_providers for termux tests; tests run: `poetry run pytest -q tests/unit/test_termux_provider.py tests/unit/test_tts_engine.py tests/integration/test_voice_workflow.py`.
 - 2026-01-21: Codex - Reformatted `src/mycoder/enhanced_mycoder_v2.py` to satisfy black; tests run: `poetry run black --check src/ tests/`, `poetry run flake8 src/ tests/`.
 - 2026-01-21: Codex - Fixed flake8 inline comment spacing in `context_manager.py`; tests run: `poetry run flake8 src/ tests/`.

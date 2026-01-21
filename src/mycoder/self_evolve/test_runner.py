@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import shlex
 import subprocess
 import time
 from datetime import datetime, timezone
@@ -24,9 +26,36 @@ class TestRunner:
 
         for command in commands:
             cmd_start = time.time()
+            try:
+                args = shlex.split(command, posix=os.name != "nt")
+            except ValueError as exc:
+                duration_ms = int((time.time() - cmd_start) * 1000)
+                results.append(
+                    TestCommandResult(
+                        command=command,
+                        exit_code=1,
+                        stdout="",
+                        stderr=str(exc),
+                        duration_ms=duration_ms,
+                    )
+                )
+                continue
+
+            if not args:
+                duration_ms = int((time.time() - cmd_start) * 1000)
+                results.append(
+                    TestCommandResult(
+                        command=command,
+                        exit_code=1,
+                        stdout="",
+                        stderr="Command is empty",
+                        duration_ms=duration_ms,
+                    )
+                )
+                continue
+
             process = subprocess.run(
-                command,
-                shell=True,
+                args,
                 cwd=self.working_directory,
                 capture_output=True,
                 text=True,

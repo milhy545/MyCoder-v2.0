@@ -67,4 +67,4 @@ poetry run pytest tests/providers/ -v
 - `tests/`: Komplexní testovací sada.
 
 ---
-*Poslední aktualizace: 2026-01-20 Agentem Jules*
+*Poslední aktualizace: 2026-01-21 Agentem Codex (nahrazení shell=True spuštění příkazů, přechod na sha256 pro cache klíče ve web_tools; testy pytest unit/providers).*

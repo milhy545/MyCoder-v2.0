@@ -52,14 +52,10 @@ except ImportError:
             ToolPriority,
             ToolResult,
         )
-    except ImportError:
-        BaseTool = None  # type: ignore
-        ToolAvailability = None  # type: ignore
-        ToolCapabilities = None  # type: ignore
-        ToolCategory = None  # type: ignore
-        ToolExecutionContext = None  # type: ignore
-        ToolPriority = None  # type: ignore
-        ToolResult = None  # type: ignore
+    except ImportError as inner_exc:
+        raise ImportError(
+            "Unable to import tool core components required by tool_registry."
+        ) from inner_exc
 
 from .self_evolve.failure_memory import AdvisoryResult, FailureMemory
 
