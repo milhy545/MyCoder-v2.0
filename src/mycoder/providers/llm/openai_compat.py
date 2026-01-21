@@ -6,14 +6,13 @@ import json
 import logging
 import os
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Optional
 
 import aiohttp
 
 from ..base import (
     APIProviderConfig,
     APIProviderStatus,
-    APIProviderType,
     APIResponse,
     BaseAPIProvider,
 )

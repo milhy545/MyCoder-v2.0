@@ -5,7 +5,7 @@ Google Gemini Provider.
 import logging
 import os
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict
 
 import aiohttp
 

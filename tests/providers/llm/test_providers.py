@@ -8,9 +8,7 @@ from mycoder.api_providers import (
     APIProviderConfig,
     APIProviderType,
     BedrockProvider,
-    ClaudeAnthropicProvider,
     GeminiProvider,
-    OllamaProvider,
     OpenAIProvider,
 )
 

@@ -7,7 +7,7 @@ import logging
 import os
 import subprocess
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict
 
 import aiohttp
 

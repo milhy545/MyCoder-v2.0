@@ -2,10 +2,8 @@
 Google STT Provider (Gemini).
 """
 
-import io
 import logging
 import os
-import time
 from typing import Any, Dict, Optional
 
 from .base import BaseSTTProvider

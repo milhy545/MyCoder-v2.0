@@ -40,6 +40,7 @@ except Exception:
     ClaudeAuthManager = None  # type: ignore
 
 __all__ = [
+    "aiohttp",
     "ClaudeAuthManager",
     "APIProviderType",
     "APIProviderStatus",

@@ -2,8 +2,6 @@
 Azure STT Provider.
 """
 
-import asyncio
-import io
 import logging
 import os
 import tempfile
