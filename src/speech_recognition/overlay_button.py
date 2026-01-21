@@ -302,74 +302,78 @@ if PYQT_AVAILABLE:
             self.set_state(ButtonState.ERROR)
             QTimer.singleShot(500, lambda: self.set_state(original_state))
 
+    class OverlayApp:
+        """
+        Application wrapper for the overlay button.
+
+        Manages QApplication lifecycle.
+        """
+
+        def __init__(self, on_click: Optional[Callable[[], None]] = None):
+            """
+            Initialize the overlay application.
+
+            Args:
+                on_click: Callback function when button is clicked
+            """
+            self.app = QApplication.instance()
+            if self.app is None:
+                self.app = QApplication([])
+
+            self.button = OverlayButton(on_click=on_click)
+
+        def show(self) -> None:
+            """Show the overlay button."""
+            self.button.show()
+
+        def hide(self) -> None:
+            """Hide the overlay button."""
+            self.button.hide()
+
+        def run(self) -> int:
+            """
+            Run the application event loop.
+
+            Returns:
+                Application exit code
+            """
+            if self.app is None:
+                raise RuntimeError("QApplication not initialized - PyQt5 not available")
+            self.button.show()
+            return self.app.exec_()
+
+        def quit(self) -> None:
+            """Quit the application."""
+            self.app.quit()
+
 else:
 
-    def _create_overlay_button(
-        on_click: Optional[Callable[[], None]] = None,
-    ) -> BaseWidget:
-        """
-        Fallback factory used when PyQt5 is not available.
-
-        This is defined as a callable so that static analysis tools
-        see `OverlayButton` as always callable, but any attempt to
-        actually create the overlay will fail with an ImportError,
-        consistent with the rest of this module.
-        """
+    def _raise_missing_gui() -> None:
         raise ImportError(
             "GUI overlay requires PyQt5. "
             "Install with: poetry install --extras speech"
         )
 
-    OverlayButton = _create_overlay_button  # type: ignore[assignment]
+    class OverlayButton:
+        """Fallback overlay button when PyQt5 is unavailable."""
 
+        def __init__(self, *_args, **_kwargs) -> None:
+            _raise_missing_gui()
 
-class OverlayApp:
-    """
-    Application wrapper for the overlay button.
+    class OverlayApp:
+        """Fallback overlay app when PyQt5 is unavailable."""
 
-    Manages QApplication lifecycle.
-    """
+        def __init__(self, *_args, **_kwargs) -> None:
+            _raise_missing_gui()
 
-    def __init__(self, on_click: Optional[Callable[[], None]] = None):
-        """
-        Initialize the overlay application.
+        def show(self) -> None:
+            _raise_missing_gui()
 
-        Args:
-            on_click: Callback function when button is clicked
-        """
-        if not PYQT_AVAILABLE:
-            raise ImportError(
-                "GUI overlay requires PyQt5. "
-                "Install with: poetry install --extras speech"
-            )
+        def hide(self) -> None:
+            _raise_missing_gui()
 
-        self.app = QApplication.instance()
-        if self.app is None:
-            self.app = QApplication([])
+        def run(self) -> int:
+            _raise_missing_gui()
 
-        overlay_cls = OverlayButton
-        self.button = overlay_cls(on_click=on_click)
-
-    def show(self) -> None:
-        """Show the overlay button."""
-        self.button.show()
-
-    def hide(self) -> None:
-        """Hide the overlay button."""
-        self.button.hide()
-
-    def run(self) -> int:
-        """
-        Run the application event loop.
-
-        Returns:
-            Application exit code
-        """
-        if self.app is None:
-            raise RuntimeError("QApplication not initialized - PyQt5 not available")
-        self.button.show()
-        return self.app.exec_()
-
-    def quit(self) -> None:
-        """Quit the application."""
-        self.app.quit()
+        def quit(self) -> None:
+            _raise_missing_gui()
