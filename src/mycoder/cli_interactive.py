@@ -498,7 +498,32 @@ class InteractiveCLI:
             },
             {
                 "key": "gemini",
-                "label": "Gemini (API key)",
+                "label": "Google Gemini (API key)",
+                "api_key": True,
+            },
+            {
+                "key": "aws_bedrock",
+                "label": "AWS Bedrock (boto3)",
+                "api_key": False,  # Uses AWS credentials (env/file)
+            },
+            {
+                "key": "openai",
+                "label": "OpenAI (GPT-4o)",
+                "api_key": True,
+            },
+            {
+                "key": "x_ai",
+                "label": "X.AI (Grok)",
+                "api_key": True,
+            },
+            {
+                "key": "mistral",
+                "label": "Mistral AI",
+                "api_key": True,
+            },
+            {
+                "key": "huggingface",
+                "label": "HuggingFace (Inference API)",
                 "api_key": True,
             },
             {
@@ -540,6 +565,11 @@ class InteractiveCLI:
             "claude_anthropic": APIProviderType.CLAUDE_ANTHROPIC,
             "claude_oauth": APIProviderType.CLAUDE_OAUTH,
             "gemini": APIProviderType.GEMINI,
+            "aws_bedrock": APIProviderType.AWS_BEDROCK,
+            "openai": APIProviderType.OPENAI,
+            "x_ai": APIProviderType.X_AI,
+            "mistral": APIProviderType.MISTRAL,
+            "huggingface": APIProviderType.HUGGINGFACE,
             "ollama_local": APIProviderType.OLLAMA_LOCAL,
             "termux_ollama": APIProviderType.TERMUX_OLLAMA,
             "ollama_remote": APIProviderType.OLLAMA_REMOTE,

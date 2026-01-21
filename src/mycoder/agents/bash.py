@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import shlex
 import subprocess
 from typing import Any, Dict
 
@@ -30,9 +32,16 @@ class BashAgent(BaseAgent):
             )
 
         try:
+            args = shlex.split(command, posix=os.name != "nt")
+            if not args:
+                return AgentResult(
+                    success=False,
+                    content="",
+                    agent_type=self.agent_type,
+                    error="Command is empty",
+                )
             result = subprocess.run(
-                command,
-                shell=True,
+                args,
                 cwd=self.working_dir,
                 capture_output=True,
                 text=True,

@@ -225,6 +225,34 @@ class ContextManager:
                 "base_url": "http://localhost:11434",
                 "timeout_seconds": 60,
             },
+            "gemini": {
+                "enabled": True,
+                "model": "gemini-1.5-pro",
+                "timeout_seconds": 30,
+                "rate_limit_rpm": 15,
+                "rate_limit_rpd": 1500,
+            },
+            "aws_bedrock": {
+                "enabled": False,
+                "region": "us-east-1",
+                "model": "anthropic.claude-3-sonnet-20240229-v1:0",
+            },
+            "openai": {
+                "enabled": False,
+                "model": "gpt-4o",
+            },
+            "x_ai": {
+                "enabled": False,
+                "model": "grok-beta",
+            },
+            "mistral": {
+                "enabled": False,
+                "model": "mistral-large-latest",
+            },
+            "huggingface": {
+                "enabled": False,
+                "model": "meta-llama/Llama-3.2-3B-Instruct",
+            },
             "thermal": {
                 "enabled": True,
                 "max_temp": 80,
@@ -251,12 +279,19 @@ class ContextManager:
         if os.environ.get("MYCODER_PREFERRED_PROVIDER"):
             config["preferred_provider"] = os.environ["MYCODER_PREFERRED_PROVIDER"]
 
-        if os.environ.get("ANTHROPIC_API_KEY"):
-            config.setdefault("claude_anthropic", {})["api_key"] = os.environ[
-                "ANTHROPIC_API_KEY"
-            ]
+        env_mappings = {
+            "ANTHROPIC_API_KEY": ("claude_anthropic", "api_key"),
+            "GEMINI_API_KEY": ("gemini", "api_key"),
+            "OPENAI_API_KEY": ("openai", "api_key"),
+            "XAI_API_KEY": ("x_ai", "api_key"),
+            "MISTRAL_API_KEY": ("mistral", "api_key"),
+            "HF_TOKEN": ("huggingface", "api_key"),
+            "ELEVENLABS_API_KEY": ("tts", "elevenlabs_api_key"),  # Example
+            "AZURE_SPEECH_KEY": ("tts", "azure_key"),
+        }
 
-        if os.environ.get("GEMINI_API_KEY"):
-            config.setdefault("gemini", {})["api_key"] = os.environ["GEMINI_API_KEY"]
+        for env_var, (section, key) in env_mappings.items():
+            if os.environ.get(env_var):
+                config.setdefault(section, {})[key] = os.environ[env_var]
 
         return config

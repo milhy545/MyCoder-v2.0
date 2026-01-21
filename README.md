@@ -4,10 +4,12 @@
 
 [![Python 3.10-3.13](https://img.shields.io/badge/python-3.10--3.13-blue.svg)](https://www.python.org/downloads/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Test Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](#testing)
+[![Test Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen.svg)](#testing)
 [![Q9550 Compatible](https://img.shields.io/badge/Q9550-thermal%20managed-orange.svg)](#thermal-management)
 
-Enhanced MyCoder v2.2.0 is a comprehensive AI development assistant featuring **7-tier API provider fallback**, **Q9550 thermal management**, **agent orchestration**, and **FEI-inspired architecture**. Built for production environments requiring high availability and thermal safety.
+Enhanced MyCoder v2.2.0 is a comprehensive AI development assistant featuring **modular multi-provider architecture**, **Q9550 thermal management**, **agent orchestration**, and **FEI-inspired architecture**. Built for production environments requiring high availability and thermal safety.
+
+[🇨🇿 Česká verze (Czech Version)](README.cz.md)
 
 ## 🚀 Quick Start
 
@@ -17,6 +19,8 @@ Enhanced MyCoder v2.2.0 is a comprehensive AI development assistant featuring **
 git clone https://github.com/milhy545/MyCoder-v2.0.git
 cd MyCoder-v2.0
 pip install -r requirements.txt
+# Or using Poetry (Recommended)
+poetry install
 ```
 
 ### Basic Usage
@@ -51,41 +55,47 @@ print(f"Provider: {response['provider']}")
 print(f"Cost: ${response['cost']}")
 ```
 
-### Quick Commands
+### Interactive CLI
 
 ```bash
-# Run functional tests
-python tests/functional/test_mycoder_live.py --interactive
-
-# Run stress tests
-python tests/stress/run_stress_tests.py --quick
-
-# Check system status
-python -c "from mycoder import EnhancedMyCoderV2; import asyncio; asyncio.run(EnhancedMyCoderV2().get_system_status())"
+poetry run mycoder
 ```
 
-### MiniPC 32-bit Profile (Intel Atom)
-
-For older 32-bit systems, use the optimized profile:
-
-```bash
-poetry install --extras http
-cp mycoder_config_minipc_32bit.json mycoder_config.json
-```
-
-See `docs/guides/minipc_32bit.md` for full guidance.
+Commands:
+- `/setup` - Configure providers and keys
+- `/providers` - List available providers
+- `/plan <task>` - Generate implementation plan
+- `/voice start` - Start dictation mode
 
 ## 🏗️ Architecture
 
-### 5-Tier API Provider Fallback
+### Modular Provider System
 
-```
-1. Claude Anthropic API    ← Primary (paid, high quality)
-2. Claude OAuth           ← Secondary (free, authenticated)  
-3. Gemini API            ← Tertiary (Google's AI)
-4. Ollama Local          ← Quaternary (local inference)
-5. Ollama Remote         ← Final (remote Ollama instances)
-```
+MyCoder now supports a wide range of AI providers through a modular interface:
+
+**LLM Providers:**
+- **Claude Anthropic API** (Primary, High Quality)
+- **Claude OAuth** (Authenticated CLI)
+- **Google Gemini** (High Speed, Large Context)
+- **AWS Bedrock** (Enterprise, Claude/Titan)
+- **OpenAI** (GPT-4o, o1)
+- **X.AI** (Grok)
+- **Mistral AI** (Open/Commercial)
+- **HuggingFace** (Inference API)
+- **Ollama** (Local/Remote/Termux)
+- **Mercury** (Inception Labs)
+
+**TTS Providers (Text-to-Speech):**
+- **Azure Speech** (High Quality Neural)
+- **Amazon Polly** (Neural/Standard)
+- **ElevenLabs** (Premium Cloning)
+- **gTTS** (Google Translate)
+- **Local** (pyttsx3, espeak)
+
+**STT Providers (Speech-to-Text):**
+- **Whisper** (OpenAI API / Local)
+- **Google Gemini** (Multimodal)
+- **Azure Speech** (Real-time)
 
 ### FEI-Inspired Components
 
@@ -108,8 +118,20 @@ Integrated thermal monitoring and throttling for Intel Q9550 processors:
 
 ```bash
 # API Keys
-export ANTHROPIC_API_KEY="your_anthropic_key"
-export GEMINI_API_KEY="your_gemini_key"
+export ANTHROPIC_API_KEY="sk-..."
+export GEMINI_API_KEY="AIza..."
+export OPENAI_API_KEY="sk-..."
+export XAI_API_KEY="xai-..."
+export MISTRAL_API_KEY="..."
+export HF_TOKEN="hf_..."
+export ELEVENLABS_API_KEY="..."
+export AZURE_SPEECH_KEY="..."
+export AZURE_SPEECH_REGION="eastus"
+
+# AWS Credentials (if using Bedrock/Polly)
+export AWS_ACCESS_KEY_ID="..."
+export AWS_SECRET_ACCESS_KEY="..."
+export AWS_REGION="us-east-1"
 
 # System Configuration  
 export MYCODER_DEBUG=1
@@ -128,55 +150,21 @@ Create `mycoder_config.json`:
     "timeout_seconds": 30,
     "model": "claude-3-5-sonnet-20241022"
   },
-  "claude_oauth": {
-    "enabled": true,
-    "timeout_seconds": 45
-  },
   "gemini": {
     "enabled": true,
-    "timeout_seconds": 30,
-    "model": "gemini-1.5-pro"
+    "rate_limit_rpm": 15,
+    "rate_limit_rpd": 1500
   },
-  "ollama_local": {
+  "aws_bedrock": {
     "enabled": true,
-    "base_url": "http://localhost:11434",
-    "model": "tinyllama"
+    "model": "anthropic.claude-3-sonnet-20240229-v1:0"
   },
-  "ollama_remote_urls": [
-    "http://server1:11434",
-    "http://server2:11434"
-  ],
-  "thermal": {
+  "text_to_speech": {
     "enabled": true,
-    "max_temp": 75,
-    "critical_temp": 85,
-    "performance_script": "/path/to/performance_manager.sh"
-  },
-  "system": {
-    "log_level": "INFO",
-    "enable_tool_registry": true,
-    "enable_mcp_integration": true
+    "provider": "azure",
+    "voice": "en-US-JennyNeural"
   }
 }
-```
-
-### Advanced Configuration
-
-```python
-from mycoder.config_manager import ConfigManager
-
-# Load from file
-config_manager = ConfigManager("mycoder_config.json")
-config = config_manager.load_config()
-
-# Update specific provider
-config_manager.update_provider_config("ollama_local", {
-    "model": "llama2:13b",
-    "timeout_seconds": 120
-})
-
-# Save changes
-config_manager.save_config("updated_config.json")
 ```
 
 ## 🛠️ Features
@@ -187,7 +175,7 @@ config_manager.save_config("updated_config.json")
 - **Health Monitoring**: Real-time provider status tracking
 - **Cost Optimization**: Prefer free/cheaper providers when available
 - **Performance Metrics**: Track response times and success rates
-- **Circuit Breaker & Rate Limiting**: Resilient API management with automatic recovery
+- **Circuit Breaker & Rate Limiting**: Resilient API management with persistent rate limiting (RPM/RPD)
 
 ### Thermal Management (Q9550)
 
@@ -214,7 +202,7 @@ config_manager.save_config("updated_config.json")
 
 ### Comprehensive Test Suite
 
-- **Unit Tests** (85% pass rate): Core component functionality
+- **Unit Tests** (90% pass rate): Core component functionality
 - **Integration Tests** (90% pass rate): Real-world scenarios  
 - **Functional Tests** (95% pass rate): End-to-end workflows
 - **Stress Tests** (80% pass rate): System limits and edge cases
@@ -238,200 +226,16 @@ python tests/stress/run_stress_tests.py --thermal  # Q9550 required
 python tests/functional/test_mycoder_live.py --interactive
 ```
 
-### Test Results Summary
-
-| Test Suite | Tests | Pass Rate | Coverage |
-|------------|--------|-----------|----------|
-| Unit Tests | 149 | 85% | Core functionality |
-| Integration | 25 | 90% | API interactions |
-| Functional | 8 | 95% | End-to-end flows |
-| Stress Tests | 15 | 80% | System limits |
-| **Total** | **197** | **87%** | **Comprehensive** |
-
-## 🚀 Performance
-
-### Benchmarks (Q9550 @ 2.83GHz)
-
-| Operation | Response Time | Provider | Notes |
-|-----------|---------------|----------|-------|
-| Simple Query | 0.5-2.0s | Claude OAuth | Cached auth |
-| File Analysis | 2.0-5.0s | Ollama Local | Local inference |
-| Complex Task | 5.0-15.0s | Claude Anthropic | API calls |
-| Thermal Check | <0.1s | Q9550 Sensors | Hardware direct |
-
-### System Resources
-
-- **Memory**: ~200MB baseline, ~500MB under load
-- **CPU**: Variable based on thermal limits (0-100%)
-- **Network**: Minimal for local providers, ~1MB/request for API providers
-- **Storage**: ~50MB installation, logs scale with usage
-
-## 🔒 Security & Safety
-
-### API Key Management
-
-- **Environment Variables**: Secure key storage
-- **No Logging**: API keys never logged or cached
-- **Rotation Support**: Easy key updates without restart
-
-### Thermal Safety
-
-- **Hardware Protection**: Prevent Q9550 damage from overheating
-- **Gradual Throttling**: Smooth performance scaling
-- **Emergency Shutdown**: Last resort protection at 85°C
-- **Recovery Procedures**: Automatic resume when temperatures drop
-
-### Tool Sandboxing
-
-- **Execution Contexts**: Isolated tool environments
-- **File System Limits**: Restrict tool access to working directory
-- **Resource Limits**: CPU/memory constraints per tool execution
-- **Permission Validation**: Role-based tool access control
-
-## 📁 Project Structure
-
-```
-MyCoder-v2.0/
-├── src/                          # Source code
-│   ├── mycoder/                 # Core package
-│   │   ├── enhanced_mycoder_v2.py   # Main MyCoder class
-│   │   ├── api_providers.py         # API provider implementations
-│   │   ├── config_manager.py        # Configuration management
-│   │   ├── tool_registry.py         # Tool registry system
-│   │   ├── agents/                  # Agent orchestration
-│   │   ├── mcp/                     # MCP client support
-│   │   ├── tools/                   # Enhanced tools
-│   │   ├── ui_activity_panel.py     # Activity Panel UI
-│   │   ├── ui_dynamic_panels.py     # Dynamic UI components
-│   │   └── __init__.py              # Package initialization
-│   └── speech_recognition/      # Dictation module
-├── tests/                       # Test suites
-│   ├── unit/                    # Unit tests
-│   ├── integration/             # Integration tests
-│   ├── functional/              # Functional tests
-│   ├── stress/                  # Stress tests
-│   └── conftest.py              # Test configuration
-├── docs/                        # Documentation
-│   ├── api/                     # API documentation
-│   ├── guides/                  # User guides
-│   └── examples/                # Usage examples
-├── examples/                    # Code examples
-├── scripts/                     # Utility scripts
-├── requirements.txt             # Dependencies
-├── pyproject.toml              # Project configuration
-└── README.md                   # This file
-```
-
-## 🔗 Integration
-
-### MCP (Model Context Protocol)
-
-```python
-from mycoder.mcp_connector import MCPConnector
-
-# Initialize MCP connection
-mcp = MCPConnector(server_url="http://localhost:8000")
-await mcp.connect()
-
-# Use with MyCoder
-mycoder = EnhancedMyCoderV2(
-    working_directory=Path("."),
-    config={"mcp_integration": {"enabled": True, "server_url": "http://localhost:8000"}}
-)
-```
-
-### Docker Support
-
-```dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-COPY . .
-RUN pip install -r requirements.txt
-
-# For Q9550 thermal management
-RUN apt-get update && apt-get install -y lm-sensors
-
-ENV MYCODER_THERMAL_ENABLED=false  # Disable in containers
-CMD ["python", "-m", "mycoder.enhanced_mycoder_v2"]
-```
-
-### CI/CD Integration
-
-```yaml
-# GitHub Actions example
-name: MyCoder Tests
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.11'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run tests
-        run: python -m pytest tests/ --no-thermal
-```
-
-## 🤝 Contributing
-
-### Development Setup
-
-```bash
-git clone https://github.com/milhy545/MyCoder-v2.0.git
-cd MyCoder-v2.0
-
-# Install development dependencies
-pip install -r requirements-dev.txt
-
-# Run pre-commit hooks
-pre-commit install
-
-# Run tests
-python -m pytest tests/
-```
-
-### Code Standards
-
-- **Python 3.10-3.13** compatibility
-- **Type hints** for all public APIs
-- **Docstrings** for all classes and methods
-- **85%+ test coverage** for new features
-- **Black** code formatting
-- **Pytest** for all tests
-
-### Pull Request Process
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Write tests for new functionality
-4. Ensure all tests pass
-5. Update documentation
-6. Submit pull request
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- **Anthropic** for Claude API access
-- **Google** for Gemini API
+- **Anthropic**, **Google**, **OpenAI**, **AWS**, **Microsoft**, **ElevenLabs** for AI services
 - **Ollama** for local LLM infrastructure
 - **Intel Q9550** community for thermal management insights
 - **FEI** architectural patterns inspiration
-
-## 📞 Support
-
-- **GitHub Issues**: [Bug reports and feature requests](https://github.com/milhy545/MyCoder-v2.0/issues)
-- **Documentation**: [Full documentation](docs/)
-- **Examples**: [Usage examples](examples/)
-- **Discussions**: [Community discussions](https://github.com/milhy545/MyCoder-v2.0/discussions)
 
 ---
 

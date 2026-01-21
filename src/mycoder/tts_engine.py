@@ -1,15 +1,25 @@
 """
-Text-to-Speech Engine for MyCoder v2.1.1
+Text-to-Speech Engine for MyCoder v2.2.0
 
-Multi-backend TTS with Czech language support.
+Multi-backend TTS with support for:
+- pyttsx3 (Offline)
+- espeak (Linux Native)
+- gTTS (Google Translate)
+- Azure Speech
+- Amazon Polly
+- ElevenLabs
 """
 
 import asyncio
 import logging
-import shutil
-import subprocess
-import tempfile
-from typing import Optional
+from typing import Any, Dict, Optional
+
+from .providers.tts.local import Pyttsx3Provider, EspeakProvider
+from .providers.tts.gtts_provider import GTTSProvider
+from .providers.tts.azure import AzureTTSProvider
+from .providers.tts.polly import AmazonPollyProvider
+from .providers.tts.elevenlabs import ElevenLabsProvider
+from .providers.tts.base import BaseTTSProvider
 
 logger = logging.getLogger(__name__)
 
@@ -17,148 +27,88 @@ logger = logging.getLogger(__name__)
 class TTSEngine:
     """
     Multi-backend Text-to-Speech engine.
-
-    Supported providers:
-    - pyttsx3: Offline, cross-platform (PRIMARY)
-    - espeak: Linux native, Czech support
-    - gtts: Google TTS (requires network)
-    - gemini: Gemini TTS API (fallback)
     """
 
-    def __init__(self, provider: str = "pyttsx3", voice: str = "cs", rate: int = 150):
+    def __init__(
+        self,
+        provider: str = "pyttsx3",
+        config: Optional[Dict[str, Any]] = None,
+        voice: Optional[str] = None,
+        rate: Optional[int] = None,
+    ):
         """
         Initialize TTS engine.
 
         Args:
-            provider: TTS provider ("pyttsx3", "espeak", "gtts", "gemini")
-            voice: Voice language code ("cs", "en", etc.)
-            rate: Speech rate (words per minute)
+            provider: TTS provider name
+            config: Configuration dictionary
+            voice: Preferred voice or language identifier
+            rate: Speech rate
         """
-        self.provider = provider
-        self.voice = voice
-        self.rate = rate
-        self.engine = None
+        self.provider_name = provider
+        self.config = dict(config or {})
+        if voice is not None:
+            self.config["voice"] = voice
+        if rate is not None:
+            self.config["rate"] = rate
+        self.config.setdefault("rate", 150)
+
+        self.provider: Optional[BaseTTSProvider] = None
         self._init_provider()
 
     def _init_provider(self) -> None:
         """Initialize TTS provider with fallback options."""
-        provider_order = [self.provider] if self.provider else []
-        for fallback in ["pyttsx3", "espeak", "gtts", "gemini"]:
-            if fallback not in provider_order:
-                provider_order.append(fallback)
+        # Try primary
+        if self._try_init(self.provider_name):
+            return
 
-        for candidate in provider_order:
-            try:
-                if candidate == "pyttsx3":
-                    import pyttsx3
-
-                    self.engine = pyttsx3.init()
-                    self.provider = "pyttsx3"
-                    self._configure_pyttsx3()
+        # Fallbacks
+        fallbacks = ["pyttsx3", "espeak", "gtts"]
+        for fallback in fallbacks:
+            if fallback != self.provider_name:
+                if self._try_init(fallback):
+                    logger.info(f"Fallback to TTS provider: {fallback}")
+                    self.provider_name = fallback
                     return
-                if candidate == "espeak":
-                    if not shutil.which("espeak"):
-                        raise RuntimeError("espeak not available")
-                    self.provider = "espeak"
-                    self.engine = None
-                    return
-                if candidate == "gtts":
-                    import gtts  # noqa: F401
 
-                    if not self._get_audio_player():
-                        raise RuntimeError("No audio player available for gtts")
-                    self.provider = "gtts"
-                    self.engine = None
-                    return
-                if candidate == "gemini":
-                    raise RuntimeError("Gemini TTS not implemented")
-            except Exception as exc:
-                logger.warning(f"Failed to init {candidate}: {exc}")
-                continue
-
-        self.provider = "disabled"
-        self.engine = None
         logger.error("No available TTS provider could be initialized")
 
-    def _configure_pyttsx3(self) -> None:
-        """Configure pyttsx3 engine for Czech."""
-        if not self.engine:
-            return
-
-        self.engine.setProperty("rate", self.rate)
-
+    def _try_init(self, name: str) -> bool:
         try:
-            voices = self.engine.getProperty("voices")
-            target = self.voice.lower()
-            for voice in voices:
-                lang_match = False
-                for lang in getattr(voice, "languages", []) or []:
-                    if isinstance(lang, bytes):
-                        lang = lang.decode("utf-8", errors="ignore")
-                    if target in str(lang).lower():
-                        lang_match = True
-                        break
-                name_match = target in str(getattr(voice, "name", "")).lower()
-                if lang_match or name_match:
-                    self.engine.setProperty("voice", voice.id)
-                    return
-        except Exception as exc:
-            logger.warning(f"Failed to configure pyttsx3 voice: {exc}")
+            if name == "pyttsx3":
+                self.provider = Pyttsx3Provider(self.config)
+            elif name == "espeak":
+                self.provider = EspeakProvider(self.config)
+            elif name == "gtts":
+                self.provider = GTTSProvider(self.config)
+            elif name == "azure":
+                self.provider = AzureTTSProvider(self.config)
+            elif name == "polly":
+                self.provider = AmazonPollyProvider(self.config)
+            elif name == "elevenlabs":
+                self.provider = ElevenLabsProvider(self.config)
+            else:
+                return False
+            return True
+        except Exception as e:
+            logger.warning(f"Failed to init TTS provider {name}: {e}")
+            return False
 
     async def speak_async(self, text: str) -> None:
-        """
-        Speak text asynchronously (non-blocking).
-
-        Args:
-            text: Text to speak
-        """
-        await asyncio.to_thread(self._speak_sync, text)
-
-    def _speak_sync(self, text: str) -> None:
-        """Synchronous speech (blocking)."""
-        if self.provider == "pyttsx3" and self.engine:
-            self.engine.say(text)
-            self.engine.runAndWait()
+        """Speak text asynchronously."""
+        if not self.provider:
             return
+        result = self._speak_sync(text)
+        if asyncio.iscoroutine(result):
+            await result
 
-        if self.provider == "espeak":
-            args = ["espeak", "-v", self.voice, "-s", str(self.rate), text]
-            subprocess.run(args, check=False)
-            return
-
-        if self.provider == "gtts":
-            self._speak_gtts(text)
-            return
-
-        logger.error("TTS provider not available")
-
-    def _get_audio_player(self) -> Optional[list[str]]:
-        """Return a playback command for gtts audio if available."""
-        if shutil.which("mpg123"):
-            return ["mpg123", "-q"]
-        if shutil.which("ffplay"):
-            return ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet"]
-        if shutil.which("afplay"):
-            return ["afplay"]
-        return None
-
-    def _speak_gtts(self, text: str) -> None:
-        """Speak using Google TTS and a local player."""
-        try:
-            from gtts import gTTS
-
-            player = self._get_audio_player()
-            if not player:
-                logger.error("No audio player available for gtts output")
-                return
-
-            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
-                gTTS(text=text, lang=self.voice).save(tmp.name)
-                subprocess.run(player + [tmp.name], check=False)
-        except Exception as exc:
-            logger.error(f"gtts playback failed: {exc}")
+    def _speak_sync(self, text: str):
+        """Internal helper for speaking text."""
+        if not self.provider:
+            return None
+        return self.provider.speak(text)
 
     def stop(self) -> None:
         """Stop current speech."""
-        if self.provider == "pyttsx3" and self.engine:
-            self.engine.stop()
+        if self.provider:
+            self.provider.stop()

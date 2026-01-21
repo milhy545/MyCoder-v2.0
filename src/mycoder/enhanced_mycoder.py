@@ -7,6 +7,8 @@ git integration, and research capabilities.
 """
 
 import logging
+import os
+import shlex
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -481,9 +483,12 @@ class EnhancedMyCoder(MyCoder):
         try:
             import subprocess
 
+            args = shlex.split(command, posix=os.name != "nt")
+            if not args:
+                return {"success": False, "error": "Command is empty"}
+
             result = subprocess.run(
-                command,
-                shell=True,
+                args,
                 capture_output=True,
                 text=True,
                 timeout=30,

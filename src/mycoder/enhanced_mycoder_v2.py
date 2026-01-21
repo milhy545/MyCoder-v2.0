@@ -34,10 +34,6 @@ try:
         APIProviderRouter,
         APIProviderType,
         APIResponse,
-        ClaudeAnthropicProvider,
-        ClaudeOAuthProvider,
-        GeminiProvider,
-        OllamaProvider,
     )
     from .mcp_bridge import MCPBridge
     from .tool_registry import (
@@ -59,10 +55,6 @@ except ImportError:
         APIProviderRouter,
         APIProviderType,
         APIResponse,
-        ClaudeAnthropicProvider,
-        ClaudeOAuthProvider,
-        GeminiProvider,
-        OllamaProvider,
     )
     from mycoder.tool_registry import (  # type: ignore
         ToolExecutionContext,
@@ -334,9 +326,90 @@ class EnhancedMyCoderV2:
                 config={
                     "api_key": gemini_api_key,
                     "model": gemini_model,
+                    "rate_limit_rpm": gemini_config.get("rate_limit_rpm", 15),
+                    "rate_limit_rpd": gemini_config.get("rate_limit_rpd", 1500),
                 },
             )
             provider_configs.append(gemini_provider_config)
+
+        # AWS Bedrock
+        aws_config = self._get_section("aws_bedrock")
+        if aws_config.get("enabled", False):
+            provider_configs.append(
+                APIProviderConfig(
+                    provider_type=APIProviderType.AWS_BEDROCK,
+                    enabled=True,
+                    timeout_seconds=aws_config.get("timeout_seconds", 30),
+                    config={
+                        "model": aws_config.get(
+                            "model", "anthropic.claude-3-sonnet-20240229-v1:0"
+                        ),
+                        "region": aws_config.get("region", "us-east-1"),
+                    },
+                )
+            )
+
+        # OpenAI
+        openai_config = self._get_section("openai")
+        if openai_config.get("enabled", False):
+            provider_configs.append(
+                APIProviderConfig(
+                    provider_type=APIProviderType.OPENAI,
+                    enabled=True,
+                    config={
+                        "api_key": openai_config.get("api_key")
+                        or os.getenv("OPENAI_API_KEY"),
+                        "model": openai_config.get("model", "gpt-4o"),
+                        "base_url": openai_config.get("base_url"),
+                    },
+                )
+            )
+
+        # X.AI
+        xai_config = self._get_section("x_ai")
+        if xai_config.get("enabled", False):
+            provider_configs.append(
+                APIProviderConfig(
+                    provider_type=APIProviderType.X_AI,
+                    enabled=True,
+                    config={
+                        "api_key": xai_config.get("api_key")
+                        or os.getenv("XAI_API_KEY"),
+                        "model": xai_config.get("model", "grok-beta"),
+                    },
+                )
+            )
+
+        # Mistral
+        mistral_config = self._get_section("mistral")
+        if mistral_config.get("enabled", False):
+            provider_configs.append(
+                APIProviderConfig(
+                    provider_type=APIProviderType.MISTRAL,
+                    enabled=True,
+                    config={
+                        "api_key": mistral_config.get("api_key")
+                        or os.getenv("MISTRAL_API_KEY"),
+                        "model": mistral_config.get("model", "mistral-large-latest"),
+                    },
+                )
+            )
+
+        # HuggingFace
+        hf_config = self._get_section("huggingface")
+        if hf_config.get("enabled", False):
+            provider_configs.append(
+                APIProviderConfig(
+                    provider_type=APIProviderType.HUGGINGFACE,
+                    enabled=True,
+                    config={
+                        "api_key": hf_config.get("api_key") or os.getenv("HF_TOKEN"),
+                        "model": hf_config.get(
+                            "model", "meta-llama/Llama-3.2-3B-Instruct"
+                        ),
+                    },
+                )
+            )
 
         # Mercury Diffusion LLM (Priority 4)
         mercury_config = self._get_section("inception_mercury")

@@ -310,6 +310,11 @@ if PYQT_AVAILABLE:
             Args:
                 on_click: Callback function when button is clicked
             """
+            if QApplication is None:
+                raise RuntimeError("QApplication not initialized - PyQt5 not available")
+            if OverlayButton is None:
+                raise RuntimeError("OverlayButton not available - PyQt5 not available")
+
             self.app = QApplication.instance()
             if self.app is None:
                 self.app = QApplication([])

@@ -42,7 +42,7 @@ async def test_pyttsx3_initialization(monkeypatch):
     monkeypatch.setitem(sys.modules, "pyttsx3", fake_module)
 
     tts = TTSEngine(provider="pyttsx3", voice="cs", rate=160)
-    assert tts.provider == "pyttsx3"
+    assert tts.provider_name == "pyttsx3"
     assert engine.properties["rate"] == 160
     assert engine.properties["voice"] == "voice-cs"
 
@@ -64,7 +64,7 @@ def test_espeak_fallback(monkeypatch):
     monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/espeak")
 
     tts = TTSEngine(provider="pyttsx3", voice="cs", rate=150)
-    assert tts.provider == "espeak"
+    assert tts.provider_name == "espeak"
 
 
 @pytest.mark.asyncio
