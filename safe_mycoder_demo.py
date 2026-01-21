@@ -48,7 +48,7 @@ def check_temperature():
         with open('/sys/class/thermal/thermal_zone0/temp', 'r') as f:
             temp = int(f.read()) // 1000
             return temp
-    except:
+    except OSError:
         return 0
 
 def safe_test():

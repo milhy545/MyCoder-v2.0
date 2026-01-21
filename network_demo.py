@@ -4,7 +4,17 @@ Demonstrace adaptivních režimů MyCoder v2.1.0 podle síťových podmínek
 """
 
 import asyncio
+import os
+
 from mycoder import AdaptiveModeManager, OperationalMode
+
+
+def _bool_flag_from_env(name: str, default: bool) -> bool:
+    """Allow overriding simulated connectivity via environment variables."""
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in ("1", "true", "yes", "on")
 
 async def network_demo():
     print("🌐 MyCoder v2.1.0 - ADAPTIVNÍ REŽIMY DEMO")
@@ -17,15 +27,15 @@ async def network_demo():
     
     # Simulace testování sítě
     print("🔍 Kontrola internetu...")
-    internet_ok = True  # Simulace
+    internet_ok = _bool_flag_from_env("MYCODER_NETWORK_INTERNET", True)
     print(f"   Internet: {'✅' if internet_ok else '❌'}")
     
     print("🔍 Kontrola MCP orchestrátoru (192.168.0.58:8020)...")
-    orchestrator_ok = False  # Reálně není dostupný
+    orchestrator_ok = _bool_flag_from_env("MYCODER_NETWORK_ORCHESTRATOR", False)
     print(f"   MCP Orchestrator: {'✅' if orchestrator_ok else '❌'}")
     
     print("🔍 Kontrola Claude CLI autentifikace...")
-    claude_ok = False  # Není nakonfigurováno
+    claude_ok = _bool_flag_from_env("MYCODER_NETWORK_CLAUDE", False)
     print(f"   Claude CLI: {'✅' if claude_ok else '❌'}")
     
     print("\n" + "="*60)
