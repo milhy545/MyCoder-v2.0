@@ -14,9 +14,6 @@ Features:
 import logging
 import os
 import time
-from abc import ABC
-from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
@@ -28,209 +25,45 @@ except ImportError:
     except ImportError:
         MCPConnector = None  # type: ignore
 try:
-    from .tools.edit_tool import EditResult, EditTool
+    from .tools.edit_tool import EditTool
 except ImportError:
     try:
-        from tools.edit_tool import EditResult, EditTool  # type: ignore
+        from tools.edit_tool import EditTool  # type: ignore
     except ImportError:
         EditTool = None  # type: ignore
-        EditResult = None  # type: ignore
+try:
+    from .tools.core import (
+        BaseTool,
+        ToolAvailability,
+        ToolCapabilities,
+        ToolCategory,
+        ToolExecutionContext,
+        ToolPriority,
+        ToolResult,
+    )
+except ImportError:
+    try:
+        from tools.core import (  # type: ignore
+            BaseTool,
+            ToolAvailability,
+            ToolCapabilities,
+            ToolCategory,
+            ToolExecutionContext,
+            ToolPriority,
+            ToolResult,
+        )
+    except ImportError:
+        BaseTool = None  # type: ignore
+        ToolAvailability = None  # type: ignore
+        ToolCapabilities = None  # type: ignore
+        ToolCategory = None  # type: ignore
+        ToolExecutionContext = None  # type: ignore
+        ToolPriority = None  # type: ignore
+        ToolResult = None  # type: ignore
 
 from .self_evolve.failure_memory import AdvisoryResult, FailureMemory
 
 logger = logging.getLogger(__name__)
-
-
-class ToolCategory(Enum):
-    """Tool categories for organization and routing"""
-
-    FILE_OPERATIONS = "file_operations"
-    GIT_OPERATIONS = "git_operations"
-    TERMINAL_OPERATIONS = "terminal_operations"
-    DATABASE_OPERATIONS = "database_operations"
-    MEMORY_OPERATIONS = "memory_operations"
-    RESEARCH_OPERATIONS = "research_operations"
-    COMMUNICATION = "communication"
-    SYSTEM_MONITORING = "system_monitoring"
-    AI_OPERATIONS = "ai_operations"
-    THERMAL_MANAGEMENT = "thermal_management"
-
-
-class ToolAvailability(Enum):
-    """Tool availability levels for different operational modes"""
-
-    ALWAYS = "always"  # Available in all modes
-    FULL_ONLY = "full_only"  # Only in FULL mode
-    DEGRADED_PLUS = "degraded_plus"  # FULL and DEGRADED modes
-    AUTONOMOUS_PLUS = "autonomous_plus"  # FULL, DEGRADED, AUTONOMOUS modes
-    LOCAL_ONLY = "local_only"  # No network required
-    RECOVERY_ONLY = "recovery_only"  # Emergency mode only
-
-
-class ToolPriority(Enum):
-    """Tool execution priority levels"""
-
-    CRITICAL = 1
-    HIGH = 2
-    NORMAL = 3
-    LOW = 4
-    BACKGROUND = 5
-
-
-@dataclass
-class ToolCapabilities:
-    """Capabilities and requirements for a tool"""
-
-    requires_network: bool = False
-    requires_filesystem: bool = False
-    requires_auth: bool = False
-    requires_mcp: bool = False
-    requires_thermal_safe: bool = False  # Q9550 specific
-    max_execution_time: int = 30  # seconds
-    resource_intensive: bool = False
-    supports_streaming: bool = False
-    supports_caching: bool = False
-
-
-@dataclass
-class ToolExecutionContext:
-    """Context for tool execution"""
-
-    mode: str  # Operational mode
-    working_directory: Optional[Path] = None
-    user_id: Optional[str] = None
-    session_id: Optional[str] = None
-    thermal_status: Optional[Dict[str, Any]] = None
-    network_status: Optional[Dict[str, Any]] = None
-    resource_limits: Optional[Dict[str, Any]] = None
-    metadata: Optional[Dict[str, Any]] = None
-
-    def __post_init__(self):
-        if self.metadata is None:
-            self.metadata = {}
-
-
-@dataclass
-class ToolResult:
-    """Standardized tool execution result"""
-
-    success: bool
-    data: Any
-    tool_name: str
-    duration_ms: int
-    error: Optional[str] = None
-    warnings: List[str] = None
-    metadata: Dict[str, Any] = None
-
-    def __post_init__(self):
-        if self.warnings is None:
-            self.warnings = []
-        if self.metadata is None:
-            self.metadata = {}
-
-
-class BaseTool(ABC):
-    """Base class for all tools in the registry"""
-
-    def __init__(
-        self,
-        name: str,
-        category: ToolCategory,
-        availability: ToolAvailability,
-        priority: ToolPriority,
-        capabilities: ToolCapabilities,
-    ):
-        self.name = name
-        self.category = category
-        self.availability = availability
-        self.priority = priority
-        self.capabilities = capabilities
-        self.execution_count = 0
-        self.error_count = 0
-        self.total_execution_time = 0
-        self.last_execution = 0
-
-    async def execute(self, context: ToolExecutionContext, **kwargs) -> ToolResult:
-        """Execute the tool with given context"""
-        raise NotImplementedError("Tool execution not implemented")
-
-    async def validate_context(self, context: ToolExecutionContext) -> bool:
-        """Validate if tool can execute in given context"""
-        raise NotImplementedError("Context validation not implemented")
-
-    def get_description(self) -> str:
-        """Human-readable description for tool schemas."""
-        return f"{self.name} tool"
-
-    def get_input_schema(self) -> Dict[str, Any]:
-        """JSON schema for tool input parameters."""
-        return {"type": "object", "properties": {}}
-
-    def to_anthropic_schema(self) -> Dict[str, Any]:
-        """Generate Anthropic tool schema."""
-        return {
-            "name": self.name,
-            "description": self.get_description(),
-            "input_schema": self.get_input_schema(),
-        }
-
-    def to_gemini_schema(self) -> Dict[str, Any]:
-        """Generate Gemini function declaration schema."""
-        return {
-            "name": self.name,
-            "description": self.get_description(),
-            "parameters": self.get_input_schema(),
-        }
-
-    def can_execute_in_mode(self, mode: str) -> bool:
-        """Check if tool can execute in given operational mode"""
-        mode_mappings = {
-            "FULL": [
-                ToolAvailability.ALWAYS,
-                ToolAvailability.FULL_ONLY,
-                ToolAvailability.DEGRADED_PLUS,
-                ToolAvailability.AUTONOMOUS_PLUS,
-            ],
-            "DEGRADED": [
-                ToolAvailability.ALWAYS,
-                ToolAvailability.DEGRADED_PLUS,
-                ToolAvailability.AUTONOMOUS_PLUS,
-            ],
-            "AUTONOMOUS": [
-                ToolAvailability.ALWAYS,
-                ToolAvailability.LOCAL_ONLY,
-                ToolAvailability.AUTONOMOUS_PLUS,
-            ],
-            "RECOVERY": [
-                ToolAvailability.ALWAYS,
-                ToolAvailability.RECOVERY_ONLY,
-                ToolAvailability.LOCAL_ONLY,
-            ],
-        }
-
-        return self.availability in mode_mappings.get(mode, [])
-
-    def get_metrics(self) -> Dict[str, Any]:
-        """Get tool execution metrics"""
-        avg_execution_time = 0
-        if self.execution_count > 0:
-            avg_execution_time = self.total_execution_time / self.execution_count
-
-        success_rate = 1.0
-        if self.execution_count > 0:
-            success_rate = (
-                self.execution_count - self.error_count
-            ) / self.execution_count
-
-        return {
-            "name": self.name,
-            "category": self.category.value,
-            "execution_count": self.execution_count,
-            "error_count": self.error_count,
-            "success_rate": success_rate,
-            "avg_execution_time": avg_execution_time,
-            "last_execution": self.last_execution,
-        }
 
 
 class FileOperationTool(BaseTool):
@@ -750,30 +583,6 @@ class ToolRegistry:
     def list_tools_by_category(self, category: ToolCategory) -> List[str]:
         """Get tools in a specific category"""
         return self.categories.get(category, [])
-
-    def get_tool_info(self, tool_name: str) -> Dict[str, Any]:
-        """Get information about a specific tool"""
-        if tool_name not in self.tools:
-            return {}
-
-        tool = self.tools[tool_name]
-        return {
-            "name": tool.name,
-            "category": tool.category.value,
-            "description": tool.description,
-            "capabilities": {
-                "requires_thermal_safe": tool.capabilities.requires_thermal_safe,
-                "resource_intensive": tool.capabilities.resource_intensive,
-                "max_execution_time": tool.capabilities.max_execution_time,
-                "requires_network": tool.capabilities.requires_network,
-            },
-            "stats": {
-                "execution_count": tool.execution_count,
-                "error_count": tool.error_count,
-                "total_execution_time": tool.total_execution_time,
-                "last_execution": tool.last_execution,
-            },
-        }
 
     def unregister_tool(self, tool_name: str):
         """Unregister a tool from the registry"""

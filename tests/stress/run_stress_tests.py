@@ -127,7 +127,7 @@ class StressTestRunner:
 
         # Check Python packages
         try:
-            pass
+            import pytest  # noqa: F401 - ensure pytest dependency is available
 
             requirements["pytest"] = True
         except ImportError:

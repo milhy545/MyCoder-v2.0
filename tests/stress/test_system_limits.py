@@ -75,7 +75,7 @@ class TestConfigurationLimits:
                 try:
                     with tempfile.TemporaryDirectory() as temp_dir:
                         # Should handle malformed config gracefully
-                        mycoder = EnhancedMyCoderV2(
+                        EnhancedMyCoderV2(
                             working_directory=Path(temp_dir), config=malformed_config
                         )
 

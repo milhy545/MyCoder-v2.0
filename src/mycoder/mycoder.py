@@ -17,10 +17,8 @@ except Exception:
 
 try:
     from .adaptive_modes import AdaptiveModeManager, OperationalMode
-    from .ollama_integration import CodeGenerationProvider, OllamaClient
 except ImportError:
     from adaptive_modes import AdaptiveModeManager, OperationalMode  # type: ignore
-    from ollama_integration import CodeGenerationProvider, OllamaClient  # type: ignore
 
 
 # Create custom network error that inherits from ClaudeAuthError

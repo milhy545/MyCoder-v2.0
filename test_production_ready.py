@@ -59,7 +59,7 @@ async def test_config_manager():
 
         # Test config validation
         try:
-            config = MyCoderConfig(**config_data)
+            MyCoderConfig(**config_data)
             print("   ✅ Config validation: OK")
         except Exception as e:
             print(f"   ❌ Config validation failed: {e}")
@@ -74,7 +74,7 @@ async def test_config_manager():
 
         try:
             manager = ConfigManager(config_file)
-            loaded_config = manager.load_config()
+            manager.load_config()
             print("   ✅ Config loading: OK")
 
             # Cleanup

@@ -146,8 +146,6 @@ class ActivityPanel:
     def _render_system_metrics(self) -> str:
         if not psutil:
             return "[dim]SYS | CPU: N/A | RAM: N/A | TEMP: N/A[/]"
-        cpu = 0.0
-        ram = 0.0
         try:
             cpu = psutil.cpu_percent(interval=None)
         except Exception:

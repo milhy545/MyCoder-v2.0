@@ -752,22 +752,17 @@ def main() -> int:
     should_launch = wizard.run()
 
     if should_launch:
-        # Launch the application
-        from .cli import run as run_dictation
+        # Launch the application via CLI entrypoint to avoid circular imports
+        import subprocess
 
         try:
-            run_dictation.callback(
-                config=None,
-                provider="local",
-                model=wizard.config.whisper.local_model,
-                language="cs",
-                no_gui=False,
-                no_hotkeys=False,
-                hotkey=None,
-                api_key=None,
-                injection_method=None,
-                debug=False,
+            subprocess.Popen(
+                ["poetry", "run", "dictation", "run"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
+            print("✅ Aplikace spuštěna na pozadí")
+            print("   Měli byste vidět zelené tlačítko 🎤")
         except Exception as e:
             print(f"❌ Chyba při spouštění aplikace: {e}")
             return 1

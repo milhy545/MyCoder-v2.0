@@ -11,12 +11,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 try:
-    from .adaptive_modes import AdaptiveModeManager, ClaudeNetworkError, OperationalMode
+    from .adaptive_modes import ClaudeNetworkError, OperationalMode
     from .mcp_connector import MCPConnector, MCPToolRouter
     from .mycoder import MyCoder
 except ImportError:
     from adaptive_modes import (  # type: ignore
-        AdaptiveModeManager,
         ClaudeNetworkError,
         OperationalMode,
     )
