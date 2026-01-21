@@ -4,11 +4,12 @@ Currently a placeholder as DeepL Voice API is in early access/limited.
 """
 
 import logging
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from .base import BaseSTTProvider
 
 logger = logging.getLogger(__name__)
+
 
 class DeepLSTTProvider(BaseSTTProvider):
     """

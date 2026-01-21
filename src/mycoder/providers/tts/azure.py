@@ -2,12 +2,12 @@
 Microsoft Azure TTS Provider.
 """
 
+import asyncio
 import logging
 import os
-import tempfile
 import subprocess
-from typing import List, Dict, Any
-import asyncio
+import tempfile
+from typing import Any, Dict, List
 
 from .base import BaseTTSProvider
 
@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import azure.cognitiveservices.speech as speechsdk
+
     AZURE_AVAILABLE = True
 except ImportError:
     AZURE_AVAILABLE = False
@@ -31,11 +32,15 @@ class AzureTTSProvider(BaseTTSProvider):
 
         self.synthesizer = None
         if AZURE_AVAILABLE and self.api_key and self.region:
-            speech_config = speechsdk.SpeechConfig(subscription=self.api_key, region=self.region)
+            speech_config = speechsdk.SpeechConfig(
+                subscription=self.api_key, region=self.region
+            )
             speech_config.speech_synthesis_voice_name = self.voice_name
             # Output to speaker directly by default, or stream if needed
             audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
-            self.synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
+            self.synthesizer = speechsdk.SpeechSynthesizer(
+                speech_config=speech_config, audio_config=audio_config
+            )
 
     async def speak(self, text: str) -> None:
         if not AZURE_AVAILABLE:

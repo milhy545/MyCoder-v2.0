@@ -2,12 +2,12 @@
 TTS Providers Module.
 """
 
-from .base import BaseTTSProvider
-from .local import Pyttsx3Provider, EspeakProvider
-from .gtts_provider import GTTSProvider
 from .azure import AzureTTSProvider
-from .polly import AmazonPollyProvider
+from .base import BaseTTSProvider
 from .elevenlabs import ElevenLabsProvider
+from .gtts_provider import GTTSProvider
+from .local import EspeakProvider, Pyttsx3Provider
+from .polly import AmazonPollyProvider
 
 __all__ = [
     "BaseTTSProvider",

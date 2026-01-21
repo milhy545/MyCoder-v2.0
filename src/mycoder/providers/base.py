@@ -156,7 +156,7 @@ class BaseAPIProvider(ABC):
         self.rate_limiter = PersistentRateLimiter(
             provider_id=config.provider_type.value,
             rpm=config.config.get("rate_limit_rpm", 60),
-            rpd=config.config.get("rate_limit_rpd", 1500), # Default 1500 RPD
+            rpd=config.config.get("rate_limit_rpd", 1500),  # Default 1500 RPD
         )
 
     @abstractmethod
@@ -210,7 +210,9 @@ class BaseAPIProvider(ABC):
             "last_health_check": self.last_health_check,
         }
 
-    async def _process_file_context(self, files: List[Path], max_files: int = 5, max_chars: int = 8000) -> str:
+    async def _process_file_context(
+        self, files: List[Path], max_files: int = 5, max_chars: int = 8000
+    ) -> str:
         """Process file context for APIs."""
         file_contents = []
         for file_path in files[:max_files]:

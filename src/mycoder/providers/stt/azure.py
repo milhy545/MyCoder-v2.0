@@ -2,12 +2,12 @@
 Azure STT Provider.
 """
 
+import asyncio
+import io
 import logging
 import os
-import io
 import tempfile
-import asyncio
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from .base import BaseSTTProvider
 
@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import azure.cognitiveservices.speech as speechsdk
+
     AZURE_AVAILABLE = True
 except ImportError:
     AZURE_AVAILABLE = False
@@ -34,7 +35,9 @@ class AzureSTTProvider(BaseSTTProvider):
             return None
 
         try:
-            speech_config = speechsdk.SpeechConfig(subscription=self.api_key, region=self.region)
+            speech_config = speechsdk.SpeechConfig(
+                subscription=self.api_key, region=self.region
+            )
             speech_config.speech_recognition_language = self.language
 
             # Use temporary file for input
@@ -44,7 +47,9 @@ class AzureSTTProvider(BaseSTTProvider):
 
             try:
                 audio_config = speechsdk.audio.AudioConfig(filename=tmp_path)
-                recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
+                recognizer = speechsdk.SpeechRecognizer(
+                    speech_config=speech_config, audio_config=audio_config
+                )
 
                 # RecognizeOnceAsync is simpler for short audio
                 # Note: This is blocking in this synchronous method wrapper, but thread-safe

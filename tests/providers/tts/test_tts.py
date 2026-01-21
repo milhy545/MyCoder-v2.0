@@ -3,8 +3,10 @@ Tests for TTS Providers.
 """
 
 import unittest
-from mycoder.tts_engine import TTSEngine
+
 from mycoder.providers.tts import BaseTTSProvider
+from mycoder.tts_engine import TTSEngine
+
 
 class TestTTS(unittest.TestCase):
 
@@ -18,6 +20,7 @@ class TestTTS(unittest.TestCase):
         engine = TTSEngine(provider="invalid_provider")
         self.assertIsNotNone(engine.provider)
         self.assertIn(engine.provider_name, ["pyttsx3", "espeak", "gtts"])
+
 
 if __name__ == "__main__":
     unittest.main()

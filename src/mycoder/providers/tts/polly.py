@@ -2,13 +2,13 @@
 Amazon Polly TTS Provider.
 """
 
+import asyncio
 import logging
 import os
-import tempfile
 import subprocess
-import asyncio
-from typing import List, Dict, Any
+import tempfile
 from contextlib import closing
+from typing import Any, Dict, List
 
 from .base import BaseTTSProvider
 
@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 try:
     import boto3
     from botocore.exceptions import BotoCoreError, ClientError
+
     BOTO3_AVAILABLE = True
 except ImportError:
     BOTO3_AVAILABLE = False
@@ -30,7 +31,7 @@ class AmazonPollyProvider(BaseTTSProvider):
         self.region_name = config.get("region", "us-east-1")
         # Standard voice ID
         self.voice_id = config.get("voice_id", "Joanna")
-        self.engine = config.get("engine", "neural") # or standard
+        self.engine = config.get("engine", "neural")  # or standard
 
         self.polly = None
         if BOTO3_AVAILABLE:
@@ -39,7 +40,7 @@ class AmazonPollyProvider(BaseTTSProvider):
                     "polly",
                     region_name=self.region_name,
                     aws_access_key_id=config.get("aws_access_key_id"),
-                    aws_secret_access_key=config.get("aws_secret_access_key")
+                    aws_secret_access_key=config.get("aws_secret_access_key"),
                 )
             except Exception as e:
                 logger.error(f"Failed to init Polly: {e}")
@@ -55,12 +56,14 @@ class AmazonPollyProvider(BaseTTSProvider):
                     Text=text,
                     OutputFormat="mp3",
                     VoiceId=self.voice_id,
-                    Engine=self.engine
+                    Engine=self.engine,
                 )
 
                 if "AudioStream" in response:
                     with closing(response["AudioStream"]) as stream:
-                        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
+                        with tempfile.NamedTemporaryFile(
+                            suffix=".mp3", delete=False
+                        ) as tmp:
                             tmp.write(stream.read())
                             return tmp.name
             except (BotoCoreError, ClientError) as error:
@@ -86,10 +89,11 @@ class AmazonPollyProvider(BaseTTSProvider):
         pass
 
     def get_available_voices(self) -> List[str]:
-        return ["Joanna", "Matthew", "Jitka"] # Jitka is Czech standard
+        return ["Joanna", "Matthew", "Jitka"]  # Jitka is Czech standard
 
     def _get_audio_player(self) -> List[str]:
         import shutil
+
         if shutil.which("mpg123"):
             return ["mpg123", "-q"]
         if shutil.which("ffplay"):

@@ -84,7 +84,9 @@ class PersistentRateLimiter:
                         # However, blocking for hours is bad UX.
                         # Let's throw an exception if wait is > 60s
                         if wait_time > 60:
-                             raise Exception(f"Daily rate limit exceeded for {self.provider_id}. Resets in {wait_time/3600:.1f} hours.")
+                            raise Exception(
+                                f"Daily rate limit exceeded for {self.provider_id}. Resets in {wait_time/3600:.1f} hours."
+                            )
 
                         await asyncio.sleep(wait_time)
                         continue
@@ -151,7 +153,7 @@ class PersistentRateLimiter:
                     with open(self.state_path, "r") as f:
                         current_data = json.load(f)
                 except Exception:
-                    pass # Overwrite corrupt file
+                    pass  # Overwrite corrupt file
 
             current_data[self.provider_id] = {
                 "last_request": self.state.last_request_time,

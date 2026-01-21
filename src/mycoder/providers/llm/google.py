@@ -5,15 +5,16 @@ Google Gemini Provider.
 import logging
 import os
 import time
-import aiohttp
 from typing import Any, Callable, Dict, List, Optional
 
+import aiohttp
+
 from ..base import (
-    BaseAPIProvider,
-    APIResponse,
-    APIProviderType,
+    APIProviderConfig,
     APIProviderStatus,
-    APIProviderConfig
+    APIProviderType,
+    APIResponse,
+    BaseAPIProvider,
 )
 
 logger = logging.getLogger(__name__)
@@ -88,7 +89,7 @@ class GeminiProvider(BaseAPIProvider):
                     if response.status != 200:
                         error_text = await response.text()
                         if response.status == 429:
-                             raise Exception("Rate limit exceeded (API 429)")
+                            raise Exception("Rate limit exceeded (API 429)")
                         raise Exception(
                             f"Gemini API error {response.status}: {error_text}"
                         )
@@ -182,7 +183,7 @@ class GeminiProvider(BaseAPIProvider):
                 # Sometimes safety filters block content
                 prompt_feedback = result.get("promptFeedback", {})
                 if prompt_feedback:
-                     raise Exception(f"Blocked by safety filters: {prompt_feedback}")
+                    raise Exception(f"Blocked by safety filters: {prompt_feedback}")
                 raise Exception("No response candidates from Gemini")
 
             parts = result["candidates"][0]["content"]["parts"]
@@ -227,11 +228,13 @@ class GeminiProvider(BaseAPIProvider):
 
             # Simple list models check is lighter than generation
             url = f"{self.base_url}/models?key={self.api_key}"
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
-                 async with session.get(url) as response:
-                     if response.status == 200:
-                         return APIProviderStatus.HEALTHY
-                     return APIProviderStatus.DEGRADED
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=10)
+            ) as session:
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        return APIProviderStatus.HEALTHY
+                    return APIProviderStatus.DEGRADED
         except Exception as e:
             logger.warning(f"Gemini health check failed: {e}")
             return APIProviderStatus.UNAVAILABLE

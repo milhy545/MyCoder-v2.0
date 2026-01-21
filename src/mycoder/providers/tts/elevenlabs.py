@@ -4,14 +4,16 @@ ElevenLabs TTS Provider.
 
 import logging
 import os
-import aiohttp
 import subprocess
 import tempfile
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
+import aiohttp
 
 from .base import BaseTTSProvider
 
 logger = logging.getLogger(__name__)
+
 
 class ElevenLabsProvider(BaseTTSProvider):
     """ElevenLabs TTS Provider."""
@@ -21,7 +23,7 @@ class ElevenLabsProvider(BaseTTSProvider):
         self.api_key = config.get("api_key") or os.getenv("ELEVENLABS_API_KEY")
         self.model = config.get("model", "eleven_monolingual_v1")
         # Default to a standard voice ID if none provided
-        self.voice_id = config.get("voice_id", "21m00Tcm4TlvDq8ikWAM") # Rachel
+        self.voice_id = config.get("voice_id", "21m00Tcm4TlvDq8ikWAM")  # Rachel
         self._current_process = None
 
     async def speak(self, text: str) -> None:
@@ -33,15 +35,12 @@ class ElevenLabsProvider(BaseTTSProvider):
         headers = {
             "Accept": "audio/mpeg",
             "Content-Type": "application/json",
-            "xi-api-key": self.api_key
+            "xi-api-key": self.api_key,
         }
         data = {
             "text": text,
             "model_id": self.model,
-            "voice_settings": {
-                "stability": 0.5,
-                "similarity_boost": 0.5
-            }
+            "voice_settings": {"stability": 0.5, "similarity_boost": 0.5},
         }
 
         try:
@@ -49,11 +48,15 @@ class ElevenLabsProvider(BaseTTSProvider):
                 async with session.post(url, json=data, headers=headers) as response:
                     if response.status != 200:
                         error_text = await response.text()
-                        logger.error(f"ElevenLabs error {response.status}: {error_text}")
+                        logger.error(
+                            f"ElevenLabs error {response.status}: {error_text}"
+                        )
                         return
 
                     # Stream to temp file and play
-                    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
+                    with tempfile.NamedTemporaryFile(
+                        suffix=".mp3", delete=False
+                    ) as tmp:
                         while True:
                             chunk = await response.content.read(1024)
                             if not chunk:
@@ -82,10 +85,11 @@ class ElevenLabsProvider(BaseTTSProvider):
             self._current_process = None
 
     def get_available_voices(self) -> List[str]:
-        return [] # TODO: Implement voice listing
+        return []  # TODO: Implement voice listing
 
     def _get_audio_player(self) -> List[str]:
         import shutil
+
         if shutil.which("mpg123"):
             return ["mpg123", "-q"]
         if shutil.which("ffplay"):

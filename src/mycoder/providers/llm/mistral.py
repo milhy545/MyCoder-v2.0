@@ -4,10 +4,12 @@ Mistral AI Provider.
 
 import logging
 import os
-from .openai_compat import OpenAIProvider
+
 from ..base import APIProviderConfig
+from .openai_compat import OpenAIProvider
 
 logger = logging.getLogger(__name__)
+
 
 class MistralProvider(OpenAIProvider):
     """Mistral AI Provider."""

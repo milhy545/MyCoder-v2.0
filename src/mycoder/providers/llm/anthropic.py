@@ -2,19 +2,20 @@
 Anthropic Claude Providers.
 """
 
+import json
 import logging
 import os
-import json
 import time
-import aiohttp
 from typing import Any, Callable, Dict, List, Optional
 
+import aiohttp
+
 from ..base import (
-    BaseAPIProvider,
-    APIResponse,
-    APIProviderType,
+    APIProviderConfig,
     APIProviderStatus,
-    APIProviderConfig
+    APIProviderType,
+    APIResponse,
+    BaseAPIProvider,
 )
 
 logger = logging.getLogger(__name__)
@@ -280,7 +281,9 @@ class ClaudeAnthropicProvider(BaseAPIProvider):
         # Claude 3.5 Sonnet pricing
         input_cost_per_token = 0.000003
         output_cost_per_token = 0.000015
-        return (input_tokens * input_cost_per_token) + (output_tokens * output_cost_per_token)
+        return (input_tokens * input_cost_per_token) + (
+            output_tokens * output_cost_per_token
+        )
 
 
 class ClaudeOAuthProvider(BaseAPIProvider):

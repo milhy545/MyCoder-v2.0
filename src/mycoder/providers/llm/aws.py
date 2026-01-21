@@ -2,18 +2,18 @@
 AWS Bedrock Provider.
 """
 
+import asyncio
+import json
 import logging
 import time
-import json
 from typing import Any, Callable, Dict, List, Optional
-import asyncio
 
 from ..base import (
-    BaseAPIProvider,
-    APIResponse,
-    APIProviderType,
+    APIProviderConfig,
     APIProviderStatus,
-    APIProviderConfig
+    APIProviderType,
+    APIResponse,
+    BaseAPIProvider,
 )
 
 logger = logging.getLogger(__name__)
@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 try:
     import boto3
     from botocore.exceptions import ClientError
+
     BOTO3_AVAILABLE = True
 except ImportError:
     BOTO3_AVAILABLE = False
@@ -31,14 +32,16 @@ class BedrockProvider(BaseAPIProvider):
 
     def __init__(self, config: APIProviderConfig):
         super().__init__(config)
-        self.model = config.config.get("model", "anthropic.claude-3-sonnet-20240229-v1:0")
+        self.model = config.config.get(
+            "model", "anthropic.claude-3-sonnet-20240229-v1:0"
+        )
         self.region = config.config.get("region", "us-east-1")
         self.client = None
 
         if BOTO3_AVAILABLE:
             try:
                 self.client = boto3.client(
-                    service_name='bedrock-runtime',
+                    service_name="bedrock-runtime",
                     region_name=self.region,
                     aws_access_key_id=config.config.get("aws_access_key_id"),
                     aws_secret_access_key=config.config.get("aws_secret_access_key"),
@@ -80,46 +83,46 @@ class BedrockProvider(BaseAPIProvider):
             # Prepare request body based on model family
             # Current implementation focuses on Claude models on Bedrock
 
-            body = json.dumps({
-                "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": kwargs.get("max_tokens", 4096),
-                "messages": [
-                    {"role": "user", "content": prompt}
-                ],
-                "temperature": kwargs.get("temperature", 0.7),
-            })
+            body = json.dumps(
+                {
+                    "anthropic_version": "bedrock-2023-05-31",
+                    "max_tokens": kwargs.get("max_tokens", 4096),
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": kwargs.get("temperature", 0.7),
+                }
+            )
 
             # Execute via thread pool since boto3 is synchronous
             def _invoke_model():
                 return self.client.invoke_model(
                     body=body,
                     modelId=self.model,
-                    accept='application/json',
-                    contentType='application/json'
+                    accept="application/json",
+                    contentType="application/json",
                 )
 
             response = await asyncio.to_thread(_invoke_model)
 
-            response_body = json.loads(response.get('body').read())
+            response_body = json.loads(response.get("body").read())
 
             content = ""
-            for content_block in response_body.get('content', []):
-                if content_block.get('type') == 'text':
-                    content += content_block.get('text', '')
+            for content_block in response_body.get("content", []):
+                if content_block.get("type") == "text":
+                    content += content_block.get("text", "")
 
             duration_ms = int((time.time() - start_time) * 1000)
             self.successful_requests += 1
             self.status = APIProviderStatus.HEALTHY
 
-            usage = response_body.get('usage', {})
+            usage = response_body.get("usage", {})
 
             return APIResponse(
                 success=True,
                 content=content,
                 provider=APIProviderType.AWS_BEDROCK,
-                cost=0.0, # Difficult to calc precisely without dynamic pricing
+                cost=0.0,  # Difficult to calc precisely without dynamic pricing
                 duration_ms=duration_ms,
-                tokens_used=usage.get('output_tokens', 0),
+                tokens_used=usage.get("output_tokens", 0),
                 session_id=kwargs.get("session_id"),
                 metadata={
                     "model": self.model,

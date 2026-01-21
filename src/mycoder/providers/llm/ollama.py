@@ -2,19 +2,21 @@
 Ollama Provider.
 """
 
+import asyncio
 import logging
 import os
-import time
-import aiohttp
 import subprocess
+import time
 from typing import Any, Callable, Dict, List, Optional
 
+import aiohttp
+
 from ..base import (
-    BaseAPIProvider,
-    APIResponse,
-    APIProviderType,
+    APIProviderConfig,
     APIProviderStatus,
-    APIProviderConfig
+    APIProviderType,
+    APIResponse,
+    BaseAPIProvider,
 )
 
 logger = logging.getLogger(__name__)
@@ -40,7 +42,9 @@ class OllamaProvider(BaseAPIProvider):
         try:
             full_prompt = prompt
             if context and context.get("files"):
-                file_content = await self._process_file_context(context["files"], max_files=3, max_chars=2000)
+                file_content = await self._process_file_context(
+                    context["files"], max_files=3, max_chars=2000
+                )
                 if file_content:
                     full_prompt = f"Context:\n{file_content}\n\nQuery: {prompt}"
 

@@ -2,11 +2,11 @@
 Local TTS Providers (pyttsx3, espeak).
 """
 
-import logging
 import asyncio
+import logging
 import shutil
 import subprocess
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from .base import BaseTTSProvider
 
@@ -19,6 +19,7 @@ class Pyttsx3Provider(BaseTTSProvider):
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         import pyttsx3
+
         self.engine = pyttsx3.init()
         self._configure()
 
@@ -53,7 +54,14 @@ class EspeakProvider(BaseTTSProvider):
             logger.warning("espeak not found")
 
     async def speak(self, text: str) -> None:
-        args = ["espeak", "-v", self.config.get("voice", "en"), "-s", str(self.config.get("rate", 150)), text]
+        args = [
+            "espeak",
+            "-v",
+            self.config.get("voice", "en"),
+            "-s",
+            str(self.config.get("rate", 150)),
+            text,
+        ]
         await asyncio.to_thread(subprocess.run, args)
 
     def stop(self) -> None:

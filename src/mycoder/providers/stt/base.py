@@ -2,11 +2,12 @@
 Base STT Provider Class.
 """
 
-from abc import ABC, abstractmethod
 import logging
-from typing import Optional, Dict, Any, List
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
 
 class BaseSTTProvider(ABC):
     """Base class for STT providers."""

@@ -2,18 +2,20 @@
 OpenAI Compatible Providers (OpenAI, X.AI, etc.).
 """
 
+import json
 import logging
 import os
 import time
-import aiohttp
 from typing import Any, Callable, Dict, List, Optional
 
+import aiohttp
+
 from ..base import (
-    BaseAPIProvider,
-    APIResponse,
-    APIProviderType,
+    APIProviderConfig,
     APIProviderStatus,
-    APIProviderConfig
+    APIProviderType,
+    APIResponse,
+    BaseAPIProvider,
 )
 
 logger = logging.getLogger(__name__)
@@ -104,7 +106,9 @@ class OpenAIProvider(BaseAPIProvider):
                         # Construct a mock result for the end
                         result = {
                             "choices": [{"message": {"content": content_accum}}],
-                            "usage": {"total_tokens": 0} # Usage often not sent in stream
+                            "usage": {
+                                "total_tokens": 0
+                            },  # Usage often not sent in stream
                         }
                     else:
                         result = await response.json()
@@ -145,15 +149,19 @@ class OpenAIProvider(BaseAPIProvider):
 
     async def health_check(self) -> APIProviderStatus:
         try:
-             if not self.api_key:
+            if not self.api_key:
                 return APIProviderStatus.UNAVAILABLE
 
-             headers = {"Authorization": f"Bearer {self.api_key}"}
-             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
-                 async with session.get(f"{self.base_url}/models", headers=headers) as response:
-                     if response.status == 200:
-                         return APIProviderStatus.HEALTHY
-                     return APIProviderStatus.DEGRADED
+            headers = {"Authorization": f"Bearer {self.api_key}"}
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=10)
+            ) as session:
+                async with session.get(
+                    f"{self.base_url}/models", headers=headers
+                ) as response:
+                    if response.status == 200:
+                        return APIProviderStatus.HEALTHY
+                    return APIProviderStatus.DEGRADED
         except Exception:
             return APIProviderStatus.UNAVAILABLE
 
@@ -169,7 +177,7 @@ class XAIProvider(OpenAIProvider):
             config.config["model"] = "grok-beta"
         if "api_key" not in config.config and not os.getenv("XAI_API_KEY"):
             # Fallback to specific env var if generic not set
-             pass
+            pass
 
         super().__init__(config)
         # Re-check API key from specific env var

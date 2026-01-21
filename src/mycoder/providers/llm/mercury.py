@@ -2,19 +2,20 @@
 Mercury (Inception Labs) Provider.
 """
 
+import json
 import logging
 import os
 import time
-import json
-import aiohttp
 from typing import Any, Callable, Dict, List, Optional
 
+import aiohttp
+
 from ..base import (
-    BaseAPIProvider,
-    APIResponse,
-    APIProviderType,
+    APIProviderConfig,
     APIProviderStatus,
-    APIProviderConfig
+    APIProviderType,
+    APIResponse,
+    BaseAPIProvider,
 )
 
 logger = logging.getLogger(__name__)

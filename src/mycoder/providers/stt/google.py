@@ -2,11 +2,11 @@
 Google STT Provider (Gemini).
 """
 
+import io
 import logging
 import os
-import io
 import time
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from .base import BaseSTTProvider
 
@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import google.generativeai as genai
+
     GENAI_AVAILABLE = True
 except ImportError:
     GENAI_AVAILABLE = False
@@ -51,10 +52,7 @@ class GoogleSTTProvider(BaseSTTProvider):
             )
 
             response = self.model.generate_content(
-                [
-                    prompt,
-                    {"mime_type": "audio/wav", "data": audio_data}
-                ]
+                [prompt, {"mime_type": "audio/wav", "data": audio_data}]
             )
 
             return response.text.strip()

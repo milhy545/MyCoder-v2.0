@@ -4,6 +4,7 @@
 
 -## Recent Changes & Updates
 *Agents: Add entries here when making significant changes*
+- 2026-01-21: Codex - Reformatted provider modules/tests and added missing imports (json/asyncio) to fix lint errors; tests run: `poetry run pytest -q tests/providers tests/unit/test_api_providers.py`.
 - 2026-01-21: Codex - Aligned `click` constraint with `gtts`, regenerated `poetry.lock` to fix CI; tests run: `poetry run pytest -q tests/unit/test_api_providers.py tests/providers/test_persistent_rate_limiter.py`.
 - 2026-01-21: Codex - Added `toml` to the main dependencies so the context manager can load TOML configs on Python 3.10 (resolved the GH CI dependency failure); tests run: `poetry run pytest tests/unit/test_context_manager.py tests/unit/test_storage.py -q`.
 - 2026-01-20: Codex - Scrubbed the remaining 38 CodeQL alerts (unused imports, duplicated helper functions, empty excepts, call-to-non-callable, redundant assignments) by modularizing the tool/infrastructure contracts in `src/mycoder/tools/core.py`, tightening overlay guards, improving CLI helpers, and updating the effected unit/stress tests; tests run: `poetry run pytest tests/unit/ -q`.

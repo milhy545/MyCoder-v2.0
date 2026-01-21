@@ -2,12 +2,12 @@
 Whisper STT Provider (API & Local).
 """
 
+import io
 import logging
 import os
-import io
 import tempfile
-from typing import Optional, Dict, Any
 from enum import Enum
+from typing import Any, Dict, Optional
 
 from .base import BaseSTTProvider
 
@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import openai
+
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
@@ -22,6 +23,7 @@ except ImportError:
 
 try:
     import whisper
+
     WHISPER_LOCAL_AVAILABLE = True
 except ImportError:
     WHISPER_LOCAL_AVAILABLE = False
@@ -66,7 +68,7 @@ class WhisperSTTProvider(BaseSTTProvider):
         return None
 
     def _transcribe_api(self, audio_data: bytes) -> Optional[str]:
-        if not OPENAI_AVAILABLE or not hasattr(self, 'client'):
+        if not OPENAI_AVAILABLE or not hasattr(self, "client"):
             return None
         try:
             audio_file = io.BytesIO(audio_data)
@@ -95,7 +97,7 @@ class WhisperSTTProvider(BaseSTTProvider):
                     tmp_path,
                     language=self.language,
                     temperature=self.temperature,
-                    fp16=False
+                    fp16=False,
                 )
                 return result["text"].strip()
             finally:

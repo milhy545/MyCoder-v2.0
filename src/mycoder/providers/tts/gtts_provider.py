@@ -2,16 +2,17 @@
 Google Translate TTS Provider.
 """
 
-import logging
-import tempfile
-import subprocess
-import os
 import asyncio
-from typing import List, Dict, Any
+import logging
+import os
+import subprocess
+import tempfile
+from typing import Any, Dict, List
 
 from .base import BaseTTSProvider
 
 logger = logging.getLogger(__name__)
+
 
 class GTTSProvider(BaseTTSProvider):
     """Google TTS (gTTS) Provider."""
@@ -48,10 +49,12 @@ class GTTSProvider(BaseTTSProvider):
 
     def get_available_voices(self) -> List[str]:
         from gtts.lang import tts_langs
+
         return list(tts_langs().keys())
 
     def _get_audio_player(self) -> List[str]:
         import shutil
+
         if shutil.which("mpg123"):
             return ["mpg123", "-q"]
         if shutil.which("ffplay"):

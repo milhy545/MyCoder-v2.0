@@ -2,12 +2,13 @@
 Base TTS Provider Class.
 """
 
-from abc import ABC, abstractmethod
-import logging
 import asyncio
-from typing import Optional, List, Dict, Any
+import logging
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
 
 class BaseTTSProvider(ABC):
     """Base class for TTS providers."""
@@ -15,7 +16,7 @@ class BaseTTSProvider(ABC):
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.voice = config.get("voice", "en")
-        self.rate = config.get("rate", 150) # WPM or percent
+        self.rate = config.get("rate", 150)  # WPM or percent
 
     @abstractmethod
     async def speak(self, text: str) -> None:

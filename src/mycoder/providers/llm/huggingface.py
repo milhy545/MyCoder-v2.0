@@ -5,15 +5,16 @@ Hugging Face Inference API Provider.
 import logging
 import os
 import time
-import aiohttp
 from typing import Any, Callable, Dict, List, Optional
 
+import aiohttp
+
 from ..base import (
-    BaseAPIProvider,
-    APIResponse,
-    APIProviderType,
+    APIProviderConfig,
     APIProviderStatus,
-    APIProviderConfig
+    APIProviderType,
+    APIResponse,
+    BaseAPIProvider,
 )
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,9 @@ class HuggingFaceProvider(BaseAPIProvider):
     def __init__(self, config: APIProviderConfig):
         super().__init__(config)
         self.api_key = config.config.get("api_key") or os.getenv("HF_TOKEN")
-        self.base_url = config.config.get("base_url", "https://api-inference.huggingface.co/models")
+        self.base_url = config.config.get(
+            "base_url", "https://api-inference.huggingface.co/models"
+        )
         # Default to a popular open model
         self.model = config.config.get("model", "meta-llama/Llama-3.2-3B-Instruct")
 
@@ -73,8 +76,8 @@ class HuggingFaceProvider(BaseAPIProvider):
             "parameters": {
                 "max_new_tokens": kwargs.get("max_tokens", 512),
                 "temperature": kwargs.get("temperature", 0.7),
-                "return_full_text": False
-            }
+                "return_full_text": False,
+            },
         }
 
         url = f"{self.base_url}/{self.model}"
@@ -89,9 +92,9 @@ class HuggingFaceProvider(BaseAPIProvider):
                         error_text = await response.text()
                         # Handle model loading state
                         if "currently loading" in error_text.lower():
-                             # Wait and retry logic handled by caller/circuit breaker ideally,
-                             # but here we just report error
-                             pass
+                            # Wait and retry logic handled by caller/circuit breaker ideally,
+                            # but here we just report error
+                            pass
                         raise Exception(f"HF API error {response.status}: {error_text}")
 
                     result = await response.json()
@@ -112,7 +115,7 @@ class HuggingFaceProvider(BaseAPIProvider):
                 provider=APIProviderType.HUGGINGFACE,
                 cost=0.0,
                 duration_ms=duration_ms,
-                tokens_used=0, # Not provided by standard inference API usually
+                tokens_used=0,  # Not provided by standard inference API usually
                 session_id=kwargs.get("session_id"),
                 metadata={
                     "model": self.model,
@@ -138,11 +141,17 @@ class HuggingFaceProvider(BaseAPIProvider):
             headers = {"Authorization": f"Bearer {self.api_key}"}
             # Lightweight call to model info? Or just a simple generation with max_tokens=1
             url = f"{self.base_url}/{self.model}"
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
-                 # Sending empty inputs usually triggers error but validates auth/availability
-                 async with session.post(url, headers=headers, json={"inputs": "test"}) as response:
-                     if response.status == 200 or response.status == 503: # 503 means loading, which implies reachable
-                         return APIProviderStatus.HEALTHY
-                     return APIProviderStatus.UNAVAILABLE
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=10)
+            ) as session:
+                # Sending empty inputs usually triggers error but validates auth/availability
+                async with session.post(
+                    url, headers=headers, json={"inputs": "test"}
+                ) as response:
+                    if (
+                        response.status == 200 or response.status == 503
+                    ):  # 503 means loading, which implies reachable
+                        return APIProviderStatus.HEALTHY
+                    return APIProviderStatus.UNAVAILABLE
         except Exception:
             return APIProviderStatus.UNAVAILABLE
