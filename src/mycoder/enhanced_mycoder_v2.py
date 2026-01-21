@@ -229,6 +229,9 @@ class EnhancedMyCoderV2:
 
         logger.info("Initializing Enhanced MyCoder v2.2.0 with multi-API system...")
 
+        # Initialize storage
+        await self.storage_manager.connect()
+
         if hasattr(self.tool_registry, "reset"):
             self.tool_registry.reset()
 
@@ -1294,6 +1297,9 @@ class EnhancedMyCoderV2:
 
         # Clear session store
         self.session_store.clear()
+
+        if self.storage_manager:
+            await self.storage_manager.close()
 
         self._initialized = False
         logger.info("Enhanced MyCoder v2.2.0 shutdown complete")
