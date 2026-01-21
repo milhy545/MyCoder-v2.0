@@ -286,7 +286,7 @@ class ContextManager:
             "XAI_API_KEY": ("x_ai", "api_key"),
             "MISTRAL_API_KEY": ("mistral", "api_key"),
             "HF_TOKEN": ("huggingface", "api_key"),
-            "ELEVENLABS_API_KEY": ("tts", "elevenlabs_api_key"), # Example
+            "ELEVENLABS_API_KEY": ("tts", "elevenlabs_api_key"),  # Example
             "AZURE_SPEECH_KEY": ("tts", "azure_key"),
         }
 
