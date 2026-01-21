@@ -303,7 +303,10 @@ if PYQT_AVAILABLE:
             QTimer.singleShot(500, lambda: self.set_state(original_state))
 
 else:
-    def _create_overlay_button(on_click: Optional[Callable[[], None]] = None) -> BaseWidget:
+
+    def _create_overlay_button(
+        on_click: Optional[Callable[[], None]] = None,
+    ) -> BaseWidget:
         """
         Fallback factory used when PyQt5 is not available.
 
