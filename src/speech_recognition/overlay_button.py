@@ -73,12 +73,6 @@ if PYQT_AVAILABLE:
                 size: Button diameter in pixels (default: 80)
                 position: Initial position as (x, y) tuple, or None for bottom-right
             """
-            if not PYQT_AVAILABLE:
-                raise ImportError(
-                    "GUI overlay requires PyQt5. "
-                    "Install with: poetry install --extras speech"
-                )
-
             super().__init__()
 
             self.on_click = on_click
