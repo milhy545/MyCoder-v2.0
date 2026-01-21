@@ -92,7 +92,9 @@ class StorageManager:
                     self._conn.row_factory = aiosqlite.Row
                     await self._initialize_tables()
                 except sqlite3.Error as e:
-                    logger.error(f"Failed to connect to database at {self.db_path}: {e}")
+                    logger.error(
+                        f"Failed to connect to database at {self.db_path}: {e}"
+                    )
                     raise StorageError("Unable to connect to storage") from e
 
     async def close(self):
