@@ -10,8 +10,9 @@ Multi-backend TTS with support for:
 - ElevenLabs
 """
 
+import asyncio
 import logging
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from .providers.tts.local import Pyttsx3Provider, EspeakProvider
 from .providers.tts.gtts_provider import GTTSProvider
@@ -28,19 +29,29 @@ class TTSEngine:
     Multi-backend Text-to-Speech engine.
     """
 
-    def __init__(self, provider: str = "pyttsx3", config: Dict[str, Any] = None):
+    def __init__(
+        self,
+        provider: str = "pyttsx3",
+        config: Optional[Dict[str, Any]] = None,
+        voice: Optional[str] = None,
+        rate: Optional[int] = None,
+    ):
         """
         Initialize TTS engine.
 
         Args:
             provider: TTS provider name
             config: Configuration dictionary
+            voice: Preferred voice or language identifier
+            rate: Speech rate
         """
         self.provider_name = provider
-        self.config = config or {}
-        # Ensure rate is passed
-        if "rate" not in self.config:
-            self.config["rate"] = 150
+        self.config = dict(config or {})
+        if voice is not None:
+            self.config["voice"] = voice
+        if rate is not None:
+            self.config["rate"] = rate
+        self.config.setdefault("rate", 150)
 
         self.provider: Optional[BaseTTSProvider] = None
         self._init_provider()
@@ -85,8 +96,17 @@ class TTSEngine:
 
     async def speak_async(self, text: str) -> None:
         """Speak text asynchronously."""
-        if self.provider:
-            await self.provider.speak(text)
+        if not self.provider:
+            return
+        result = self._speak_sync(text)
+        if asyncio.iscoroutine(result):
+            await result
+
+    def _speak_sync(self, text: str):
+        """Internal helper for speaking text."""
+        if not self.provider:
+            return None
+        return self.provider.speak(text)
 
     def stop(self) -> None:
         """Stop current speech."""

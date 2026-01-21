@@ -4,6 +4,7 @@
 
 -## Recent Changes & Updates
 *Agents: Add entries here when making significant changes*
+- 2026-01-21: Codex - Restored TTS compatibility (voice/rate config, pyttsx3 voice resolution, speak_async hook) and exposed aiohttp in api_providers for termux tests; tests run: `poetry run pytest -q tests/unit/test_termux_provider.py tests/unit/test_tts_engine.py tests/integration/test_voice_workflow.py`.
 - 2026-01-21: Codex - Reformatted `src/mycoder/enhanced_mycoder_v2.py` to satisfy black; tests run: `poetry run black --check src/ tests/`, `poetry run flake8 src/ tests/`.
 - 2026-01-21: Codex - Fixed flake8 inline comment spacing in `context_manager.py`; tests run: `poetry run flake8 src/ tests/`.
 - 2026-01-21: Codex - Reformatted provider modules/tests and added missing imports (json/asyncio) to fix lint errors; tests run: `poetry run pytest -q tests/providers tests/unit/test_api_providers.py`.

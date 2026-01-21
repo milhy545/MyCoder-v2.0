@@ -5,6 +5,8 @@ This module is now a compatibility facade for the new modular provider system.
 See `src/mycoder/providers/` for implementation details.
 """
 
+import aiohttp
+
 from .providers.base import (
     APIProviderType,
     APIProviderStatus,
