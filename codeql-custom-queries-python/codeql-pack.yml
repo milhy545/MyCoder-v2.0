@@ -3,5 +3,6 @@ library: false
 warnOnImplicitThis: false
 name: getting-started/codeql-extra-queries-python
 version: 1.0.0
+extractor: python
 dependencies:
   codeql/python-all: ^5.0.4
