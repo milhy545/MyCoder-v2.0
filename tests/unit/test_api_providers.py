@@ -455,7 +455,7 @@ class TestClaudeOAuthProvider:
                 await provider._get_auth_manager()
 
     @pytest.mark.asyncio
-    @patch("mycoder.api_providers.ClaudeAuthManager")
+    @patch("mycoder.providers.llm.anthropic.ClaudeAuthManager")
     async def test_query_success(self, mock_auth_manager_class):
         """Test successful OAuth query"""
         # Mock claude-cli-auth response
@@ -481,7 +481,7 @@ class TestClaudeOAuthProvider:
         assert response.session_id == "test_session"
 
     @pytest.mark.asyncio
-    @patch("mycoder.api_providers.ClaudeAuthManager")
+    @patch("mycoder.providers.llm.anthropic.ClaudeAuthManager")
     async def test_query_error(self, mock_auth_manager_class):
         """Test OAuth query error handling"""
         mock_auth_manager = AsyncMock()
