@@ -26,7 +26,7 @@ class Command:
 class CommandParser:
     """Parser pro CLI příkazy MyCoder"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Pre-compile patterns for performance
         patterns = {
             # Bash/Terminal commands

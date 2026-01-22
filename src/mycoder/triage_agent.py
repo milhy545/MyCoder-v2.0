@@ -44,7 +44,6 @@ Analyze the provided GitHub issues and assign labels based on the project's cont
 1.  **Strict JSON Only:** Your final output must be **only** the JSON array. No markdown, no "Here is the JSON", no fluff.
 2.  **Label Discipline:** Use ONLY the labels provided in `AVAILABLE_LABELS`. Do not hallucinate new labels.
 3.  **Variable Safety:** Reference variables strictly.
-4.  **No Command Injection:** Do not use command substitution `$()` in generated shell commands.
 
 ## Input Data
 
@@ -77,9 +76,8 @@ Iterate through issues. If an issue is clear, assign labels. If unclear, skip it
 
 ## Output Specification
 
-Write a JSON array to the output file. Format:
+Write a JSON array. Format:
 
-```json
 [
     {{
         "issue_number": 123,
@@ -92,7 +90,6 @@ Write a JSON array to the output file. Format:
         "explanation": "Request to beautify logging. Low priority per Goat Principle (current logs are ugly but functional)."
     }}
 ]
-```
 """
 
 
