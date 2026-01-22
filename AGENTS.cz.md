@@ -4,7 +4,6 @@
 
 ## Nedávné změny a aktualizace
 *Agenti: Zde přidávejte záznamy při provádění významných změn*
-- 2026-01-21: Jules - Aktualizován systémový prompt `src/mycoder/triage_agent.py` pro soulad s "Principem zvracející kozy" v2 a vylepšena striktnost JSON; testy: `poetry run pytest tests/unit/test_triage_agent.py`.
 - 2026-01-22: Codex - Vypnuty spouštěče push/PR pro legacy `python-app.yml`, aby nepadaly workflow běhy; testy: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
 - 2026-01-22: Codex - Opraven CodeQL alert na nevolatelný overlay button pomocí kontroly callable; testy: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
 - 2026-01-21: Jules - Aktualizován systémový prompt `src/mycoder/triage_agent.py` pro soulad s "Principem zvracející kozy" v2 a vylepšena striktnost JSON; testy: `poetry run pytest tests/unit/test_triage_agent.py`.
