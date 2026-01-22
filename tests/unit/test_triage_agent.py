@@ -102,7 +102,10 @@ class TestTriageAgent(unittest.TestCase):
         self.assertEqual(results[0]["issue_number"], 2)
 
     @patch("mycoder.triage_agent.triage_issues_with_llm")
-    @patch.dict("os.environ", {"ISSUES_TO_TRIAGE": '[{"id": 1}]', "AVAILABLE_LABELS": "bug,enhancement"})
+    @patch.dict(
+        "os.environ",
+        {"ISSUES_TO_TRIAGE": '[{"id": 1}]', "AVAILABLE_LABELS": "bug,enhancement"},
+    )
     @patch("builtins.print")
     def test_main(self, mock_print, mock_triage):
         mock_triage.return_value = [{"issue_number": 1, "labels": ["bug"]}]
@@ -124,6 +127,7 @@ class TestTriageAgent(unittest.TestCase):
         mock_print.assert_called_once()
         # Verify print was called with JSON
         import json
+
         args, _ = mock_print.call_args
         self.assertIn('"issue_number": 1', args[0])
 
