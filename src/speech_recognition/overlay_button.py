@@ -318,6 +318,8 @@ if PYQT_AVAILABLE:
                 self.app = QApplication([])
 
             button_cls = OverlayButton
+            if button_cls is None:
+                raise RuntimeError("OverlayButton not available - PyQt5 not available")
             if not callable(button_cls):
                 raise RuntimeError("OverlayButton not available - PyQt5 not available")
             self.button = button_cls(on_click=on_click)
