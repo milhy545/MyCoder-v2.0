@@ -41,8 +41,8 @@ class GTTSProvider(BaseTTSProvider):
 
         try:
             os.unlink(path)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Failed to remove temp audio file %s: %s", path, exc)
 
     def stop(self) -> None:
         pass

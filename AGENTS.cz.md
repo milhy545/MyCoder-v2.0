@@ -2,6 +2,12 @@
 
 **Poznámka:** Tento soubor je hlavním zdrojem pravdy pro všechny AI agenty (Claude Code, Jules/Gemini, Codex) pracující na tomto projektu. Definuje architekturu projektu, konvence a provozní protokoly.
 
+## Nedávné změny a aktualizace
+*Agenti: Zde přidávejte záznamy při provádění významných změn*
+- 2026-01-22: Codex - Vypnuty spouštěče push/PR pro legacy `python-app.yml`, aby nepadaly workflow běhy; testy: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
+- 2026-01-22: Codex - Opraven CodeQL alert na nevolatelný overlay button pomocí kontroly callable; testy: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
+- 2026-01-21: Jules - Aktualizován systémový prompt `src/mycoder/triage_agent.py` pro soulad s "Principem zvracející kozy" v2 a vylepšena striktnost JSON; testy: `poetry run pytest tests/unit/test_triage_agent.py`.
+
 ## 🌍 Přehled projektu
 
 **Enhanced MyCoder v2.2.0** je kriticky důležitý AI vývojářský asistent navržený pro **vysokou dostupnost**, **teplotní bezpečnost** (Intel Q9550) a **odolnost díky více poskytovatelům**.

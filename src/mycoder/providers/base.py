@@ -3,15 +3,13 @@ Base API Provider Classes.
 Defines the standard interface for all AI providers in MyCoder.
 """
 
-import asyncio
-import json
 import logging
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 from .rate_limiter import PersistentRateLimiter
 

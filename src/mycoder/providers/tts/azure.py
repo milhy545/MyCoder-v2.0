@@ -5,8 +5,6 @@ Microsoft Azure TTS Provider.
 import asyncio
 import logging
 import os
-import subprocess
-import tempfile
 from typing import Any, Dict, List
 
 from .base import BaseTTSProvider

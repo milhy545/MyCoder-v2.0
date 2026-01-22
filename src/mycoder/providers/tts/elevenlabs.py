@@ -73,8 +73,8 @@ class ElevenLabsProvider(BaseTTSProvider):
 
             try:
                 os.unlink(tmp_path)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("Failed to remove temp audio file %s: %s", tmp_path, exc)
 
         except Exception as e:
             logger.error(f"ElevenLabs TTS failed: {e}")

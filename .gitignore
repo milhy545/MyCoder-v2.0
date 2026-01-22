@@ -62,6 +62,9 @@ temp/
 tmp/
 
 .gemini/
+.codex/
+.claude/
+.kilocode/
 gha-creds-*.json
 history.json
 *.db

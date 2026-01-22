@@ -2,8 +2,6 @@
 Tests for PersistentRateLimiter.
 """
 
-import asyncio
-import json
 import shutil
 import tempfile
 import time
