@@ -2,7 +2,7 @@
 
 **Note:** This file is the primary source of truth for all AI agents (Claude Code, Jules/Gemini, Codex) working on this project. It defines the project's architecture, conventions, and operational protocols.
 
--## Recent Changes & Updates
+## Recent Changes & Updates
 *Agents: Add entries here when making significant changes*
 - 2026-01-21: Jules - Updated `src/mycoder/triage_agent.py` system prompt to align with "Goat Principle" v2 and improved JSON strictness; tests run: `poetry run pytest tests/unit/test_triage_agent.py`.
 - 2026-01-21: Codex - Addressed remaining CodeQL alerts (overlay_button guard, tts_engine await assignment, cleanup logging, explicit Azure STT returns, OAuth duration fallback, removed unused import); tests run: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
