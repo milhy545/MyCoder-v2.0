@@ -1,0 +1,12 @@
+---
+sourceLocationPrefix: /home/milhy777/Develop/MyCoder-v2.0/codeql-custom-queries-python
+baselineLinesOfCode: 0
+unicodeNewlines: false
+columnKind: utf32
+primaryLanguage: python
+creationMetadata:
+  cliVersion: 2.23.9
+  creationTime: 2026-01-22T16:08:03.211999519Z
+finalised: true
+overlayBaseDatabase: false
+overlayDatabase: false
