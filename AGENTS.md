@@ -4,6 +4,7 @@
 
 -## Recent Changes & Updates
 *Agents: Add entries here when making significant changes*
+- 2026-01-22: Codex - Fixed CodeQL non-callable overlay button alert with a callable guard; tests run: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
 - 2026-01-21: Jules - Updated `src/mycoder/triage_agent.py` system prompt to align with "Goat Principle" v2 and improved JSON strictness; tests run: `poetry run pytest tests/unit/test_triage_agent.py`.
 - 2026-01-21: Codex - Addressed remaining CodeQL alerts (overlay_button guard, tts_engine await assignment, cleanup logging, explicit Azure STT returns, OAuth duration fallback, removed unused import); tests run: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
 - 2026-01-21: Codex - Removed CodeQL-unused imports across providers/tests, tightened overlay_button callable guard, and re-exported aiohttp in api_providers; tests run: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
