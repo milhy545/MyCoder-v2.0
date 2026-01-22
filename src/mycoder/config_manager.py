@@ -406,9 +406,18 @@ class ConfigManager:
 
         destination = Path(path)
         try:
+            # Create a safe copy for serialization
+            config_dict = asdict(self.config)
+
+            # Redact sensitive keys to prevent leakage in config files
+            # The system will reload them from Environment variables
+            for provider in ["claude_anthropic", "claude_oauth", "gemini"]:
+                if provider in config_dict and "api_key" in config_dict[provider]:
+                    config_dict[provider]["api_key"] = ""
+
             destination.parent.mkdir(parents=True, exist_ok=True)
             with destination.open("w") as file_obj:
-                json.dump(asdict(self.config), file_obj, indent=2)
+                json.dump(config_dict, file_obj, indent=2)
             return True
         except PermissionError:
             logger.warning("Permission denied while saving config %s", destination)

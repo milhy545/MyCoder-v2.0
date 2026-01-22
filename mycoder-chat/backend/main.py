@@ -2,13 +2,14 @@
 MyCoder Chat Interface - FastAPI Backend
 Mini-orchestrator pro routing na HAS a LLM Server
 """
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Header, HTTPException, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 import json
 import logging
+import os
 from pathlib import Path
 from router import MiniOrchestrator
 from debug_utils import setup_debug_logging, timing_decorator
@@ -23,21 +24,22 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Configuration
+HAS_URL = os.getenv("HAS_URL", "http://192.168.0.58:8020")
+LLM_SERVER_URL = os.getenv("LLM_SERVER_URL", "http://llm-server.local:8000")
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000").split(",")
+AUTH_TOKEN = os.getenv("MYCODER_AUTH_TOKEN", "")  # If empty, auth is disabled
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Initialize orchestrator
-orchestrator = MiniOrchestrator()
-
-# Configuration - UPRAVIT PODLE TVÉHO PROSTŘEDÍ
-HAS_URL = "http://192.168.0.58:8020"  # <-- ZMĚŇ NA SVOU HAS IP
-LLM_SERVER_URL = "http://llm-server.local:8000"  # <-- ZMĚŇ NA LLM SERVER IP
 
 # Mount frontend
 frontend_path = Path(__file__).parent.parent / "frontend"

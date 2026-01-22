@@ -58,6 +58,7 @@ except ImportError:
         ) from inner_exc
 
 from .self_evolve.failure_memory import AdvisoryResult, FailureMemory
+from .security import FileSecurityManager, SecurityError
 
 logger = logging.getLogger(__name__)
 
@@ -156,9 +157,14 @@ class FileOperationTool(BaseTool):
             if not path:
                 raise ValueError("File path is required")
 
-            file_path = Path(path)
-            if context.working_directory:
-                file_path = context.working_directory / file_path
+            # Initialize Security Manager
+            security = FileSecurityManager(working_directory=context.working_directory)
+            
+            try:
+                # Securely resolve path (prevents traversal)
+                file_path = security.validate_path(path)
+            except SecurityError as e:
+                raise PermissionError(str(e))
 
             result_data = None
 
@@ -294,9 +300,22 @@ class FileEditTool(BaseTool):
                 error='Usage: /edit <path> "old" "new" [--all]',
             )
 
-        file_path = Path(path)
-        if context.working_directory:
-            file_path = context.working_directory / file_path
+        # Initialize Security Manager
+        security = FileSecurityManager(working_directory=context.working_directory)
+        
+        try:
+            # Securely resolve path
+            file_path = security.validate_path(path)
+        except SecurityError as e:
+            duration_ms = int((time.time() - start_time) * 1000)
+            self.error_count += 1
+            return ToolResult(
+                success=False,
+                data=None,
+                tool_name=self.name,
+                duration_ms=duration_ms,
+                error=str(e),
+            )
 
         edit_result = self.edit_tool.edit(
             str(file_path),

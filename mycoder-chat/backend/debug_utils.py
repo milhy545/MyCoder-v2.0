@@ -27,6 +27,23 @@ class ColoredFormatter(logging.Formatter):
         return super().format(record)
 
 
+class SensitiveDataFilter(logging.Filter):
+    """Filters out sensitive data like API keys from logs."""
+    
+    SENSITIVE_KEYS = {'api_key', 'token', 'password', 'secret', 'authorization'}
+    
+    def filter(self, record):
+        msg = str(record.msg)
+        # Basic heuristic string replacement
+        for key in self.SENSITIVE_KEYS:
+            if key in msg.lower():
+                # This is a simple safeguard. For JSON payloads, a parser would be better,
+                # but for general logging, masking the whole line or parts is safer.
+                # Here we simply mark it.
+                record.msg = f"[SENSITIVE DATA MASKED] (Original log contained '{key}')"
+        return True
+
+
 def setup_debug_logging(log_file: str = "mycoder_chat.log"):
     """Nastaví pokročilé logování"""
 
@@ -37,6 +54,9 @@ def setup_debug_logging(log_file: str = "mycoder_chat.log"):
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     file_handler.setFormatter(file_formatter)
+    
+    # Apply Sensitive Data Filter
+    file_handler.addFilter(SensitiveDataFilter())
 
     # Console handler s barvami
     console_handler = logging.StreamHandler()

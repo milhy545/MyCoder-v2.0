@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import socket
+import ipaddress
+from urllib.parse import urlparse
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -41,6 +44,12 @@ class WebFetcher:
         if cached:
             return {"success": True, "content": cached, "cached": True}
 
+        if not self._is_safe_url(url):
+            return {
+                "success": False,
+                "error": "Security Error: Access to private/local network blocked (SSRF Protection).",
+            }
+
         try:
             async with aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(total=30)
@@ -73,6 +82,35 @@ class WebFetcher:
 
         except aiohttp.ClientError as exc:
             return {"success": False, "error": str(exc)}
+
+    def _is_safe_url(self, url: str) -> bool:
+        """
+        Validate URL against SSRF attacks (block private/local IPs).
+        """
+        try:
+            # Handle scheme if missing (though usually handled by caller/user)
+            if not url.startswith(("http://", "https://")):
+                url = "https://" + url
+
+            parsed = urlparse(url)
+            hostname = parsed.hostname
+            if not hostname:
+                return False
+
+            # Resolve hostname to IP
+            # Note: This has a small TOCTOU risk (DNS rebinding), but standard basic protection
+            # Better protection requires custom DNS resolver or inspecting socket connection
+            ip_str = socket.gethostbyname(hostname)
+            ip = ipaddress.ip_address(ip_str)
+
+            # Block private, loopback, and link-local ranges
+            if ip.is_private or ip.is_loopback or ip.is_link_local:
+                return False
+
+            return True
+        except Exception:
+            # Fail safe on any resolution error
+            return False
 
     def _html_to_markdown(self, html: str) -> str:
         import re
