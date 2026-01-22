@@ -46,6 +46,41 @@ class ButtonState(Enum):
     ERROR = "error"
 
 
+def _raise_missing_gui() -> None:
+    raise ImportError(
+        "GUI overlay requires PyQt5. Install with: poetry install --extras speech"
+    )
+
+
+class _OverlayButtonFallback:
+    """Fallback overlay button when PyQt5 is unavailable."""
+
+    def __init__(self, *_args, **_kwargs) -> None:
+        _raise_missing_gui()
+
+
+class _OverlayAppFallback:
+    """Fallback overlay app when PyQt5 is unavailable."""
+
+    def __init__(self, *_args, **_kwargs) -> None:
+        _raise_missing_gui()
+
+    def show(self) -> None:
+        _raise_missing_gui()
+
+    def hide(self) -> None:
+        _raise_missing_gui()
+
+    def run(self) -> int:
+        _raise_missing_gui()
+
+    def quit(self) -> None:
+        _raise_missing_gui()
+
+
+OverlayButton = _OverlayButtonFallback
+OverlayApp = _OverlayAppFallback
+
 if PYQT_AVAILABLE:
 
     class OverlayButton(BaseWidget):
@@ -347,35 +382,3 @@ if PYQT_AVAILABLE:
         def quit(self) -> None:
             """Quit the application."""
             self.app.quit()
-
-else:
-
-    def _raise_missing_gui() -> None:
-        raise ImportError(
-            "GUI overlay requires PyQt5. "
-            "Install with: poetry install --extras speech"
-        )
-
-    class OverlayButton:
-        """Fallback overlay button when PyQt5 is unavailable."""
-
-        def __init__(self, *_args, **_kwargs) -> None:
-            _raise_missing_gui()
-
-    class OverlayApp:
-        """Fallback overlay app when PyQt5 is unavailable."""
-
-        def __init__(self, *_args, **_kwargs) -> None:
-            _raise_missing_gui()
-
-        def show(self) -> None:
-            _raise_missing_gui()
-
-        def hide(self) -> None:
-            _raise_missing_gui()
-
-        def run(self) -> int:
-            _raise_missing_gui()
-
-        def quit(self) -> None:
-            _raise_missing_gui()
