@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from mycoder.api_providers import APIProviderType, APIResponse
-from mycoder.triage_agent import triage_issues_with_llm
+from mycoder.triage_agent import main as triage_main, triage_issues_with_llm
 
 
 class TestTriageAgent(unittest.TestCase):
@@ -100,6 +100,36 @@ class TestTriageAgent(unittest.TestCase):
 
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["issue_number"], 2)
+
+    @patch("mycoder.triage_agent.triage_issues_with_llm")
+    @patch.dict(
+        "os.environ",
+        {"ISSUES_TO_TRIAGE": '[{"id": 1}]', "AVAILABLE_LABELS": "bug,enhancement"},
+    )
+    @patch("builtins.print")
+    def test_main(self, mock_print, mock_triage):
+        mock_triage.return_value = [{"issue_number": 1, "labels": ["bug"]}]
+
+        # We need to mock asyncio.run because main calls it.
+        # But wait, main calls asyncio.run(triage_issues_with_llm(...)).
+        # Since we mocked triage_issues_with_llm, asyncio.run will try to run the mock?
+        # If triage_issues_with_llm is mocked, main sees a Mock object. asyncio.run(Mock()) fails.
+        # We need triage_issues_with_llm to be an async function (or return a coroutine).
+
+        async def async_mock(*args, **kwargs):
+            return [{"issue_number": 1, "labels": ["bug"]}]
+
+        mock_triage.side_effect = async_mock
+
+        triage_main()
+
+        mock_triage.assert_called_once()
+        mock_print.assert_called_once()
+        # Verify print was called with JSON
+        import json
+
+        args, _ = mock_print.call_args
+        self.assertIn('"issue_number": 1', args[0])
 
 
 if __name__ == "__main__":
