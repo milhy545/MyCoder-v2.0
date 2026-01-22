@@ -213,7 +213,7 @@ async def triage_issues_with_llm(
         return []
 
 
-def main():
+def main() -> None:
     # Read from environment variables
     issues_env = os.environ.get("ISSUES_TO_TRIAGE")
     labels_env = os.environ.get("AVAILABLE_LABELS")
