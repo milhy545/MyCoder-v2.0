@@ -3,7 +3,8 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from mycoder.api_providers import APIProviderType, APIResponse
-from mycoder.triage_agent import main as triage_main, triage_issues_with_llm
+from mycoder.triage_agent import main as triage_main
+from mycoder.triage_agent import triage_issues_with_llm
 
 
 class TestTriageAgent(unittest.TestCase):

@@ -32,7 +32,7 @@ class TestEnhancedMyCoderNetwork(unittest.TestCase):
     def test_get_network_target_remote(self):
         mycoder = EnhancedMyCoderV2(
             config={
-                "ollama_local_enabled": False,
+                "ollama_local": {"enabled": False},
                 "ollama_remote_urls": ["http://remote-server:8080"],
             }
         )
@@ -42,7 +42,7 @@ class TestEnhancedMyCoderNetwork(unittest.TestCase):
 
     def test_get_network_target_fallback(self):
         mycoder = EnhancedMyCoderV2(
-            config={"ollama_local_enabled": False, "ollama_remote_urls": []}
+            config={"ollama_local": {"enabled": False}, "ollama_remote_urls": []}
         )
         host, port = mycoder._get_network_target()
         self.assertEqual(host, "1.1.1.1")

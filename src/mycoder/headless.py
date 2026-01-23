@@ -7,18 +7,18 @@ Output: JSONL (structured logging)
 Input: stdin or args
 """
 
-import sys
-import json
-import asyncio
-import logging
 import argparse
+import asyncio
+import json
+import logging
+import sys
 from pathlib import Path
 
 # Ensure src is in path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from mycoder.enhanced_mycoder_v2 import EnhancedMyCoderV2
 from mycoder.context_manager import ContextManager
+from mycoder.enhanced_mycoder_v2 import EnhancedMyCoderV2
 
 
 class JsonlHandler(logging.Handler):

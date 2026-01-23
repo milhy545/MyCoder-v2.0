@@ -76,14 +76,14 @@ from .context_manager import ContextManager
 from .enhanced_mycoder import EnhancedMyCoder
 from .enhanced_mycoder_v2 import EnhancedMyCoderV2
 from .mycoder import MyCoder
+from .security import FileSecurityManager, SecurityError
+from .storage import StorageManager
 from .tool_registry import (
     ToolExecutionContext,
     ToolRegistry,
     ToolResult,
     get_tool_registry,
 )
-from .storage import StorageManager
-from .security import FileSecurityManager, SecurityError
 
 # Version info
 __version__ = "2.2.0"

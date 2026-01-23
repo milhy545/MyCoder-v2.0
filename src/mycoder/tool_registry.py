@@ -57,8 +57,8 @@ except ImportError:
             "Unable to import tool core components required by tool_registry."
         ) from inner_exc
 
-from .self_evolve.failure_memory import AdvisoryResult, FailureMemory
 from .security import FileSecurityManager, SecurityError
+from .self_evolve.failure_memory import AdvisoryResult, FailureMemory
 
 logger = logging.getLogger(__name__)
 
@@ -157,12 +157,17 @@ class FileOperationTool(BaseTool):
             if not path:
                 raise ValueError("File path is required")
 
+            # Join with working directory if relative
+            file_path_obj = Path(path)
+            if context.working_directory and not file_path_obj.is_absolute():
+                file_path_obj = context.working_directory / file_path_obj
+
             # Initialize Security Manager
             security = FileSecurityManager(working_directory=context.working_directory)
-            
+
             try:
                 # Securely resolve path (prevents traversal)
-                file_path = security.validate_path(path)
+                file_path = security.validate_path(file_path_obj)
             except SecurityError as e:
                 raise PermissionError(str(e))
 
@@ -300,12 +305,17 @@ class FileEditTool(BaseTool):
                 error='Usage: /edit <path> "old" "new" [--all]',
             )
 
+        # Join with working directory if relative
+        file_path_obj = Path(path)
+        if context.working_directory and not file_path_obj.is_absolute():
+            file_path_obj = context.working_directory / file_path_obj
+
         # Initialize Security Manager
         security = FileSecurityManager(working_directory=context.working_directory)
-        
+
         try:
             # Securely resolve path
-            file_path = security.validate_path(path)
+            file_path = security.validate_path(file_path_obj)
         except SecurityError as e:
             duration_ms = int((time.time() - start_time) * 1000)
             self.error_count += 1

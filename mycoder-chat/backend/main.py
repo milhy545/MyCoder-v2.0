@@ -2,17 +2,26 @@
 MyCoder Chat Interface - FastAPI Backend
 Mini-orchestrator pro routing na HAS a LLM Server
 """
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Header, HTTPException, Depends
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
-from fastapi.middleware.cors import CORSMiddleware
-import httpx
+
 import json
 import logging
 import os
 from pathlib import Path
-from router import MiniOrchestrator
+
+import httpx
 from debug_utils import setup_debug_logging, timing_decorator
+from fastapi import (
+    Depends,
+    FastAPI,
+    Header,
+    HTTPException,
+    WebSocket,
+    WebSocketDisconnect,
+)
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from router import MiniOrchestrator
 
 # Logging setup
 setup_debug_logging()
@@ -21,13 +30,15 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="MyCoder Chat - J.A.R.V.I.S.",
     description="Lightweight chat interface s mini-orchestrací",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # Configuration
 HAS_URL = os.getenv("HAS_URL", "http://192.168.0.58:8020")
 LLM_SERVER_URL = os.getenv("LLM_SERVER_URL", "http://llm-server.local:8000")
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000").split(",")
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000"
+).split(",")
 AUTH_TOKEN = os.getenv("MYCODER_AUTH_TOKEN", "")  # If empty, auth is disabled
 
 # CORS middleware
@@ -40,6 +51,7 @@ app.add_middleware(
 )
 
 # Initialize orchestrator
+orchestrator = MiniOrchestrator()
 
 # Mount frontend
 frontend_path = Path(__file__).parent.parent / "frontend"
@@ -57,11 +69,7 @@ async def get_chat():
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "has_url": HAS_URL,
-        "llm_server_url": LLM_SERVER_URL
-    }
+    return {"status": "healthy", "has_url": HAS_URL, "llm_server_url": LLM_SERVER_URL}
 
 
 @app.websocket("/ws")
@@ -81,37 +89,38 @@ async def websocket_endpoint(websocket: WebSocket):
             logger.info(f"Routing decision: {routing}")
 
             # Pošli routing info uživateli (pro transparentnost)
-            await websocket.send_json({
-                "type": "routing_info",
-                "routing": routing
-            })
+            await websocket.send_json({"type": "routing_info", "routing": routing})
 
             # Zavolej příslušný backend
             try:
-                if routing['target'] == 'has':
+                if routing["target"] == "has":
                     response = await call_has(user_message, routing)
-                elif routing['target'] == 'llm_server':
+                elif routing["target"] == "llm_server":
                     response = await call_llm_server(user_message, routing)
                 else:
                     response = {
                         "content": f"❌ Unknown target: {routing['target']}",
-                        "metadata": {}
+                        "metadata": {},
                     }
 
                 # Pošli odpověď uživateli
-                await websocket.send_json({
-                    "type": "response",
-                    "content": response.get("content", "Prázdná odpověď"),
-                    "metadata": response.get("metadata", {})
-                })
+                await websocket.send_json(
+                    {
+                        "type": "response",
+                        "content": response.get("content", "Prázdná odpověď"),
+                        "metadata": response.get("metadata", {}),
+                    }
+                )
 
             except Exception as e:
                 logger.error(f"Error processing request: {e}")
-                await websocket.send_json({
-                    "type": "error",
-                    "content": f"❌ Chyba při zpracování: {str(e)}",
-                    "metadata": {"error": str(e)}
-                })
+                await websocket.send_json(
+                    {
+                        "type": "error",
+                        "content": f"❌ Chyba při zpracování: {str(e)}",
+                        "metadata": {"error": str(e)},
+                    }
+                )
 
     except WebSocketDisconnect:
         logger.info("WebSocket client disconnected")
@@ -126,16 +135,13 @@ async def call_has(message: str, routing: dict) -> dict:
         async with httpx.AsyncClient(timeout=60.0) as client:
             payload = {
                 "message": message,
-                "service": routing['service'],
-                "mode": routing['mode'],
-                "model": routing.get('model', 'auto')
+                "service": routing["service"],
+                "mode": routing["mode"],
+                "model": routing.get("model", "auto"),
             }
 
             logger.info(f"Calling HAS: {HAS_URL}/mcp")
-            response = await client.post(
-                f"{HAS_URL}/mcp",
-                json=payload
-            )
+            response = await client.post(f"{HAS_URL}/mcp", json=payload)
 
             if response.status_code == 200:
                 return response.json()
@@ -143,20 +149,20 @@ async def call_has(message: str, routing: dict) -> dict:
                 logger.error(f"HAS error: {response.status_code} - {response.text}")
                 return {
                     "content": f"❌ HAS vrátil chybu: {response.status_code}",
-                    "metadata": {"error": response.text}
+                    "metadata": {"error": response.text},
                 }
 
     except httpx.ConnectError:
         logger.error(f"Cannot connect to HAS at {HAS_URL}")
         return {
             "content": f"❌ Nelze se připojit k HAS ({HAS_URL}). Zkontroluj že server běží.",
-            "metadata": {"error": "connection_refused"}
+            "metadata": {"error": "connection_refused"},
         }
     except Exception as e:
         logger.error(f"HAS call failed: {e}")
         return {
             "content": f"❌ Chyba při volání HAS: {str(e)}",
-            "metadata": {"error": str(e)}
+            "metadata": {"error": str(e)},
         }
 
 
@@ -167,38 +173,36 @@ async def call_llm_server(message: str, routing: dict) -> dict:
         async with httpx.AsyncClient(timeout=300.0) as client:
             payload = {
                 "message": message,
-                "service": routing['service'],
-                "mode": routing['mode']
+                "service": routing["service"],
+                "mode": routing["mode"],
             }
 
             logger.info(f"Calling LLM Server: {LLM_SERVER_URL}/process")
-            response = await client.post(
-                f"{LLM_SERVER_URL}/process",
-                json=payload
-            )
+            response = await client.post(f"{LLM_SERVER_URL}/process", json=payload)
 
             if response.status_code == 200:
                 return response.json()
             else:
                 return {
                     "content": f"❌ LLM Server error: {response.status_code}",
-                    "metadata": {"error": response.text}
+                    "metadata": {"error": response.text},
                 }
 
     except httpx.ConnectError:
         return {
             "content": f"❌ LLM Server nedostupný ({LLM_SERVER_URL})",
-            "metadata": {"error": "connection_refused"}
+            "metadata": {"error": "connection_refused"},
         }
     except Exception as e:
         logger.error(f"LLM Server call failed: {e}")
         return {
             "content": f"❌ Chyba LLM Server: {str(e)}",
-            "metadata": {"error": str(e)}
+            "metadata": {"error": str(e)},
         }
 
 
 # ========== DEBUG ENDPOINTS ==========
+
 
 @app.get("/debug/routing/{message}")
 async def debug_routing(message: str):
@@ -207,7 +211,7 @@ async def debug_routing(message: str):
     return {
         "message": message,
         "routing_decision": routing,
-        "patterns_matched": orchestrator._debug_get_matched_patterns(message)
+        "patterns_matched": orchestrator._debug_get_matched_patterns(message),
     }
 
 
@@ -217,10 +221,7 @@ async def get_logs(lines: int = 100):
     try:
         with open("mycoder_chat.log", "r") as f:
             all_lines = f.readlines()
-            return {
-                "total_lines": len(all_lines),
-                "last_lines": all_lines[-lines:]
-            }
+            return {"total_lines": len(all_lines), "last_lines": all_lines[-lines:]}
     except FileNotFoundError:
         return {"error": "Log file not found"}
 
@@ -231,7 +232,7 @@ async def get_stats():
     return {
         "total_requests": orchestrator.total_requests,
         "routing_breakdown": orchestrator.routing_stats,
-        "error_count": 0
+        "error_count": 0,
     }
 
 
@@ -243,15 +244,14 @@ async def test_has_connection():
             response = await client.get(f"{HAS_URL}/health")
             return {
                 "status": "connected",
-                "has_response": response.json() if response.status_code == 200 else None,
-                "status_code": response.status_code
+                "has_response": (
+                    response.json() if response.status_code == 200 else None
+                ),
+                "status_code": response.status_code,
             }
     except Exception:
         logger.exception("HAS health check failed")
-        return {
-            "status": "failed",
-            "error": "HAS health check failed"
-        }
+        return {"status": "failed", "error": "HAS health check failed"}
 
 
 @app.post("/debug/test-llm-server")
@@ -262,17 +262,17 @@ async def test_llm_connection():
             response = await client.get(f"{LLM_SERVER_URL}/health")
             return {
                 "status": "connected",
-                "llm_response": response.json() if response.status_code == 200 else None,
-                "status_code": response.status_code
+                "llm_response": (
+                    response.json() if response.status_code == 200 else None
+                ),
+                "status_code": response.status_code,
             }
     except Exception:
         logger.exception("LLM server health check failed")
-        return {
-            "status": "failed",
-            "error": "LLM server health check failed"
-        }
+        return {"status": "failed", "error": "LLM server health check failed"}
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

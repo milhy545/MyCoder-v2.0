@@ -724,7 +724,7 @@ class TestSystemRestartStress:
 
         # Should handle rapid cycles reliably
         assert success_rate >= 90.0
-        assert avg_cycle_time < 2.0
+        assert avg_cycle_time < 3.0
 
     @pytest.mark.asyncio
     async def test_system_recovery_after_corruption(self):

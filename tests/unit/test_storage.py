@@ -1,7 +1,9 @@
 import sqlite3
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-from mycoder.storage import StorageManager, StorageError
+
+import pytest
+
+from mycoder.storage import StorageError, StorageManager
 
 
 class FakeTime:

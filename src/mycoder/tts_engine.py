@@ -14,12 +14,12 @@ import asyncio
 import logging
 from typing import Any, Dict, Optional
 
-from .providers.tts.local import Pyttsx3Provider, EspeakProvider
-from .providers.tts.gtts_provider import GTTSProvider
 from .providers.tts.azure import AzureTTSProvider
-from .providers.tts.polly import AmazonPollyProvider
-from .providers.tts.elevenlabs import ElevenLabsProvider
 from .providers.tts.base import BaseTTSProvider
+from .providers.tts.elevenlabs import ElevenLabsProvider
+from .providers.tts.gtts_provider import GTTSProvider
+from .providers.tts.local import EspeakProvider, Pyttsx3Provider
+from .providers.tts.polly import AmazonPollyProvider
 
 logger = logging.getLogger(__name__)
 

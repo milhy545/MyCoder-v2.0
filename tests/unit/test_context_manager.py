@@ -1,6 +1,5 @@
 import json
 
-
 from mycoder.context_manager import ContextManager
 
 

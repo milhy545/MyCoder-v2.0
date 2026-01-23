@@ -117,6 +117,7 @@ class ModelRouter:
                 if adapter and await adapter.initialize():
                     self.adapters[model_info.name] = adapter
                     logger.info(f"Initialized adapter: {model_info.name}")
+
     # ========================================================================
     # Main Routing API
     # ========================================================================
@@ -255,7 +256,11 @@ class ModelRouter:
         )
 
         return await self._orchestrate_loop(
-            prompt, budget or self.default_budget, max_handoffs, stream_callback, context
+            prompt,
+            budget or self.default_budget,
+            max_handoffs,
+            stream_callback,
+            context,
         )
 
     async def _orchestrate_loop(
@@ -289,18 +294,18 @@ class ModelRouter:
 
         logger.warning(f"Max handoffs ({max_handoffs}) reached")
         if result is None:
-             # Should not happen if max_handoffs >= 0
-             return RouterResult(
-                 success=False,
-                 content="Loop did not execute",
-                 model_role=ModelRole.WORKER,
-                 model_name="none",
-                 cost_usd=0.0,
-                 duration_ms=0,
-                 tokens_used=0,
-                 task_context=context,
-                 error="Internal loop error",
-             )
+            # Should not happen if max_handoffs >= 0
+            return RouterResult(
+                success=False,
+                content="Loop did not execute",
+                model_role=ModelRole.WORKER,
+                model_name="none",
+                cost_usd=0.0,
+                duration_ms=0,
+                tokens_used=0,
+                task_context=context,
+                error="Internal loop error",
+            )
         return result
 
     # ========================================================================

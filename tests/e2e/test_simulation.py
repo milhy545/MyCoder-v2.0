@@ -17,14 +17,16 @@ logger = logging.getLogger(__name__)
 MOCK_SERVER_PORT = 11435  # Use non-standard port to avoid conflict
 MOCK_SERVER_HOST = "localhost"
 BASE_CONFIG = {
-    "ollama_local_enabled": True,
-    "ollama_local_model": "tinyllama",
-    "ollama_local_base_url": f"http://{MOCK_SERVER_HOST}:{MOCK_SERVER_PORT}",
+    "ollama_local": {
+        "enabled": True,
+        "model": "tinyllama",
+        "base_url": f"http://{MOCK_SERVER_HOST}:{MOCK_SERVER_PORT}",
+    },
     "network_check_host": MOCK_SERVER_HOST,
     "network_check_port": MOCK_SERVER_PORT,
-    "claude_anthropic_enabled": False,
-    "claude_oauth_enabled": False,
-    "gemini_enabled": False,
+    "claude_anthropic": {"enabled": False},
+    "claude_oauth": {"enabled": False},
+    "gemini": {"enabled": False},
 }
 
 

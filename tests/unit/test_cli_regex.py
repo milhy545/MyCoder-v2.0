@@ -1,9 +1,10 @@
 import unittest
+
 from mycoder.cli_interactive import (
-    THINKING_REGEX,
     MD_CODE_BLOCK_REGEX,
-    MD_INLINE_CODE_REGEX,
     MD_HEADER_REGEX,
+    MD_INLINE_CODE_REGEX,
+    THINKING_REGEX,
 )
 
 

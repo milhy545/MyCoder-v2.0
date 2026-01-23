@@ -35,20 +35,20 @@ try:
         APIProviderType,
         APIResponse,
     )
+    from .context_manager import ContextManager
     from .mcp_bridge import MCPBridge
+    from .security import FileSecurityManager, SecurityError
+    from .storage import StorageManager
     from .tool_registry import (
         ToolExecutionContext,
         get_tool_registry,
     )
-    from .context_manager import ContextManager
-    from .storage import StorageManager
-    from .security import FileSecurityManager, SecurityError
 except ImportError:
     from adaptive_modes import AdaptiveModeManager, OperationalMode  # type: ignore
-    from mcp_bridge import MCPBridge  # type: ignore
     from context_manager import ContextManager
-    from storage import StorageManager
+    from mcp_bridge import MCPBridge  # type: ignore
     from security import FileSecurityManager, SecurityError
+    from storage import StorageManager
 
     from mycoder.api_providers import (  # type: ignore
         APIProviderConfig,

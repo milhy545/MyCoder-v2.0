@@ -128,7 +128,9 @@ class IntentClassifier:
             suggested_steps=suggested_steps,
         )
 
-    def _estimate_tokens(self, prompt: str, file_context: Optional[List[str]] = None) -> int:
+    def _estimate_tokens(
+        self, prompt: str, file_context: Optional[List[str]] = None
+    ) -> int:
         """Estimate total tokens for the task."""
         # Prompt tokens (rough: 4 chars per token)
         prompt_tokens = len(prompt) // 4
@@ -212,4 +214,3 @@ class IntentClassifier:
                 "Reviewer: Analyze codebase",
                 "Reviewer: Generate report",
             ]
-

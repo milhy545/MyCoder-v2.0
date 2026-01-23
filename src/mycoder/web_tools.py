@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
 import socket
-import ipaddress
-from urllib.parse import urlparse
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 import aiohttp
 
