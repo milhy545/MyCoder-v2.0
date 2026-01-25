@@ -132,6 +132,41 @@ class TestTriageAgent(unittest.TestCase):
         args, _ = mock_print.call_args
         self.assertIn('"issue_number": 1', args[0])
 
+    @patch("mycoder.triage_agent.APIProviderRouter")
+    @patch("mycoder.triage_agent.ContextManager")
+    def test_prompt_construction(self, mock_ctx_mgr, mock_router_cls):
+        # Mock Context
+        mock_ctx = MagicMock()
+        mock_ctx.config = {}
+        mock_ctx_mgr.return_value.get_context.return_value = mock_ctx
+
+        # Mock Router response
+        mock_router_instance = mock_router_cls.return_value
+
+        # We don't care about the response content for this test, just that it succeeds
+        async def mock_query(prompt, **kwargs):
+            return APIResponse(
+                success=True,
+                content="[]",
+                provider=APIProviderType.OLLAMA_LOCAL,
+            )
+
+        mock_router_instance.query.side_effect = mock_query
+
+        issues = [{"number": 1, "title": "Test"}]
+        labels = ["bug"]
+
+        asyncio.run(triage_issues_with_llm(issues, labels))
+
+        # Verify prompt content
+        args, kwargs = mock_router_instance.query.call_args
+        prompt_sent = kwargs.get("prompt")
+
+        self.assertIn("**Available Labels:**\nbug", prompt_sent)
+        self.assertIn('"number": 1', prompt_sent)
+        self.assertIn("Functionality > Aesthetics", prompt_sent)  # Check for Goat Principle
+        self.assertNotIn("Final Command Construction", prompt_sent)  # Check for sanitized prompt
+
 
 if __name__ == "__main__":
     unittest.main()
