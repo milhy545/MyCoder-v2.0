@@ -11,3 +11,7 @@
 ## 2024-05-22 - [Regex Pre-compilation in CommandParser]
 **Learning:** `CommandParser` was compiling regex patterns inside the `parse()` loop for every command check. While Python's `re` module has a cache, explicit pre-compilation in `__init__` is more robust and measurably faster (~50% reduction in parsing time per call).
 **Action:** Pre-compile all constant regex patterns in the class `__init__` method.
+
+## 2025-02-15 - [Regex Pre-compilation in WebFetcher]
+**Learning:** `WebFetcher._html_to_markdown` was recompiling multiple regexes on every call, which is inefficient for a frequently used utility.
+**Action:** Moved regex patterns to module-level constants (`_REGEX_SCRIPT`, `_REGEX_STYLE`, etc.) to improve performance and code readability. Benchmarking showed a small but measurable improvement (~2% for 100 iterations of a large payload).

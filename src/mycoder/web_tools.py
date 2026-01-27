@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import ipaddress
 import json
+import re
 import socket
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -13,6 +14,23 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 import aiohttp
+
+# Pre-compiled regex patterns for HTML cleanup
+_REGEX_SCRIPT = re.compile(r"<script[^>]*>[\s\S]*?</script[^>]*>", re.I)
+_REGEX_STYLE = re.compile(r"<style[^>]*>[\s\S]*?</style>", re.I)
+_REGEX_H1 = re.compile(r"<h1[^>]*>(.*?)</h1>", re.I)
+_REGEX_H2 = re.compile(r"<h2[^>]*>(.*?)</h2>", re.I)
+_REGEX_H3 = re.compile(r"<h3[^>]*>(.*?)</h3>", re.I)
+_REGEX_P = re.compile(r"<p[^>]*>(.*?)</p>", re.I | re.S)
+_REGEX_BR = re.compile(r"<br\s*/?>", re.I)
+_REGEX_LI = re.compile(r"<li[^>]*>(.*?)</li>", re.I)
+_REGEX_A = re.compile(r'<a[^>]*href="([^"]*)"[^>]*>(.*?)</a>', re.I)
+_REGEX_CODE = re.compile(r"<code[^>]*>(.*?)</code>", re.I)
+_REGEX_PRE = re.compile(r"<pre[^>]*>(.*?)</pre>", re.I | re.S)
+_REGEX_STRONG = re.compile(r"<strong[^>]*>(.*?)</strong>", re.I)
+_REGEX_EM = re.compile(r"<em[^>]*>(.*?)</em>", re.I)
+_REGEX_TAGS = re.compile(r"<[^>]+>")
+_REGEX_NEWLINES = re.compile(r"\n\s*\n\s*\n")
 
 
 @dataclass
@@ -113,33 +131,25 @@ class WebFetcher:
             return False
 
     def _html_to_markdown(self, html: str) -> str:
-        import re
+        # Optimized with pre-compiled regex patterns
+        html = _REGEX_SCRIPT.sub("", html)
+        html = _REGEX_STYLE.sub("", html)
 
-        html = re.sub(r"<script[^>]*>[\s\S]*?</script[^>]*>", "", html, flags=re.I)
-        html = re.sub(r"<style[^>]*>[\s\S]*?</style>", "", html, flags=re.I)
+        html = _REGEX_H1.sub(r"# \1\n", html)
+        html = _REGEX_H2.sub(r"## \1\n", html)
+        html = _REGEX_H3.sub(r"### \1\n", html)
+        html = _REGEX_P.sub(r"\1\n\n", html)
+        html = _REGEX_BR.sub("\n", html)
+        html = _REGEX_LI.sub(r"- \1\n", html)
+        html = _REGEX_A.sub(r"[\2](\1)", html)
+        html = _REGEX_CODE.sub(r"`\1`", html)
+        html = _REGEX_PRE.sub(r"```\n\1\n```", html)
+        html = _REGEX_STRONG.sub(r"**\1**", html)
+        html = _REGEX_EM.sub(r"*\1*", html)
 
-        html = re.sub(r"<h1[^>]*>(.*?)</h1>", r"# \1\n", html, flags=re.I)
-        html = re.sub(r"<h2[^>]*>(.*?)</h2>", r"## \1\n", html, flags=re.I)
-        html = re.sub(r"<h3[^>]*>(.*?)</h3>", r"### \1\n", html, flags=re.I)
-        html = re.sub(r"<p[^>]*>(.*?)</p>", r"\1\n\n", html, flags=re.I | re.S)
-        html = re.sub(r"<br\s*/?>", "\n", html, flags=re.I)
-        html = re.sub(r"<li[^>]*>(.*?)</li>", r"- \1\n", html, flags=re.I)
-        html = re.sub(
-            r'<a[^>]*href="([^"]*)"[^>]*>(.*?)</a>',
-            r"[\2](\1)",
-            html,
-            flags=re.I,
-        )
-        html = re.sub(r"<code[^>]*>(.*?)</code>", r"`\1`", html, flags=re.I)
-        html = re.sub(
-            r"<pre[^>]*>(.*?)</pre>", r"```\n\1\n```", html, flags=re.I | re.S
-        )
-        html = re.sub(r"<strong[^>]*>(.*?)</strong>", r"**\1**", html, flags=re.I)
-        html = re.sub(r"<em[^>]*>(.*?)</em>", r"*\1*", html, flags=re.I)
+        html = _REGEX_TAGS.sub("", html)
 
-        html = re.sub(r"<[^>]+>", "", html)
-
-        html = re.sub(r"\n\s*\n\s*\n", "\n\n", html)
+        html = _REGEX_NEWLINES.sub("\n\n", html)
         html = html.strip()
 
         return html[:50000]
