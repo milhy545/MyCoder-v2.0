@@ -5,6 +5,7 @@
 ## Recent Changes & Updates
 *Agents: Add entries here when making significant changes*
 
+- 2026-01-23: Jules - Updated `src/mycoder/triage_agent.py` to use new prompt format, removed conflicting shell command generation instruction to ensure strictly JSON output; tests run: `poetry run pytest tests/unit/test_triage_agent.py`.
 - 2026-01-23: Jules - Performed comprehensive security audit and hardening: redacted API keys in config saves, enforced `FileSecurityManager` in all file tools, implemented SSRF protection in `WebFetcher`, and secured web backend (CORS/ENV URLs); fixed path resolution bugs in tool registry and updated test suites; merged all branches and cleaned up repository; tests run: full suite (472 passed).
 - 2026-01-22: Codex - Disabled legacy `python-app.yml` push/PR triggers to avoid failing workflow runs; tests run: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
 - 2026-01-22: Codex - Fixed CodeQL non-callable overlay button alert with a callable guard; tests run: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
