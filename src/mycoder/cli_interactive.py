@@ -5,6 +5,7 @@ Left: Chat History (Auto-scrolling Markdown). Right: Activity Panel (Live Activi
 """
 
 import asyncio
+import functools
 import json
 import os
 import re
@@ -101,6 +102,50 @@ MD_CODE_BLOCK_REGEX = re.compile(r"```[\s\S]*?```")
 MD_INLINE_CODE_REGEX = re.compile(r"`[^`]*`")
 MD_STYLE_REGEX = re.compile(r"[*_~`]")
 MD_HEADER_REGEX = re.compile(r"^#+\s+", flags=re.MULTILINE)
+
+
+@functools.lru_cache(maxsize=128)
+def _cached_render_ai_content(content: str, show_thinking: bool) -> Group:
+    """Cache expensive Markdown rendering for AI messages."""
+    parts = THINKING_REGEX.split(content)
+    ai_content_group = []
+
+    for part in parts:
+        if part.startswith("<thinking>") and part.endswith("</thinking>"):
+            thought_content = part[10:-11].strip()
+            if not thought_content:
+                continue
+
+            if show_thinking:
+                # Expanded view
+                ai_content_group.append(
+                    Panel(
+                        Markdown(thought_content),
+                        title="Chain of Thought",
+                        border_style="dim blue",
+                        title_align="left",
+                        expand=False,
+                    )
+                )
+            else:
+                # Collapsed view
+                summary = thought_content[:60].replace("\n", " ") + "..."
+                ai_content_group.append(
+                    Panel(
+                        Text(f"Thinking: {summary}", style="dim italic blue"),
+                        border_style="dim blue",
+                        expand=False,
+                    )
+                )
+        else:
+            if not part.strip():
+                continue
+            try:
+                ai_content_group.append(Markdown(part))
+            except Exception:
+                ai_content_group.append(Text(part, style="cyan"))
+
+    return Group(*ai_content_group)
 
 
 class ConfigWrapper:
@@ -1865,51 +1910,7 @@ class InteractiveCLI:
             elif role == "ai":
                 header_style = "bold cyan"
                 header_label = "MyCoder AI"
-
-                # Split content into thinking and response blocks
-                # Bolt Optimization: Use pre-compiled regex
-                parts = THINKING_REGEX.split(content)
-
-                ai_content_group = []
-
-                for part in parts:
-                    if part.startswith("<thinking>") and part.endswith("</thinking>"):
-                        thought_content = part[10:-11].strip()
-                        if not thought_content:
-                            continue
-
-                        if self.show_thinking:
-                            # Expanded view
-                            ai_content_group.append(
-                                Panel(
-                                    Markdown(thought_content),
-                                    title="Chain of Thought",
-                                    border_style="dim blue",
-                                    title_align="left",
-                                    expand=False,
-                                )
-                            )
-                        else:
-                            # Collapsed view
-                            summary = thought_content[:60].replace("\n", " ") + "..."
-                            ai_content_group.append(
-                                Panel(
-                                    Text(
-                                        f"Thinking: {summary}", style="dim italic blue"
-                                    ),
-                                    border_style="dim blue",
-                                    expand=False,
-                                )
-                            )
-                    else:
-                        if not part.strip():
-                            continue
-                        try:
-                            ai_content_group.append(Markdown(part))
-                        except Exception:
-                            ai_content_group.append(Text(part, style="cyan"))
-
-                body_renderable = Group(*ai_content_group)
+                body_renderable = _cached_render_ai_content(content, self.show_thinking)
 
             else:  # system
                 header_style = "bold yellow"
