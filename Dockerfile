@@ -5,6 +5,7 @@ FROM python:3.11-slim-bookworm
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install system dependencies
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
@@ -12,16 +13,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Ollama
-RUN curl -fsSL https://ollama.ai/install.sh -o /tmp/ollama_install.sh && \
-    sh /tmp/ollama_install.sh && \
-    rm /tmp/ollama_install.sh
+RUN curl -fsSL https://ollama.ai/install.sh | sh
 
 # Create app directory
 WORKDIR /app
 
 # Install Poetry with pinned version
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir poetry==1.8.2
+RUN pip install --no-cache-dir poetry==1.8.2
 
 # Copy project files
 COPY pyproject.toml poetry.lock* ./
@@ -41,7 +39,7 @@ EXPOSE 8000 11434
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD ["curl", "-f", "http://localhost:11434/api/tags"]
+    CMD curl -f http://localhost:11434/api/tags || exit 1
 
 # Start script
 COPY docker-entrypoint.sh /app/
