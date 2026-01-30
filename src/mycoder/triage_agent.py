@@ -42,7 +42,7 @@ Analyze the provided GitHub issues and assign labels based on the project's cont
 ## Critical Constraints (System Safety)
 
 1.  **Strict JSON Only:** Your final output must be **only** the JSON array. No markdown, no "Here is the JSON", no fluff.
-2.  **Label Discipline:** Use ONLY the labels provided in `AVAILABLE_LABELS`. Do not hallucinate new labels.
+2.  **Label Discipline:** Use ONLY the labels provided in `{available_labels}`. Do not hallucinate new labels.
 3.  **Variable Safety:** Reference variables strictly.
 4.  **No Command Injection:** Do not use command substitution `$()` in generated shell commands.
 
@@ -55,6 +55,8 @@ Analyze the provided GitHub issues and assign labels based on the project's cont
 **Issues to Triage:**
 {issues_to_triage}
 
+
+**Output Target:** `{github_env}`
 
 ## Analysis Protocol
 
@@ -77,7 +79,7 @@ Iterate through issues. If an issue is clear, assign labels. If unclear, skip it
 
 ## Output Specification
 
-Write a JSON array to the output. Format:
+Write a JSON array to the output file. Format:
 
 ```json
 [
@@ -164,7 +166,9 @@ async def triage_issues_with_llm(
 
     try:
         prompt = JULES_SYSTEM_PROMPT.format(
-            available_labels=labels_str, issues_to_triage=issues_json
+            available_labels=labels_str,
+            issues_to_triage=issues_json,
+            github_env=os.environ.get("GITHUB_ENV", "stdout"),
         )
     except Exception as e:
         logger.error(f"Failed to format prompt: {e}")
