@@ -56,8 +56,7 @@ class FailureMemory:
 
     def _init_database(self) -> None:
         with self._get_connection() as conn:
-            conn.executescript(
-                """
+            conn.executescript("""
                 CREATE TABLE IF NOT EXISTS failure_records (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     tool_signature TEXT NOT NULL,
@@ -78,8 +77,7 @@ class FailureMemory:
                     ON failure_records(error_type, updated_at);
                 CREATE INDEX IF NOT EXISTS idx_failure_tool
                     ON failure_records(tool_name);
-                """
-            )
+                """)
             conn.commit()
 
     @contextmanager
@@ -352,8 +350,7 @@ class FailureMemory:
 
     def get_stats(self) -> Dict[str, Any]:
         with self._get_connection() as conn:
-            cursor = conn.execute(
-                """
+            cursor = conn.execute("""
                 SELECT
                     COUNT(*) as total,
                     SUM(CASE WHEN error_type = 'HARD' THEN 1 ELSE 0 END) as hard_errors,
@@ -361,8 +358,7 @@ class FailureMemory:
                     SUM(CASE WHEN evolution_status = 'PENDING' THEN 1 ELSE 0 END) as pending,
                     SUM(CASE WHEN evolution_status = 'RESOLVED' THEN 1 ELSE 0 END) as resolved
                 FROM failure_records
-                """
-            )
+                """)
             row = cursor.fetchone()
             return {
                 "total": row[0] or 0,

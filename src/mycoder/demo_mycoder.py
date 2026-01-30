@@ -46,8 +46,7 @@ async def demo_basic_usage():
     # File analysis demo
     print("\n3️⃣  Creating test file for analysis...")
     test_file = Path("demo_file.py")
-    test_file.write_text(
-        """
+    test_file.write_text("""
 def calculate_fibonacci(n):
     if n <= 1:
         return n
@@ -56,8 +55,7 @@ def calculate_fibonacci(n):
 # This could be optimized with memoization
 result = calculate_fibonacci(10)
 print(f"Fibonacci(10) = {result}")
-"""
-    )
+""")
 
     result = await mycoder.process_request(
         "Analyze this Python code and suggest improvements", files=[test_file]

@@ -140,16 +140,14 @@ if PYQT_AVAILABLE:
 
             # Status label style
             self.status_label.setFont(QFont("Arial", 10))
-            self.status_label.setStyleSheet(
-                """
+            self.status_label.setStyleSheet("""
                 QLabel {
                     color: white;
                     background-color: rgba(0, 0, 0, 150);
                     border-radius: 10px;
                     padding: 5px;
                 }
-            """
-            )
+            """)
 
         def _update_button_style(self) -> None:
             """Update button style based on current state."""

@@ -110,15 +110,13 @@ def sample_test_files(temp_dir: Path) -> list[Path]:
 
     # Python file
     py_file = temp_dir / "test_script.py"
-    py_file.write_text(
-        '''def hello_world():
+    py_file.write_text('''def hello_world():
     """A simple test function."""
     return "Hello, World!"
 
 if __name__ == "__main__":
     print(hello_world())
-'''
-    )
+''')
     files.append(py_file)
 
     # Text file

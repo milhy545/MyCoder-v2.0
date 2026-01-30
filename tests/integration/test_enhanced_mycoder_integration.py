@@ -562,19 +562,16 @@ class TestRealWorldScenarios:
             src_dir.mkdir()
 
             main_file = src_dir / "main.py"
-            main_file.write_text(
-                """
+            main_file.write_text("""
 def hello_world():
     print("Hello, World!")
 
 if __name__ == "__main__":
     hello_world()
-"""
-            )
+""")
 
             test_file = project_dir / "test_main.py"
-            test_file.write_text(
-                """
+            test_file.write_text("""
 import unittest
 from src.main import hello_world
 
@@ -582,8 +579,7 @@ class TestMain(unittest.TestCase):
     def test_hello_world(self):
         # This test needs implementation
         pass
-"""
-            )
+""")
 
             config = {
                 "claude_oauth": {"enabled": True},
