@@ -1,0 +1,6 @@
+# Hadolint configuration
+ignore:
+  - DL3008  # Pin versions in apt install
+  - DL3015  # Avoid pip install not pinned
+  - DL3059  # Multiple RUN instructions
+  - SC2086  # Double quote to prevent globbing and word splitting
