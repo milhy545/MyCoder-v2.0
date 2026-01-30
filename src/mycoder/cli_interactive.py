@@ -194,7 +194,11 @@ class MyCoderCompleter(Completer):
                         rel_path = rel_path[2:]
 
                     self._file_cache.append(rel_path)
-        except Exception:
+        except Exception as e:
+            # It's better to log this exception to diagnose issues with file caching.
+            # For example, you could print to stderr:
+            # import sys
+            # print(f"[Warning] File cache refresh failed: {e}", file=sys.stderr)
             pass
         self._last_cache_time = time.time()
 
