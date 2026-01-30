@@ -1,15 +1,12 @@
-import sys
 import os
-import functools
+import sys
+
 import pytest
 
 # Add src to path
 sys.path.insert(0, os.path.abspath("src"))
 
 try:
-    from rich.markdown import Markdown
-    from rich.panel import Panel
-    from rich.text import Text
     from rich.console import Group
 except ImportError:
     pytest.skip("Rich not installed", allow_module_level=True)

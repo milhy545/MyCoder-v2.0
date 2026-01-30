@@ -214,3 +214,5 @@ class IntentClassifier:
                 "Reviewer: Analyze codebase",
                 "Reviewer: Generate report",
             ]
+
+        return []

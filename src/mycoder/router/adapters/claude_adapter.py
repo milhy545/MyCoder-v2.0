@@ -42,14 +42,8 @@ class ClaudeAdapter(BaseModelAdapter):
         if not self.is_initialized:
             return False
 
-        # Simple dry run or check
-        try:
-            # We don't want to waste money, so we'll assume healthy if key is present
-            # or maybe do a very cheap call if absolutely necessary.
-            # For now, let's just return True if initialized.
-            return True
-        except Exception:
-            return False
+        # We don't want to waste money, so we'll assume healthy if initialized.
+        return True
 
     async def query(
         self,

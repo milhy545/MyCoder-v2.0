@@ -5,6 +5,7 @@
 ## Recent Changes & Updates
 *Agents: Add entries here when making significant changes*
 
+- 2026-01-30: Codex - Resolved CodeQL alerts (unused imports, mixed returns, unreachable code, non-callable guard) and updated tests; tests run: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
 - 2026-01-23: Bolt - Optimized `WebFetcher` by pre-compiling regex patterns for HTML-to-Markdown conversion, improving performance by ~4-6%; verified with benchmarks and unit tests.
 - 2026-01-23: Jules - Updated `src/mycoder/triage_agent.py` to use "Goat Principle" v2 prompt with Python formatting (escaped braces, no shell vars) and removed shell command instructions to strictly output JSON; tests run: `poetry run pytest tests/unit/test_triage_agent.py`.
 - 2026-01-23: Jules - Updated system prompt in `src/mycoder/triage_agent.py` to enforce "Goat Principle" v2 and sanitized shell generation instructions; tests run: `poetry run pytest tests/unit/test_triage_agent.py`.

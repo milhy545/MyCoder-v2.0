@@ -1,17 +1,12 @@
 """Integration tests for ModelRouter."""
 
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 
 from mycoder.router.adapters.base import AdapterResponse
 from mycoder.router.model_router import ModelRouter
-from mycoder.router.task_context import (
-    BudgetTier,
-    ModelRole,
-    TaskComplexity,
-    TaskContext,
-)
+from mycoder.router.task_context import BudgetTier, ModelRole
 
 
 class TestModelRouterIntegration:

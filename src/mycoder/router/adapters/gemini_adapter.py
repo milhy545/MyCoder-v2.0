@@ -1,8 +1,7 @@
-import json
 import logging
 import os
 import time
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Optional
 
 import aiohttp
 
@@ -61,12 +60,6 @@ class GeminiAdapter(BaseModelAdapter):
 
         # Gemini structure
         contents = [{"parts": [{"text": prompt}]}]
-        if system_prompt:
-            # Gemini 1.5 Pro supports system instructions, but structure varies.
-            # We'll prepend to prompt for simplicity if system_instruction param isn't used
-            # But let's try the official `system_instruction` field for v1beta
-            pass
-
         payload = {
             "contents": contents,
             "generationConfig": {
@@ -78,7 +71,9 @@ class GeminiAdapter(BaseModelAdapter):
         if system_prompt:
             payload["system_instruction"] = {"parts": [{"text": system_prompt}]}
 
-        method = "streamGenerateContent" if stream_callback else "generateContent"
+        # Use non-streaming endpoint; if streaming is requested, we emit the full
+        # response as a single callback to keep behavior deterministic.
+        method = "generateContent"
         url = f"{self.base_url}/{self.model_info.name}:{method}?key={self.api_key}"
 
         try:
@@ -96,48 +91,6 @@ class GeminiAdapter(BaseModelAdapter):
                             duration_ms=int((time.time() - start_time) * 1000),
                             error=f"API Error {response.status}: {error_text}",
                         )
-
-                    if stream_callback:
-                        content = ""
-                        time_to_first_token = None
-
-                        # Gemini streams a JSON array, but chunked
-                        # Often returns partial JSON objects
-                        async for line in response.content:
-                            line_text = line.decode("utf-8").strip()
-                            # Parsing Gemini stream manually via REST is tricky because it sends a JSON array
-                            # "[", ",", "]"
-                            # We might need a proper parser or just accumulate buffer
-                            pass
-
-                        # Since manual stream parsing of JSON array is brittle without a library,
-                        # AND we are in "Lightweight" mode, let's implement a simple buffer parser
-                        # OR fallback to non-streaming for reliability if difficult.
-
-                        # Actually, let's just do non-streaming for Gemini adapter in this iteration
-                        # to ensure correctness, unless requested otherwise. Spec says "Handle streaming/non-streaming".
-                        # But without the SDK, parsing `streamGenerateContent` output (which is a JSON array of response objects)
-                        # requires buffering valid JSON chunks.
-
-                        # Let's try basic chunk accumulation
-                        buffer = ""
-                        async for chunk in response.content:
-                            text_chunk = chunk.decode("utf-8")
-                            buffer += text_chunk
-                            # Check if we have a complete JSON object (heuristic)
-                            # This is complex.
-
-                        # FALLBACK: Use non-streaming for reliability until robust parser is added
-                        # We will re-request without streaming if we were supposed to stream but can't easily.
-                        # Actually, simpler: Just use generateContent and fake the stream callback at the end
-                        # This isn't true streaming but fulfills the interface contract.
-                        data = (
-                            await response.json()
-                        )  # Wait, we called streamGenerateContent endpoint
-                        # If we called stream, we get a list of objects.
-
-                        # Let's just use non-streaming endpoint for now to be safe.
-                        # I will change method above to always be generateContent for this MVP.
 
                     # NON-STREAMING (simpler to implement raw)
                     data = await response.json()

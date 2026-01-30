@@ -10,10 +10,9 @@ Implements the Triad strategy:
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
 
-from ..self_evolve.failure_memory import Advisory, AdvisoryResult, FailureMemory
+from ..self_evolve.failure_memory import AdvisoryResult, FailureMemory
 from ..tool_registry import ToolRegistry
 from .adapters import BUDGET_MODEL_MAP
 from .adapters.base import AdapterResponse, BaseModelAdapter
