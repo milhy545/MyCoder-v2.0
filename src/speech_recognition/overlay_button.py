@@ -48,7 +48,7 @@ class ButtonState(Enum):
 
 if PYQT_AVAILABLE:
 
-    class OverlayButton(BaseWidget):
+    class _OverlayButtonImpl(BaseWidget):
         """
         Floating overlay button for speech recognition control.
 
@@ -294,15 +294,6 @@ if PYQT_AVAILABLE:
             self.set_state(ButtonState.ERROR)
             QTimer.singleShot(500, lambda: self.set_state(original_state))
 
-    def _get_overlay_button_class() -> type[BaseWidget]:
-        if not PYQT_AVAILABLE:
-            raise RuntimeError("PyQt5 not available - overlay button disabled")
-        if OverlayButton is None:
-            raise RuntimeError("OverlayButton not available - PyQt5 not available")
-        if not callable(OverlayButton):
-            raise RuntimeError("OverlayButton is not callable")
-        return OverlayButton
-
     class OverlayApp:
         """
         Application wrapper for the overlay button.
@@ -324,8 +315,7 @@ if PYQT_AVAILABLE:
             if self.app is None:
                 self.app = QApplication([])
 
-            button_cls = _get_overlay_button_class()
-            self.button = button_cls(on_click=on_click)
+            self.button = _OverlayButtonImpl(on_click=on_click)
 
         def show(self) -> None:
             """Show the overlay button."""
@@ -351,6 +341,8 @@ if PYQT_AVAILABLE:
             """Quit the application."""
             self.app.quit()
 
+    OverlayButton = _OverlayButtonImpl
+
 else:
 
     def _raise_missing_gui() -> None:
@@ -359,7 +351,7 @@ else:
             "Install with: poetry install --extras speech"
         )
 
-    class OverlayButton:
+    class _OverlayButtonImpl:
         """Fallback overlay button when PyQt5 is unavailable."""
 
         def __init__(self, *_args, **_kwargs) -> None:
@@ -382,3 +374,5 @@ else:
 
         def quit(self) -> None:
             _raise_missing_gui()
+
+    OverlayButton = _OverlayButtonImpl
