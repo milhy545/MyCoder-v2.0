@@ -26,8 +26,9 @@ class Command:
 class CommandParser:
     """Parser pro CLI příkazy MyCoder"""
 
-    def __init__(self):
-        self.command_patterns = {
+    def __init__(self) -> None:
+        # Pre-compile patterns for performance
+        patterns = {
             # Bash/Terminal commands
             r"^/bash\s+(.+)$": self._parse_bash_command,
             r"^/sh\s+(.+)$": self._parse_bash_command,
@@ -49,6 +50,12 @@ class CommandParser:
             r"^/provider\s+(\w+)$": self._parse_provider_override,
         }
 
+        # Store compiled regex objects
+        self.command_patterns = {
+            re.compile(pattern, re.IGNORECASE): parser_func
+            for pattern, parser_func in patterns.items()
+        }
+
     def parse(self, user_input: str) -> Optional[Command]:
         """
         Parsuje uživatelský vstup na Command objekt.
@@ -65,8 +72,8 @@ class CommandParser:
         user_input = user_input.strip()
 
         # Zkus každý pattern
-        for pattern, parser_func in self.command_patterns.items():
-            match = re.match(pattern, user_input, re.IGNORECASE)
+        for compiled_pattern, parser_func in self.command_patterns.items():
+            match = compiled_pattern.match(user_input)
             if match:
                 try:
                     return parser_func(match, user_input)
