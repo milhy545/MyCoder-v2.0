@@ -126,17 +126,48 @@ class MyCoderCompleter(Completer):
         self.command_parser = command_parser
         self.skill_manager = skill_manager
         self.commands = [
-            "/status", "/diffon", "/diffoff", "/realtime", "/tools", "/providers",
-            "/setup", "/init", "/history", "/autoexec", "/self-evolve", "/plan",
-            "/todo", "/edit", "/agent", "/web", "/mcp", "/voice", "/speak", "/exit",
-            "/quit", "/help", "/bash", "/file", "/git"
+            "/status",
+            "/diffon",
+            "/diffoff",
+            "/realtime",
+            "/tools",
+            "/providers",
+            "/setup",
+            "/init",
+            "/history",
+            "/autoexec",
+            "/self-evolve",
+            "/plan",
+            "/todo",
+            "/edit",
+            "/agent",
+            "/web",
+            "/mcp",
+            "/voice",
+            "/speak",
+            "/exit",
+            "/quit",
+            "/help",
+            "/bash",
+            "/file",
+            "/git",
         ]
 
         # Smart File Indexing
         self._file_cache: List[str] = []
         self._last_cache_time: float = 0.0
         self._cache_ttl: float = 30.0  # Refresh every 30s
-        self._ignored_dirs = {".git", "__pycache__", ".venv", "build", "node_modules", ".idea", ".vscode", "dist", ".mypy_cache"}
+        self._ignored_dirs = {
+            ".git",
+            "__pycache__",
+            ".venv",
+            "build",
+            "node_modules",
+            ".idea",
+            ".vscode",
+            "dist",
+            ".mypy_cache",
+        }
 
     def _refresh_file_cache(self) -> None:
         """Refreshes the file cache if TTL expired."""
@@ -164,7 +195,9 @@ class MyCoderCompleter(Completer):
             pass
         self._last_cache_time = time.time()
 
-    def get_completions(self, document: Document, complete_event) -> Iterable[Completion]:
+    def get_completions(
+        self, document: Document, complete_event
+    ) -> Iterable[Completion]:
         text = document.text_before_cursor
         word = document.get_word_before_cursor(WORD=True)
 
@@ -184,7 +217,7 @@ class MyCoderCompleter(Completer):
                         f"${skill.name}",
                         start_position=-len(word),
                         display=f"{skill.icon} {skill.name}",
-                        display_meta=skill.description
+                        display_meta=skill.description,
                     )
             return
 
@@ -202,7 +235,7 @@ class MyCoderCompleter(Completer):
                         f"@{fpath}",
                         start_position=-len(word),
                         display=fpath,
-                        display_meta="File"
+                        display_meta="File",
                     )
                     count += 1
                     # Limit suggestions to keep UI responsive
@@ -537,13 +570,13 @@ class InteractiveCLI:
         """Check for dangerous command patterns."""
         dangerous_patterns = [
             r"rm\s+-[rRf]+",  # rm -rf
-            r"sudo\s+",       # sudo
-            r"chmod\s+",      # chmod
-            r"chown\s+",      # chown
-            r"dd\s+if=",      # dd
-            r">/dev/sd",      # writing to device
-            r"mkfs",          # formatting
-            r":\(\)\{ :\|:& \};:"  # fork bomb
+            r"sudo\s+",  # sudo
+            r"chmod\s+",  # chmod
+            r"chown\s+",  # chown
+            r"dd\s+if=",  # dd
+            r">/dev/sd",  # writing to device
+            r"mkfs",  # formatting
+            r":\(\)\{ :\|:& \};:",  # fork bomb
         ]
         for pattern in dangerous_patterns:
             if re.search(pattern, command):
@@ -2132,7 +2165,7 @@ class InteractiveCLI:
                 key_bindings=key_bindings,
                 completer=completer,
                 complete_while_typing=True,
-                reserve_space_for_menu=5
+                reserve_space_for_menu=5,
             )
         try:
             with Live(
@@ -2166,7 +2199,7 @@ class InteractiveCLI:
                                 command = Command(
                                     tool="terminal_exec",
                                     args={"command": skill.command},
-                                    raw_input=user_input
+                                    raw_input=user_input,
                                 )
                                 # START ACTIVITY
                                 self.activity_panel.add_activity(
@@ -2174,12 +2207,14 @@ class InteractiveCLI:
                                         type=ActivityType.TOOL_CALL,
                                         description=f"Skill: {skill.name}",
                                         target="Running...",
-                                        status="running"
+                                        status="running",
                                     )
                                 )
                                 self._refresh_live()
                             else:
-                                self.console.print(f"[bold red]Skill '{skill_name}' not found.[/]")
+                                self.console.print(
+                                    f"[bold red]Skill '{skill_name}' not found.[/]"
+                                )
                                 live.update(self._create_layout())
                                 continue
 
@@ -2187,7 +2222,10 @@ class InteractiveCLI:
                         if command.tool == "terminal_exec":
                             cmd_str = command.args.get("command", "")
                             if self._is_dangerous(cmd_str):
-                                if not self._prompt_confirm(f"[bold red]⚠️ DANGEROUS COMMAND DETECTED:[/]\n{cmd_str}\nExecute anyway?", default=False):
+                                if not self._prompt_confirm(
+                                    f"[bold red]⚠️ DANGEROUS COMMAND DETECTED:[/]\n{cmd_str}\nExecute anyway?",
+                                    default=False,
+                                ):
                                     self.console.print("[red]Aborted.[/]")
                                     live.update(self._create_layout())
                                     continue
@@ -2199,7 +2237,7 @@ class InteractiveCLI:
                                         type=ActivityType.TOOL_CALL,
                                         description="Shell Command",
                                         target=cmd_str[:20],
-                                        status="running"
+                                        status="running",
                                     )
                                 )
                                 self._refresh_live()
@@ -2210,8 +2248,10 @@ class InteractiveCLI:
                             and self.coder.tool_orchestrator
                         ):
                             try:
-                                result = await self.coder.tool_orchestrator.execute_command(
-                                    command, self._build_execution_context()
+                                result = (
+                                    await self.coder.tool_orchestrator.execute_command(
+                                        command, self._build_execution_context()
+                                    )
                                 )
                                 self._display_tool_result(result)
                             except Exception as e:

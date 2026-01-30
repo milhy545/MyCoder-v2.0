@@ -194,7 +194,11 @@ class CommandParser:
             return None
 
         # Allow /, !, $ prefixes
-        if not (user_input.startswith("/") or user_input.startswith("!") or user_input.startswith("$")):
+        if not (
+            user_input.startswith("/")
+            or user_input.startswith("!")
+            or user_input.startswith("$")
+        ):
             return None
 
         user_input = user_input.strip()

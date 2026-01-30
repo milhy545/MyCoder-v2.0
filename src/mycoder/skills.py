@@ -54,7 +54,9 @@ class SkillManager:
 
                 # Validace povinných polí
                 if not all(k in data for k in ("name", "description", "command")):
-                    logger.warning(f"Skipping invalid skill in {skill_dir}: missing fields")
+                    logger.warning(
+                        f"Skipping invalid skill in {skill_dir}: missing fields"
+                    )
                     continue
 
                 skill = Skill(
@@ -64,7 +66,7 @@ class SkillManager:
                     icon=data.get("icon", "🔧"),
                     version=data.get("version", "1.0.0"),
                     author=data.get("author", "Unknown"),
-                    path=skill_dir
+                    path=skill_dir,
                 )
 
                 self.skills[skill.name] = skill
