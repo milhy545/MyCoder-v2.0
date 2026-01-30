@@ -1,0 +1,8 @@
+{
+  "name": "git-summary",
+  "description": "📊 Vytvoří rychlý přehled větví a posledních 5 commitů",
+  "command": "python3 skills/git-summary/handler.py",
+  "icon": "📊",
+  "version": "1.0.0",
+  "author": "MyCoder User"
+}

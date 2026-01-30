@@ -52,7 +52,7 @@ class TestElevenLabsProvider(unittest.TestCase):
         args, _ = mock_urlopen.call_args
         request = args[0]
         self.assertEqual(request.full_url, "https://api.elevenlabs.io/v1/voices")
-        self.assertEqual(request.headers["xi-api-key"], "test_key")
+        self.assertEqual(request.headers["Xi-api-key"], "test_key")
 
     @patch("urllib.request.urlopen")
     def test_get_available_voices_caching(self, mock_urlopen):

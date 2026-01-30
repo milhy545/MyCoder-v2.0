@@ -11,12 +11,16 @@ import os
 import re
 import shutil
 import sys
+import time
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Iterable
+import logging
 
 import psutil
+
+logger = logging.getLogger(__name__)
 
 # Rich library is now required via poetry
 try:
@@ -41,10 +45,15 @@ try:
     from prompt_toolkit import PromptSession
     from prompt_toolkit import prompt as pt_prompt
     from prompt_toolkit.key_binding import KeyBindings
+    from prompt_toolkit.completion import Completer, Completion
+    from prompt_toolkit.document import Document
 except ImportError:
     pt_prompt = None
     KeyBindings = None
     PromptSession = None
+    Completer = object  # Dummy for type hinting
+    Completion = None
+    Document = None
 
 # Import Core
 try:
@@ -61,6 +70,7 @@ try:
         generate_project_guide,
     )
     from .self_evolve import SelfEvolveManager
+    from .skills import SkillManager
     from .todo_tracker import TodoTracker
     from .tool_registry import ToolExecutionContext
     from .ui_activity_panel import Activity, ActivityPanel, ActivityType
@@ -79,6 +89,7 @@ except ImportError:
         generate_project_guide,
     )
     from mycoder.self_evolve import SelfEvolveManager
+    from mycoder.skills import SkillManager
     from mycoder.todo_tracker import TodoTracker
     from mycoder.tool_registry import ToolExecutionContext
     from mycoder.ui_activity_panel import Activity, ActivityPanel, ActivityType
@@ -102,6 +113,136 @@ MD_CODE_BLOCK_REGEX = re.compile(r"```[\s\S]*?```")
 MD_INLINE_CODE_REGEX = re.compile(r"`[^`]*`")
 MD_STYLE_REGEX = re.compile(r"[*_~`]")
 MD_HEADER_REGEX = re.compile(r"^#+\s+", flags=re.MULTILINE)
+AT_FILE_REGEX = re.compile(r"@([\w./\-_]+)")
+
+
+class MyCoderCompleter(Completer):
+    """
+    Custom Completer for MyCoder CLI.
+    Supports:
+    - / commands
+    - $ skills
+    - @ files (cached)
+    """
+
+    def __init__(self, command_parser: CommandParser, skill_manager: SkillManager):
+        self.command_parser = command_parser
+        self.skill_manager = skill_manager
+        self.commands = [
+            "/status",
+            "/diffon",
+            "/diffoff",
+            "/realtime",
+            "/tools",
+            "/providers",
+            "/setup",
+            "/init",
+            "/history",
+            "/autoexec",
+            "/self-evolve",
+            "/plan",
+            "/todo",
+            "/edit",
+            "/agent",
+            "/web",
+            "/mcp",
+            "/voice",
+            "/speak",
+            "/exit",
+            "/quit",
+            "/help",
+            "/bash",
+            "/file",
+            "/git",
+        ]
+
+        # Smart File Indexing
+        self._file_cache: List[str] = []
+        self._last_cache_time: float = 0.0
+        self._cache_ttl: float = 30.0  # Refresh every 30s
+        self._ignored_dirs = {
+            ".git",
+            "__pycache__",
+            "node_modules",
+            ".idea",
+            ".vscode",
+            "dist",
+            ".mypy_cache",
+        }
+
+    def _refresh_file_cache(self) -> None:
+        """Refreshes the file cache if TTL expired."""
+        if time.time() - self._last_cache_time < self._cache_ttl and self._file_cache:
+            return
+
+        self._file_cache = []
+        try:
+            # Recursive walk from current directory
+            for root, dirs, files in os.walk(".", topdown=True):
+                # Filter directories in-place to prevent recursion into ignored dirs
+                dirs[:] = [d for d in dirs if d not in self._ignored_dirs]
+
+                for name in files:
+                    if name.startswith("."):
+                        continue
+
+                    # Create relative path
+                    rel_path = os.path.join(root, name)
+                    if rel_path.startswith("./"):
+                        rel_path = rel_path[2:]
+
+                    self._file_cache.append(rel_path)
+        except Exception as exc:
+            logger.debug("Failed to refresh file cache: %s", exc)
+        self._last_cache_time = time.time()
+
+    def get_completions(
+        self, document: Document, complete_event
+    ) -> Iterable[Completion]:
+        text = document.text_before_cursor
+        word = document.get_word_before_cursor(WORD=True)
+
+        # 1. Commands (/)
+        if text.startswith("/") and " " not in text:
+            for cmd in self.commands:
+                if cmd.startswith(text):
+                    yield Completion(cmd, start_position=-len(text))
+            return
+
+        # 2. Skills ($)
+        if word.startswith("$"):
+            search = word[1:]
+            for skill in self.skill_manager.list_skills():
+                if skill.name.startswith(search):
+                    yield Completion(
+                        f"${skill.name}",
+                        start_position=-len(word),
+                        display=f"{skill.icon} {skill.name}",
+                        display_meta=skill.description,
+                    )
+            return
+
+        # 3. Files (@)
+        if word.startswith("@"):
+            search = word[1:]
+
+            # Lazy refresh cache
+            self._refresh_file_cache()
+
+            count = 0
+            for fpath in self._file_cache:
+                if fpath.startswith(search):
+                    yield Completion(
+                        f"@{fpath}",
+                        start_position=-len(word),
+                        display=fpath,
+                        display_meta="File",
+                    )
+                    count += 1
+                    # Limit suggestions to keep UI responsive
+                    if count > 50:
+                        break
+            return
 
 
 @functools.lru_cache(maxsize=128)
@@ -373,6 +514,9 @@ class InteractiveCLI:
         # NEW (v2.2.0): Command parser for tool execution
         self.command_parser = CommandParser()
 
+        # NEW (v2.2.0): Skill Manager
+        self.skill_manager = SkillManager(str(self.working_directory / "skills"))
+
         # TTS engine (v2.2.0)
         self.tts_engine = None
         tts_config = getattr(self.config, "text_to_speech", {}) or {}
@@ -422,6 +566,23 @@ class InteractiveCLI:
                 with suppress(Exception):
                     live.start()
                 self._refresh_live()
+
+    def _is_dangerous(self, command: str) -> bool:
+        """Check for dangerous command patterns."""
+        dangerous_patterns = [
+            r"rm\s+-[rRf]+",  # rm -rf
+            r"sudo\s+",  # sudo
+            r"chmod\s+",  # chmod
+            r"chown\s+",  # chown
+            r"dd\s+if=",  # dd
+            r">/dev/sd",  # writing to device
+            r"mkfs",  # formatting
+            r":\(\)\{ :\|:& \};:",  # fork bomb
+        ]
+        for pattern in dangerous_patterns:
+            if re.search(pattern, command):
+                return True
+        return False
 
     def _handle_init_command(self, args: List[str]) -> None:
         """Create a project guide file similar to Claude/Gemini /init."""
@@ -701,6 +862,9 @@ class InteractiveCLI:
         elif action_key in {"CMD_EXEC", "EXEC_TOOL"}:
             activity_type = ActivityType.TOOL_CALL
             description = "Command" if action_key == "CMD_EXEC" else "Tool"
+        elif action_key == "SKILL":
+            activity_type = ActivityType.TOOL_CALL
+            description = "Skill"
         elif action_key == "PROVIDER_SWITCH":
             activity_type = ActivityType.API_CALL
             description = "Provider switch"
@@ -1527,7 +1691,19 @@ class InteractiveCLI:
         table.add_row("/mcp ...", "MCP connect/tools/call")
         table.add_row("/voice start|stop|status", "Voice dictation control")
         table.add_row("/speak <text>", "Text-to-speech playback")
+        table.add_row("!command", "Execute shell command directly")
+        table.add_row("$skill", "Execute a registered skill")
+        table.add_row("@file", "Include file content context")
         table.add_row("/exit", "Shutdown")
+
+        # Add Skills section dynamically
+        skills = self.skill_manager.list_skills()
+        if skills:
+            table.add_section()
+            table.add_row("[bold cyan]Skills[/]", "")
+            for skill in skills:
+                table.add_row(f"${skill.name}", f"{skill.icon} {skill.description}")
+
         self.console.print(table)
 
     def show_status(self) -> None:
@@ -1567,6 +1743,22 @@ class InteractiveCLI:
         progress_task = asyncio.create_task(self._update_progress_simulation())
         stream_text = ""
 
+        # Auto-detect @file references and inject context
+        attached_files = []
+        for match in AT_FILE_REGEX.finditer(user_input):
+            file_ref = match.group(1)
+            path = Path(file_ref)
+            if not path.is_absolute():
+                path = self.working_directory / path
+            if path.exists() and path.is_file():
+                attached_files.append(path)
+                self.console.print(f"[{COLOR_INFO}]Attached context: {file_ref}[/]")
+
+        # Merge attached files with default context files
+        context_files = self._default_context_files()
+        if attached_files:
+            context_files.extend(attached_files)
+
         def _stream_handler(chunk: str) -> None:
             nonlocal stream_text
             if not chunk:
@@ -1583,7 +1775,7 @@ class InteractiveCLI:
             try:
                 response = await self.coder.process_request(
                     user_input,
-                    files=self._default_context_files() or None,
+                    files=context_files or None,
                     diffusing=self.diffusing_mode,
                     realtime=self.realtime_mode,
                     preferred_provider=self.preferred_provider,
@@ -1967,7 +2159,15 @@ class InteractiveCLI:
                 self.show_thinking = not self.show_thinking
                 self._refresh_live()
 
-            session = PromptSession(key_bindings=key_bindings)
+            # Initialize custom completer
+            completer = MyCoderCompleter(self.command_parser, self.skill_manager)
+
+            session = PromptSession(
+                key_bindings=key_bindings,
+                completer=completer,
+                complete_while_typing=True,
+                reserve_space_for_menu=5,
+            )
         try:
             with Live(
                 self._create_layout(),
@@ -1987,39 +2187,93 @@ class InteractiveCLI:
                         continue
 
                     # NEW (v2.2.0): Parse and execute tool commands
-                    if user_input.startswith("/"):
-                        command = self.command_parser.parse(user_input)
+                    command = self.command_parser.parse(user_input)
+                    if command:
+                        self._log_activity("EXEC_TOOL", command.tool)
 
-                        if command:
-                            # Tool command (e.g., /bash, /file, /git)
-                            self._log_activity("EXEC_TOOL", command.tool)
-
-                            # Execute tool if orchestrator is available
-                            if (
-                                hasattr(self.coder, "tool_orchestrator")
-                                and self.coder.tool_orchestrator
-                            ):
-                                try:
-                                    result = await self.coder.tool_orchestrator.execute_command(
-                                        command, self._build_execution_context()
+                        # Handle special logic for skill execution
+                        if command.tool == "skill_exec":
+                            skill_name = command.args.get("skill_name")
+                            skill = self.skill_manager.get_skill(skill_name)
+                            if skill:
+                                # Convert to terminal_exec command
+                                command = Command(
+                                    tool="terminal_exec",
+                                    args={"command": skill.command},
+                                    raw_input=user_input,
+                                )
+                                # START ACTIVITY
+                                self.activity_panel.add_activity(
+                                    Activity(
+                                        type=ActivityType.TOOL_CALL,
+                                        description=f"Skill: {skill.name}",
+                                        target="Running...",
+                                        status="running",
                                     )
-                                    self._display_tool_result(result)
-                                except Exception as e:
-                                    self.console.print(
-                                        f"[bold red]Tool execution error: {e}[/]"
-                                    )
+                                )
+                                self._refresh_live()
                             else:
                                 self.console.print(
-                                    f"[bold yellow]Tool orchestrator not initialized. Run in initialized mode.[/]"
+                                    f"[bold red]Skill '{skill_name}' not found.[/]"
                                 )
+                                live.update(self._create_layout())
+                                continue
 
-                            live.update(self._create_layout())
-                            continue
+                        # Safety Check for Terminal Exec
+                        if command.tool == "terminal_exec":
+                            cmd_str = command.args.get("command", "")
+                            if self._is_dangerous(cmd_str):
+                                if not self._prompt_confirm(
+                                    f"[bold red]⚠️ DANGEROUS COMMAND DETECTED:[/]\n{cmd_str}\nExecute anyway?",
+                                    default=False,
+                                ):
+                                    self.console.print("[red]Aborted.[/]")
+                                    live.update(self._create_layout())
+                                    continue
 
-                        # Slash command (existing logic for /exit, /help, etc.)
+                            # Visual feedback for direct shell commands if not covered by skill logic above
+                            if command.raw_input.startswith("!"):
+                                self.activity_panel.add_activity(
+                                    Activity(
+                                        type=ActivityType.TOOL_CALL,
+                                        description="Shell Command",
+                                        target=cmd_str[:20],
+                                        status="running",
+                                    )
+                                )
+                                self._refresh_live()
+
+                        # Execute tool if orchestrator is available
+                        if (
+                            hasattr(self.coder, "tool_orchestrator")
+                            and self.coder.tool_orchestrator
+                        ):
+                            try:
+                                result = (
+                                    await self.coder.tool_orchestrator.execute_command(
+                                        command, self._build_execution_context()
+                                    )
+                                )
+                                self._display_tool_result(result)
+                            except Exception as e:
+                                self.console.print(
+                                    f"[bold red]Tool execution error: {e}[/]"
+                                )
+                        else:
+                            self.console.print(
+                                f"[bold yellow]Tool orchestrator not initialized. Run in initialized mode.[/]"
+                            )
+
+                        live.update(self._create_layout())
+                        continue
+
+                    # Handle legacy slash commands (that were not caught by parser if any)
+                    # NOTE: Most are now caught by parser if they match regex, but legacy handle_slash_command might still handle some
+                    if user_input.startswith("/"):
                         await self.handle_slash_command(user_input)
                         live.update(self._create_layout())
                         continue
+
                     self._append_chat_entry("user", user_input)
                     live.update(self._create_layout())
                     await self.process_chat(user_input)
