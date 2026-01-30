@@ -294,6 +294,15 @@ if PYQT_AVAILABLE:
             self.set_state(ButtonState.ERROR)
             QTimer.singleShot(500, lambda: self.set_state(original_state))
 
+    def _get_overlay_button_class() -> type[BaseWidget]:
+        if not PYQT_AVAILABLE:
+            raise RuntimeError("PyQt5 not available - overlay button disabled")
+        if OverlayButton is None:
+            raise RuntimeError("OverlayButton not available - PyQt5 not available")
+        if not callable(OverlayButton):
+            raise RuntimeError("OverlayButton is not callable")
+        return OverlayButton
+
     class OverlayApp:
         """
         Application wrapper for the overlay button.
@@ -315,13 +324,8 @@ if PYQT_AVAILABLE:
             if self.app is None:
                 self.app = QApplication([])
 
-            if not PYQT_AVAILABLE:
-                raise RuntimeError("PyQt5 not available - overlay button disabled")
-            if OverlayButton is None:
-                raise RuntimeError("OverlayButton not available - PyQt5 not available")
-            if not callable(OverlayButton):
-                raise RuntimeError("OverlayButton is not callable")
-            self.button = OverlayButton(on_click=on_click)
+            button_cls = _get_overlay_button_class()
+            self.button = button_cls(on_click=on_click)
 
         def show(self) -> None:
             """Show the overlay button."""
