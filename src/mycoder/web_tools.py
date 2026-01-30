@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import ipaddress
 import json
+import re
 import socket
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -13,6 +14,24 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 import aiohttp
+
+# Bolt Optimization: Pre-compiled regexes for HTML to Markdown conversion
+# Hoisting these improves performance by avoiding re-compilation on every fetch.
+RE_SCRIPT = re.compile(r"<script[^>]*>[\s\S]*?</script[^>]*>", flags=re.I)
+RE_STYLE = re.compile(r"<style[^>]*>[\s\S]*?</style>", flags=re.I)
+RE_H1 = re.compile(r"<h1[^>]*>(.*?)</h1>", flags=re.I)
+RE_H2 = re.compile(r"<h2[^>]*>(.*?)</h2>", flags=re.I)
+RE_H3 = re.compile(r"<h3[^>]*>(.*?)</h3>", flags=re.I)
+RE_P = re.compile(r"<p[^>]*>(.*?)</p>", flags=re.I | re.S)
+RE_BR = re.compile(r"<br\s*/?>", flags=re.I)
+RE_LI = re.compile(r"<li[^>]*>(.*?)</li>", flags=re.I)
+RE_A = re.compile(r'<a[^>]*href="([^"]*)"[^>]*>(.*?)</a>', flags=re.I)
+RE_CODE = re.compile(r"<code[^>]*>(.*?)</code>", flags=re.I)
+RE_PRE = re.compile(r"<pre[^>]*>(.*?)</pre>", flags=re.I | re.S)
+RE_STRONG = re.compile(r"<strong[^>]*>(.*?)</strong>", flags=re.I)
+RE_EM = re.compile(r"<em[^>]*>(.*?)</em>", flags=re.I)
+RE_TAGS = re.compile(r"<[^>]+>")
+RE_NEWLINES = re.compile(r"\n\s*\n\s*\n")
 
 
 @dataclass
@@ -113,33 +132,27 @@ class WebFetcher:
             return False
 
     def _html_to_markdown(self, html: str) -> str:
-        import re
+        # Bolt Optimization: Use pre-compiled regex patterns
+        # Replacing inline re.sub with module-level constants
 
-        html = re.sub(r"<script[^>]*>[\s\S]*?</script[^>]*>", "", html, flags=re.I)
-        html = re.sub(r"<style[^>]*>[\s\S]*?</style>", "", html, flags=re.I)
+        html = RE_SCRIPT.sub("", html)
+        html = RE_STYLE.sub("", html)
 
-        html = re.sub(r"<h1[^>]*>(.*?)</h1>", r"# \1\n", html, flags=re.I)
-        html = re.sub(r"<h2[^>]*>(.*?)</h2>", r"## \1\n", html, flags=re.I)
-        html = re.sub(r"<h3[^>]*>(.*?)</h3>", r"### \1\n", html, flags=re.I)
-        html = re.sub(r"<p[^>]*>(.*?)</p>", r"\1\n\n", html, flags=re.I | re.S)
-        html = re.sub(r"<br\s*/?>", "\n", html, flags=re.I)
-        html = re.sub(r"<li[^>]*>(.*?)</li>", r"- \1\n", html, flags=re.I)
-        html = re.sub(
-            r'<a[^>]*href="([^"]*)"[^>]*>(.*?)</a>',
-            r"[\2](\1)",
-            html,
-            flags=re.I,
-        )
-        html = re.sub(r"<code[^>]*>(.*?)</code>", r"`\1`", html, flags=re.I)
-        html = re.sub(
-            r"<pre[^>]*>(.*?)</pre>", r"```\n\1\n```", html, flags=re.I | re.S
-        )
-        html = re.sub(r"<strong[^>]*>(.*?)</strong>", r"**\1**", html, flags=re.I)
-        html = re.sub(r"<em[^>]*>(.*?)</em>", r"*\1*", html, flags=re.I)
+        html = RE_H1.sub(r"# \1\n", html)
+        html = RE_H2.sub(r"## \1\n", html)
+        html = RE_H3.sub(r"### \1\n", html)
+        html = RE_P.sub(r"\1\n\n", html)
+        html = RE_BR.sub("\n", html)
+        html = RE_LI.sub(r"- \1\n", html)
+        html = RE_A.sub(r"[\2](\1)", html)
+        html = RE_CODE.sub(r"`\1`", html)
+        html = RE_PRE.sub(r"```\n\1\n```", html)
+        html = RE_STRONG.sub(r"**\1**", html)
+        html = RE_EM.sub(r"*\1*", html)
 
-        html = re.sub(r"<[^>]+>", "", html)
+        html = RE_TAGS.sub("", html)
 
-        html = re.sub(r"\n\s*\n\s*\n", "\n\n", html)
+        html = RE_NEWLINES.sub("\n\n", html)
         html = html.strip()
 
         return html[:50000]
@@ -162,7 +175,7 @@ class WebFetcher:
             data = json.loads(cache_file.read_text(encoding="utf-8"))
             cached_at = datetime.fromisoformat(data["fetched_at"])
             if datetime.now() - cached_at < self.cache_ttl:
-                return data["content"]
+                return str(data["content"])
         except (json.JSONDecodeError, KeyError, ValueError):
             # Ignore corrupted cache entries.
             pass
