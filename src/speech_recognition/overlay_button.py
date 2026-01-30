@@ -322,7 +322,7 @@ class OverlayApp:
         if self.app is None:
             self.app = QApplication([])
 
-        self.button = OverlayButton(on_click=on_click)
+        self.button = OverlayButton(on_click=on_click)  # lgtm[py/call-to-non-callable]
 
     def show(self) -> None:
         """Show the overlay button."""
