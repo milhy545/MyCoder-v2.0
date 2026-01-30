@@ -92,7 +92,7 @@ class TestElevenLabsProvider(unittest.TestCase):
         self.assertIsNone(self.provider._voices_cache)
 
     def test_get_available_voices_no_api_key(self):
-        provider = ElevenLabsProvider({}) # No key
+        provider = ElevenLabsProvider({})  # No key
         voices = provider.get_available_voices()
         self.assertEqual(voices, [])
 
