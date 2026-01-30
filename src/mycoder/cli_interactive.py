@@ -543,7 +543,7 @@ class InteractiveCLI:
             r"dd\s+if=",      # dd
             r">/dev/sd",      # writing to device
             r"mkfs",          # formatting
-            r":\(\)\{ :\|:& \};:" # fork bomb
+            r":\(\)\{ :\|:& \};:"  # fork bomb
         ]
         for pattern in dangerous_patterns:
             if re.search(pattern, command):
@@ -2159,29 +2159,29 @@ class InteractiveCLI:
 
                         # Handle special logic for skill execution
                         if command.tool == "skill_exec":
-                             skill_name = command.args.get("skill_name")
-                             skill = self.skill_manager.get_skill(skill_name)
-                             if skill:
-                                 # Convert to terminal_exec command
-                                 command = Command(
-                                     tool="terminal_exec",
-                                     args={"command": skill.command},
-                                     raw_input=user_input
-                                 )
-                                 # START ACTIVITY
-                                 self.activity_panel.add_activity(
-                                     Activity(
-                                         type=ActivityType.TOOL_CALL,
-                                         description=f"Skill: {skill.name}",
-                                         target="Running...",
-                                         status="running"
-                                     )
-                                 )
-                                 self._refresh_live()
-                             else:
-                                 self.console.print(f"[bold red]Skill '{skill_name}' not found.[/]")
-                                 live.update(self._create_layout())
-                                 continue
+                            skill_name = command.args.get("skill_name")
+                            skill = self.skill_manager.get_skill(skill_name)
+                            if skill:
+                                # Convert to terminal_exec command
+                                command = Command(
+                                    tool="terminal_exec",
+                                    args={"command": skill.command},
+                                    raw_input=user_input
+                                )
+                                # START ACTIVITY
+                                self.activity_panel.add_activity(
+                                    Activity(
+                                        type=ActivityType.TOOL_CALL,
+                                        description=f"Skill: {skill.name}",
+                                        target="Running...",
+                                        status="running"
+                                    )
+                                )
+                                self._refresh_live()
+                            else:
+                                self.console.print(f"[bold red]Skill '{skill_name}' not found.[/]")
+                                live.update(self._create_layout())
+                                continue
 
                         # Safety Check for Terminal Exec
                         if command.tool == "terminal_exec":
@@ -2194,15 +2194,15 @@ class InteractiveCLI:
 
                             # Visual feedback for direct shell commands if not covered by skill logic above
                             if command.raw_input.startswith("!"):
-                                 self.activity_panel.add_activity(
-                                     Activity(
-                                         type=ActivityType.TOOL_CALL,
-                                         description="Shell Command",
-                                         target=cmd_str[:20],
-                                         status="running"
-                                     )
-                                 )
-                                 self._refresh_live()
+                                self.activity_panel.add_activity(
+                                    Activity(
+                                        type=ActivityType.TOOL_CALL,
+                                        description="Shell Command",
+                                        target=cmd_str[:20],
+                                        status="running"
+                                    )
+                                )
+                                self._refresh_live()
 
                         # Execute tool if orchestrator is available
                         if (
