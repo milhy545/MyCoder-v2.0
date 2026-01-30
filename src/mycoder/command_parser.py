@@ -137,6 +137,23 @@ def _parse_provider_override(match: re.Match, raw_input: str) -> Command:
     )
 
 
+def _parse_direct_shell(match: re.Match, raw_input: str) -> Command:
+    """Parse !<command>"""
+    command_str = match.group(1).strip()
+    return Command(
+        tool="terminal_exec", args={"command": command_str}, raw_input=raw_input
+    )
+
+
+def _parse_skill_exec(match: re.Match, raw_input: str) -> Command:
+    """Parse $<skill_name> [args]"""
+    # Assuming syntax: $skill_name
+    skill_name = match.group(1).strip()
+    return Command(
+        tool="skill_exec", args={"skill_name": skill_name}, raw_input=raw_input
+    )
+
+
 # Module-level compiled patterns for performance (Bolt Optimization)
 COMPILED_PATTERNS = {
     re.compile(r"^/bash\s+(.+)$", re.IGNORECASE): _parse_bash_command,
@@ -154,6 +171,9 @@ COMPILED_PATTERNS = {
     re.compile(r"^/git\s+add\s+(.+)$", re.IGNORECASE): _parse_git_add,
     re.compile(r"^/git\s+commit\s+(.+)$", re.IGNORECASE): _parse_git_commit,
     re.compile(r"^/provider\s+(\w+)$", re.IGNORECASE): _parse_provider_override,
+    # New triggers for v2.2.0
+    re.compile(r"^!(.+)$"): _parse_direct_shell,
+    re.compile(r"^\$([\w-]+)(?:\s+.*)?$"): _parse_skill_exec,
 }
 
 
@@ -170,7 +190,11 @@ class CommandParser:
         Returns:
             Command objekt nebo None pokud není rozpoznán jako příkaz
         """
-        if not user_input or not user_input.startswith("/"):
+        if not user_input:
+            return None
+
+        # Allow /, !, $ prefixes
+        if not (user_input.startswith("/") or user_input.startswith("!") or user_input.startswith("$")):
             return None
 
         user_input = user_input.strip()
