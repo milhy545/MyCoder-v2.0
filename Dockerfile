@@ -1,8 +1,11 @@
 # 🤖 MyCoder - Dockerfile with Ollama integration
 FROM python:3.11-slim-bookworm
 
+# Set shell to fail on pipe errors
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
     build-essential \
@@ -14,19 +17,17 @@ RUN curl -fsSL https://ollama.ai/install.sh | sh
 # Create app directory
 WORKDIR /app
 
-# Install Poetry
-RUN pip install poetry
+# Install Poetry with pinned version
+RUN pip install --no-cache-dir poetry==1.8.2
 
 # Copy project files
 COPY pyproject.toml poetry.lock* ./
 COPY src/ ./src/
 COPY README.md LICENSE ./
 
-# Configure Poetry
-RUN poetry config virtualenvs.create false
-
-# Install dependencies
-RUN poetry install --only main
+# Configure Poetry and install dependencies in one layer
+RUN poetry config virtualenvs.create false && \
+    poetry install --only main --no-interaction --no-ansi
 
 # Create mycoder user
 RUN useradd -m -u 1000 mycoder && chown -R mycoder:mycoder /app
