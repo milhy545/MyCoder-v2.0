@@ -16,8 +16,11 @@ from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Iterable
+import logging
 
 import psutil
+
+logger = logging.getLogger(__name__)
 
 # Rich library is now required via poetry
 try:
@@ -160,8 +163,8 @@ class MyCoderCompleter(Completer):
         self._ignored_dirs = {
             ".git",
             "__pycache__",
-            ".venv",
-            "build",
+        except OSError as exc:
+            logger.debug("Failed to refresh file cache: %s", exc)
             "node_modules",
             ".idea",
             ".vscode",
