@@ -2,11 +2,13 @@
 ElevenLabs TTS Provider.
 """
 
+import json
 import logging
 import os
 import subprocess
 import tempfile
-from typing import Any, Dict, List
+import urllib.request
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 
@@ -25,6 +27,7 @@ class ElevenLabsProvider(BaseTTSProvider):
         # Default to a standard voice ID if none provided
         self.voice_id = config.get("voice_id", "21m00Tcm4TlvDq8ikWAM")  # Rachel
         self._current_process = None
+        self._voices_cache: Optional[List[str]] = None
 
     async def speak(self, text: str) -> None:
         if not self.api_key:
@@ -85,7 +88,47 @@ class ElevenLabsProvider(BaseTTSProvider):
             self._current_process = None
 
     def get_available_voices(self) -> List[str]:
-        return []  # TODO: Implement voice listing
+        """
+        Fetch available voices from ElevenLabs API.
+        Returns a list of strings formatted as "Name (voice_id)".
+        Uses internal caching to avoid redundant API calls.
+        """
+        if self._voices_cache is not None:
+            return self._voices_cache
+
+        if not self.api_key:
+            logger.error("ElevenLabs API key not found, cannot list voices")
+            return []
+
+        url = "https://api.elevenlabs.io/v1/voices"
+        req = urllib.request.Request(url)
+        req.add_header("xi-api-key", self.api_key)
+        req.add_header("Accept", "application/json")
+
+        try:
+            with urllib.request.urlopen(req) as response:
+                if response.status != 200:
+                    logger.error(
+                        f"ElevenLabs voices API failed with status {response.status}"
+                    )
+                    return []
+
+                data = json.loads(response.read().decode("utf-8"))
+                voices_data = data.get("voices", [])
+
+                # Format: "Name (voice_id)"
+                formatted_voices = []
+                for v in voices_data:
+                    name = v.get("name", "Unknown")
+                    voice_id = v.get("voice_id", "Unknown")
+                    formatted_voices.append(f"{name} ({voice_id})")
+
+                self._voices_cache = formatted_voices
+                return formatted_voices
+
+        except Exception as e:
+            logger.error(f"Failed to fetch ElevenLabs voices: {e}")
+            return []
 
     def _get_audio_player(self) -> List[str]:
         import shutil

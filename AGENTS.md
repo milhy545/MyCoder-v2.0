@@ -5,6 +5,7 @@
 ## Recent Changes & Updates
 *Agents: Add entries here when making significant changes*
 
+- 2026-01-30: Jules - Implemented synchronous `get_available_voices` for ElevenLabs provider using `urllib.request` with caching and formatted output; added tests in `tests/providers/tts/test_elevenlabs.py`; tests run: `poetry run pytest tests/providers/tts/test_elevenlabs.py`.
 - 2026-01-30: Codex - Fixed SyntaxError in `cli_interactive.py` file cache ignored dirs and restored logging; tests run: `poetry run flake8 src/ tests/`, `poetry run black --check src/ tests/`, `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
 - 2026-01-30: Codex - Resolved CodeQL alerts (unused imports, mixed returns, unreachable code, non-callable guard) and updated tests; tests run: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
 - 2026-01-23: Bolt - Optimized `WebFetcher` by pre-compiling regex patterns for HTML-to-Markdown conversion, improving performance by ~4-6%; verified with benchmarks and unit tests.
