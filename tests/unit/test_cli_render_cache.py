@@ -18,8 +18,6 @@ from mycoder.cli_interactive import _cached_render_ai_content
 
 
 def test_cache_identity():
-
-def test_cache_identity():
     """Verify that the cache returns the exact same object for identical inputs."""
     content = "This is a test message with **markdown**."
     r1 = _cached_render_ai_content(content, False)
