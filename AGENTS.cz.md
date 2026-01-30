@@ -5,6 +5,7 @@
 ## Nedávné změny a aktualizace
 *Agenti: Zde přidávejte záznamy při provádění významných změn*
 - 2026-01-30: Codex - Opraveny CodeQL alerty (nepoužité importy, smíšené návraty, nedosažitelný kód, guard proti nevolatelnému objektu) a upraveny testy; testy: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
+- 2026-01-30: Codex - Zpřísněny kontroly instancování OverlayButton kvůli CodeQL; testy: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
 - 2026-01-23: Jules - Aktualizován systémový prompt `src/mycoder/triage_agent.py` pro soulad s "Principem zvracející kozy" v2 a vynucení striktního JSONu; testy: `poetry run pytest tests/unit/test_triage_agent.py`.
 - 2026-01-23: Jules - Aktualizován `src/mycoder/triage_agent.py` pro použití nového formátu promptu, odstraněna konfliktní instrukce pro generování shell příkazů pro zajištění striktního JSON výstupu; testy: `poetry run pytest tests/unit/test_triage_agent.py`.
 - 2026-01-21: Jules - Aktualizován systémový prompt `src/mycoder/triage_agent.py` pro soulad s "Principem zvracející kozy" v2 a vylepšena striktnost JSON; testy: `poetry run pytest tests/unit/test_triage_agent.py`.
