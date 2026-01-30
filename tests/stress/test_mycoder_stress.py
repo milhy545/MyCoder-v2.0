@@ -875,7 +875,9 @@ class TestEdgeCaseStress:
                                 handled_gracefully += 1
                                 print(f"   ✅ Input {i:2d}: Handled gracefully")
                             else:
-                                print(f"   ⚠️  Input {i:2d}: Unexpected response format")
+                                print(
+                                    f"   ⚠️  Input {i:2d}: Unexpected response format"
+                                )
                         else:
                             # Should handle type errors gracefully
                             await mycoder.process_request(malformed_input)
