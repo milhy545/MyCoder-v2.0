@@ -315,6 +315,10 @@ class ExecutionMonitor:
         self.logs: List[Tuple[str, str, str]] = []
         self.max_logs: int = 15
 
+        # Bolt Optimization: Cache metrics
+        self._last_metrics_time = 0.0
+        self._cached_metrics = {"cpu": 0.0, "ram": 0.0, "thermal": "N/A"}
+
     def add_log(self, action: str, resource: str = "") -> None:
         """Add a timestamped entry and trim logs to the configured cap."""
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
@@ -351,6 +355,11 @@ class ExecutionMonitor:
 
     def get_system_metrics(self) -> dict:
         """Return the latest CPU, RAM, and thermal measurements."""
+        # Bolt Optimization: Check cache (TTL 2s)
+        current_time = time.time()
+        if current_time - self._last_metrics_time < 2.0:
+            return self._cached_metrics
+
         metrics = {"cpu": 0.0, "ram": 0.0, "thermal": "N/A"}
         try:
             metrics["cpu"] = psutil.cpu_percent(interval=None)
@@ -375,6 +384,9 @@ class ExecutionMonitor:
         except (AttributeError, RuntimeError, OSError):
             # Sensor access may fail on some hosts; ignore.
             pass
+
+        self._cached_metrics = metrics
+        self._last_metrics_time = current_time
         return metrics
 
     def render(self, console: Console) -> Panel:
