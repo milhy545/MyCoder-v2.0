@@ -1,3 +1,4 @@
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -44,6 +45,10 @@ class ActivityPanel:
         self.thinking_text: str = ""
         self.files_modified: List[str] = []
         self.files_created: List[str] = []
+
+        # Bolt Optimization: Cache system metrics to reduce IO in render loop
+        self._last_metrics_time = 0.0
+        self._cached_metrics_str = "[dim]SYS | CPU: 0% | RAM: 0% | TEMP: N/A[/]"
 
     def add_activity(self, activity: Activity) -> None:
         """Add new activity and trim old ones."""
@@ -144,6 +149,11 @@ class ActivityPanel:
         return f"[green]{'=' * filled}[/][dim]{'.' * empty}[/]"
 
     def _render_system_metrics(self) -> str:
+        # Bolt Optimization: Return cached metrics if within TTL (2s)
+        current_time = time.time()
+        if current_time - self._last_metrics_time < 2.0:
+            return self._cached_metrics_str
+
         if not psutil:
             return "[dim]SYS | CPU: N/A | RAM: N/A | TEMP: N/A[/]"
         try:
@@ -154,7 +164,12 @@ class ActivityPanel:
             ram = psutil.virtual_memory().percent
         except Exception:
             ram = 0.0
-        return f"[dim]SYS | CPU: {cpu:.0f}% | RAM: {ram:.0f}% | TEMP: N/A[/]"
+
+        self._cached_metrics_str = (
+            f"[dim]SYS | CPU: {cpu:.0f}% | RAM: {ram:.0f}% | TEMP: N/A[/]"
+        )
+        self._last_metrics_time = current_time
+        return self._cached_metrics_str
 
     def _get_activity_icon(self, activity_type: ActivityType) -> str:
         icons = {
