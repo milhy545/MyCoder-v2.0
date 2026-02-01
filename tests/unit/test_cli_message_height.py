@@ -1,6 +1,5 @@
 import os
 import sys
-import pytest
 
 # Add src to path
 sys.path.insert(0, os.path.abspath("src"))
@@ -93,3 +92,4 @@ def test_caching_performance():
     info3 = _calculate_message_height.cache_info()
     assert info3.misses == 2
     assert info3.hits == 1
+    assert res3 >= 1
