@@ -105,7 +105,11 @@ class TestTriageAgent(unittest.TestCase):
     @patch("mycoder.triage_agent.triage_issues_with_llm")
     @patch.dict(
         "os.environ",
-        {"ISSUES_TO_TRIAGE": '[{"id": 1}]', "AVAILABLE_LABELS": "bug,enhancement"},
+        {
+            "ISSUES_TO_TRIAGE": '[{"id": 1}]',
+            "AVAILABLE_LABELS": "bug,enhancement",
+        },
+        clear=True,  # Clear the environment to prevent leaking GITHUB_ENV from CI
     )
     @patch("builtins.print")
     def test_main(self, mock_print, mock_triage):
@@ -187,7 +191,9 @@ class TestTriageAgent(unittest.TestCase):
         labels = ["bug"]
         github_env_val = "/custom/path/to/env"
 
-        asyncio.run(triage_issues_with_llm(issues, labels, github_env=github_env_val))
+        asyncio.run(
+            triage_issues_with_llm(issues, labels, github_env=github_env_val)
+        )
 
         # Verify prompt content
         args, kwargs = mock_router_instance.query.call_args
