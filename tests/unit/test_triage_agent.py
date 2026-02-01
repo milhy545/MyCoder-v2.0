@@ -105,7 +105,11 @@ class TestTriageAgent(unittest.TestCase):
     @patch("mycoder.triage_agent.triage_issues_with_llm")
     @patch.dict(
         "os.environ",
-        {"ISSUES_TO_TRIAGE": '[{"id": 1}]', "AVAILABLE_LABELS": "bug,enhancement"},
+        {
+            "ISSUES_TO_TRIAGE": '[{"id": 1}]',
+            "AVAILABLE_LABELS": "bug,enhancement",
+            "GITHUB_ENV": "stdout",
+        },
     )
     @patch("builtins.print")
     def test_main(self, mock_print, mock_triage):
