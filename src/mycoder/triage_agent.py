@@ -56,6 +56,8 @@ Analyze the provided GitHub issues and assign labels based on the project's cont
 {issues_to_triage}
 
 
+**Output Target:** `{github_env}`
+
 ## Analysis Protocol
 
 ### Step 1: Semantic Mapping & Stack Awareness
@@ -97,7 +99,9 @@ Write a JSON array to the output. Format:
 
 
 async def triage_issues_with_llm(
-    issues: List[Dict[str, Any]], available_labels: List[str]
+    issues: List[Dict[str, Any]],
+    available_labels: List[str],
+    github_env: str = "stdout",
 ) -> List[Dict[str, Any]]:
     """
     Uses LLM (Jules) to triage issues based on the Goat Principle.
@@ -164,7 +168,9 @@ async def triage_issues_with_llm(
 
     try:
         prompt = JULES_SYSTEM_PROMPT.format(
-            available_labels=labels_str, issues_to_triage=issues_json
+            available_labels=labels_str,
+            issues_to_triage=issues_json,
+            github_env=github_env,
         )
     except Exception as e:
         logger.error(f"Failed to format prompt: {e}")
@@ -217,6 +223,7 @@ def main() -> None:
     # Read from environment variables
     issues_env = os.environ.get("ISSUES_TO_TRIAGE")
     labels_env = os.environ.get("AVAILABLE_LABELS")
+    github_env = os.environ.get("GITHUB_ENV", "stdout")
 
     # Handle input arguments (fallback for manual testing)
     if not issues_env:
@@ -256,7 +263,9 @@ def main() -> None:
 
     # Run async triage
     try:
-        triage_results = asyncio.run(triage_issues_with_llm(issues, available_labels))
+        triage_results = asyncio.run(
+            triage_issues_with_llm(issues, available_labels, github_env=github_env)
+        )
         # Output strictly JSON to stdout
         print(json.dumps(triage_results, indent=2))
     except Exception as e:
