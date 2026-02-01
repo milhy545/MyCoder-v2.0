@@ -32,10 +32,6 @@
 **Learning:** `WebFetcher._html_to_markdown` in `src/mycoder/web_tools.py` was re-compiling ~14 complex regex patterns every time a page was fetched and converted. While Python caches compiled regexes, the function overhead of checking the cache and re-parsing flags for 14 patterns per call adds up in high-throughput scraping scenarios.
 **Action:** Hoisted all regex patterns to module-level `RE_*` constants. This also improved code readability by removing repetitive `flags=re.I` arguments.
 
-## 2025-05-23 - [Caching TUI Message Height Calculation]
-**Learning:** `InteractiveCLI._estimate_message_height` was calculating height for every message in every frame of the TUI render loop (4Hz). While `count('\n')` is fast, doing it repeatedly for immutable message history wastes CPU.
-**Action:** Refactored the logic into a module-level `@functools.lru_cache` function `_calculate_message_height`. This transforms an O(N) per-frame operation into O(1) for cached messages.
-
 ## 2026-01-23 - [Regex Pre-compilation in WebFetcher]
 **Learning:** `WebFetcher._html_to_markdown` was re-compiling 15+ regex patterns every time it processed HTML content. Even with Python's regex cache, this adds overhead, especially for batch processing.
 **Action:** Moved regex patterns to module-level constants and pre-compiled them. Benchmarks show ~4-6% performance improvement on processing large HTML blocks.

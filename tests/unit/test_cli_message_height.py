@@ -1,12 +1,12 @@
 import os
 import sys
-import functools
 import pytest
 
 # Add src to path
 sys.path.insert(0, os.path.abspath("src"))
 
 from mycoder.cli_interactive import _calculate_message_height
+
 
 def test_basic_height_calculation():
     """Verify height calculation for simple user messages."""
@@ -29,6 +29,7 @@ def test_basic_height_calculation():
     lines = _calculate_message_height(content, role, width)
     assert lines >= 5
 
+
 def test_ai_message_overhead():
     """Verify AI messages get extra buffer for markdown."""
     content = "Simple answer"
@@ -39,10 +40,11 @@ def test_ai_message_overhead():
 
     assert ai_lines > user_lines
 
+
 def test_long_content_wrapping():
     """Verify that long content increases height estimate."""
     content = "a" * 200
-    width = 50 # effective ~46 -> ~5 lines
+    width = 50  # effective ~46 -> ~5 lines
 
     short_content = "a" * 10
 
@@ -50,6 +52,7 @@ def test_long_content_wrapping():
     short_lines = _calculate_message_height(short_content, "user", width)
 
     assert long_lines > short_lines
+
 
 def test_newline_counting():
     """Verify that newlines are counted correctly."""
@@ -61,6 +64,7 @@ def test_newline_counting():
     lines_multi = _calculate_message_height(content_multi, "user", width)
 
     assert lines_multi > lines_single
+
 
 def test_caching_performance():
     """Verify that caching returns the same result efficiently."""
