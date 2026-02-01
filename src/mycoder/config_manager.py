@@ -299,7 +299,7 @@ class ConfigManager:
             if not candidate.exists():
                 continue
             try:
-                with candidate.open("r") as file_obj:
+                with open(candidate, "r") as file_obj:
                     return json.load(file_obj)
             except PermissionError:
                 logger.warning("Permission denied reading %s", candidate)
@@ -391,9 +391,11 @@ class ConfigManager:
         defaults = self._get_default_config()
         file_config = self._load_file_config() or {}
         env_config = self._load_env_config()
+        allow_env_overrides = file_config.get("env_overrides", True)
 
         merged = self._merge_deep(defaults, file_config)
-        merged = self._merge_deep(merged, env_config)
+        if allow_env_overrides:
+            merged = self._merge_deep(merged, env_config)
 
         self.config = self._dict_to_config(merged)
         self._validate_config()
@@ -415,8 +417,10 @@ class ConfigManager:
                 if provider in config_dict and "api_key" in config_dict[provider]:
                     config_dict[provider]["api_key"] = ""
 
+            config_dict.setdefault("env_overrides", False)
+
             destination.parent.mkdir(parents=True, exist_ok=True)
-            with destination.open("w") as file_obj:
+            with open(destination, "w") as file_obj:
                 json.dump(config_dict, file_obj, indent=2)
             return True
         except PermissionError:

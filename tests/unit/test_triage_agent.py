@@ -108,8 +108,9 @@ class TestTriageAgent(unittest.TestCase):
         {
             "ISSUES_TO_TRIAGE": '[{"id": 1}]',
             "AVAILABLE_LABELS": "bug,enhancement",
+            "GITHUB_ENV": "stdout",
         },
-        clear=True,  # Clear the environment to prevent leaking GITHUB_ENV from CI
+        clear=True,  # Clear the environment to prevent leaking CI GITHUB_ENV.
     )
     @patch("builtins.print")
     def test_main(self, mock_print, mock_triage):
@@ -131,7 +132,7 @@ class TestTriageAgent(unittest.TestCase):
         mock_triage.assert_called_once()
         # Verify Github env passed to triage_issues_with_llm
         # main() defaults to 'stdout' if env var not set
-        # But we didn't set GITHUB_ENV in patch.dict, so it should be stdout.
+        # We set GITHUB_ENV to 'stdout' explicitly to avoid CI leaking it.
         # Let's check call args.
         call_args = mock_triage.call_args
         # args[0] is issues, args[1] is labels. kwargs might have github_env
