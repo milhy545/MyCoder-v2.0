@@ -483,6 +483,55 @@ class ExecutionMonitor:
         )
 
 
+@functools.lru_cache(maxsize=2048)
+def _calculate_message_height(content: str, role: str, content_width: int) -> int:
+    """
+    Conservatively estimate how many terminal lines this message will consume.
+    Cached module-level function to optimize TUI rendering loop.
+    """
+    # Start with header line (timestamp + role label)
+    lines = 1
+
+    # Count explicit newlines - critical for code blocks and lists
+    newline_count = content.count("\n")
+
+    # Calculate wrapped lines based on content length
+    # Use effective width (slightly less than actual to account for padding)
+    effective_width = max(30, content_width - 4)
+    char_based_lines = max(1, len(content) // effective_width)
+
+    # Take the MAXIMUM of newline-based and char-based estimates
+    # This handles both long single-line text and multi-line code blocks
+    content_lines = max(newline_count + 1, char_based_lines)
+
+    # Apply role-specific safety multipliers
+    if role == "ai":
+        # AI messages use Markdown which adds significant overhead:
+        # - Code blocks add borders and syntax highlighting
+        # - Lists add bullet points and indentation
+        # - Headers add extra spacing
+        # - Tables add grid lines
+        # Use 1.5x multiplier + fixed buffer of 3 lines
+        content_lines = int(content_lines * 1.5) + 3
+
+        # Additional penalty for very long AI responses
+        if len(content) > 1000:
+            content_lines += 2
+    else:
+        # User/system messages are plain text, but still add buffer
+        content_lines = int(content_lines * 1.1) + 1
+
+    lines += content_lines
+
+    # Separator line
+    lines += 1
+
+    # Add small buffer per message to account for Rich rendering quirks
+    lines += 1
+
+    return lines
+
+
 class InteractiveCLI:
     """Interactive command-line interface for MyCoder with split-screen UI."""
 
@@ -1947,50 +1996,9 @@ class InteractiveCLI:
         Returns:
             Estimated line count (always rounds up for safety)
         """
-        content = entry["content"]
-        role = entry["role"]
-
-        # Start with header line (timestamp + role label)
-        lines = 1
-
-        # Count explicit newlines - critical for code blocks and lists
-        newline_count = content.count("\n")
-
-        # Calculate wrapped lines based on content length
-        # Use effective width (slightly less than actual to account for padding)
-        effective_width = max(30, content_width - 4)
-        char_based_lines = max(1, len(content) // effective_width)
-
-        # Take the MAXIMUM of newline-based and char-based estimates
-        # This handles both long single-line text and multi-line code blocks
-        content_lines = max(newline_count + 1, char_based_lines)
-
-        # Apply role-specific safety multipliers
-        if role == "ai":
-            # AI messages use Markdown which adds significant overhead:
-            # - Code blocks add borders and syntax highlighting
-            # - Lists add bullet points and indentation
-            # - Headers add extra spacing
-            # - Tables add grid lines
-            # Use 1.5x multiplier + fixed buffer of 3 lines
-            content_lines = int(content_lines * 1.5) + 3
-
-            # Additional penalty for very long AI responses
-            if len(content) > 1000:
-                content_lines += 2
-        else:
-            # User/system messages are plain text, but still add buffer
-            content_lines = int(content_lines * 1.1) + 1
-
-        lines += content_lines
-
-        # Separator line
-        lines += 1
-
-        # Add small buffer per message to account for Rich rendering quirks
-        lines += 1
-
-        return lines
+        return _calculate_message_height(
+            entry.get("content", ""), entry.get("role", "user"), content_width
+        )
 
     def _render_chat_panel(self) -> Panel:
         """
