@@ -187,9 +187,7 @@ class TestTriageAgent(unittest.TestCase):
         labels = ["bug"]
         github_env_val = "/custom/path/to/env"
 
-        asyncio.run(
-            triage_issues_with_llm(issues, labels, github_env=github_env_val)
-        )
+        asyncio.run(triage_issues_with_llm(issues, labels, github_env=github_env_val))
 
         # Verify prompt content
         args, kwargs = mock_router_instance.query.call_args
