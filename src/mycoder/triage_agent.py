@@ -79,7 +79,7 @@ Iterate through issues. If an issue is clear, assign labels. If unclear, skip it
 
 ## Output Specification
 
-Write a JSON array to the output. Format:
+Write a JSON array to the output file. Format:
 
 ```json
 [
