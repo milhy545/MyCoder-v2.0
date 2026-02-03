@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import ipaddress
 import json
@@ -62,7 +63,7 @@ class WebFetcher:
         if cached:
             return {"success": True, "content": cached, "cached": True}
 
-        if not self._is_safe_url(url):
+        if not await self._is_safe_url(url):
             return {
                 "success": False,
                 "error": "Security Error: Access to private/local network blocked (SSRF Protection).",
@@ -101,7 +102,7 @@ class WebFetcher:
         except aiohttp.ClientError as exc:
             return {"success": False, "error": str(exc)}
 
-    def _is_safe_url(self, url: str) -> bool:
+    async def _is_safe_url(self, url: str) -> bool:
         """
         Validate URL against SSRF attacks (block private/local IPs).
         """
@@ -115,15 +116,29 @@ class WebFetcher:
             if not hostname:
                 return False
 
-            # Resolve hostname to IP
-            # Note: This has a small TOCTOU risk (DNS rebinding), but standard basic protection
-            # Better protection requires custom DNS resolver or inspecting socket connection
-            ip_str = socket.gethostbyname(hostname)
-            ip = ipaddress.ip_address(ip_str)
-
-            # Block private, loopback, and link-local ranges
-            if ip.is_private or ip.is_loopback or ip.is_link_local:
+            # Resolve hostname to IP using async resolver
+            loop = asyncio.get_running_loop()
+            try:
+                # getaddrinfo returns list of (family, type, proto, canonname, sockaddr)
+                # We check all resolved IPs
+                infos = await loop.getaddrinfo(hostname, None)
+            except socket.gaierror:
                 return False
+
+            if not infos:
+                return False
+
+            for info in infos:
+                # info[4] is sockaddr, info[4][0] is the IP address
+                ip_str = info[4][0]
+                try:
+                    ip = ipaddress.ip_address(ip_str)
+                    # Block private, loopback, and link-local ranges
+                    if ip.is_private or ip.is_loopback or ip.is_link_local:
+                        return False
+                except ValueError:
+                    # Skip invalid IPs
+                    continue
 
             return True
         except Exception:
