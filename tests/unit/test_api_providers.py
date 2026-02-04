@@ -780,7 +780,10 @@ class TestOllamaProvider:
         """Test thermal status check for local provider"""
         # Mock thermal script success
         mock_process = AsyncMock()
-        mock_process.communicate.return_value = (b"Temperature: 75\xc2\xb0C - NORMAL", b"")
+        mock_process.communicate.return_value = (
+            b"Temperature: 75\xc2\xb0C - NORMAL",
+            b"",
+        )
         mock_process.returncode = 0
         mock_subprocess.return_value = mock_process
 
@@ -799,7 +802,10 @@ class TestOllamaProvider:
         """Test thermal status check with critical temperature"""
         # Mock thermal script with critical temperature
         mock_process = AsyncMock()
-        mock_process.communicate.return_value = (b"Temperature: 87\xc2\xb0C - CRITICAL", b"")
+        mock_process.communicate.return_value = (
+            b"Temperature: 87\xc2\xb0C - CRITICAL",
+            b"",
+        )
         mock_process.returncode = 0
         mock_subprocess.return_value = mock_process
 
@@ -817,7 +823,10 @@ class TestOllamaProvider:
         """Test query with thermal monitoring"""
         # Mock thermal script indicating high temperature
         mock_process = AsyncMock()
-        mock_process.communicate.return_value = (b"Temperature: 82\xc2\xb0C - HIGH", b"")
+        mock_process.communicate.return_value = (
+            b"Temperature: 82\xc2\xb0C - HIGH",
+            b"",
+        )
         mock_process.returncode = 0
         mock_subprocess.return_value = mock_process
 

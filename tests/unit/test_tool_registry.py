@@ -616,7 +616,10 @@ class TestThermalAwareTool:
         """Test thermal status check via script"""
         # Mock successful thermal script
         mock_process = AsyncMock()
-        mock_process.communicate.return_value = (b"Temperature: 75\xc2\xb0C - NORMAL operation", b"")
+        mock_process.communicate.return_value = (
+            b"Temperature: 75\xc2\xb0C - NORMAL operation",
+            b"",
+        )
         mock_process.returncode = 0
         mock_subprocess.return_value = mock_process
 
@@ -636,7 +639,10 @@ class TestThermalAwareTool:
         """Test thermal status check with critical temperature"""
         # Mock thermal script indicating critical temperature
         mock_process = AsyncMock()
-        mock_process.communicate.return_value = (b"Temperature: 87\xc2\xb0C - CRITICAL - throttling required", b"")
+        mock_process.communicate.return_value = (
+            b"Temperature: 87\xc2\xb0C - CRITICAL - throttling required",
+            b"",
+        )
         mock_process.returncode = 0
         mock_subprocess.return_value = mock_process
 

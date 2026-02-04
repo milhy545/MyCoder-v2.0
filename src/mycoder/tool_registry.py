@@ -511,7 +511,9 @@ class ThermalAwareTool(BaseTool):
             )
 
             try:
-                stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=5.0)
+                stdout, stderr = await asyncio.wait_for(
+                    process.communicate(), timeout=5.0
+                )
             except asyncio.TimeoutError:
                 try:
                     process.kill()
