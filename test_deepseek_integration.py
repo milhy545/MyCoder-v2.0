@@ -6,7 +6,8 @@ Verifies that the DeepSeek optimization works correctly
 
 import asyncio
 import sys
-from mycoder.ollama_integration import OllamaClient, CodeGenerationProvider
+
+from mycoder.ollama_integration import CodeGenerationProvider, OllamaClient
 
 
 async def test_deepseek_integration():

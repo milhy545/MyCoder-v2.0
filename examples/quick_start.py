@@ -7,9 +7,9 @@ with the 5-tier API provider fallback system.
 """
 
 import asyncio
-from pathlib import Path
-import sys
 import os
+import sys
+from pathlib import Path
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))

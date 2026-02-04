@@ -7,11 +7,11 @@ complex import issues. Tests core functionality in a tmux-friendly format.
 """
 
 import asyncio
+import os
 import sys
-from pathlib import Path
 import tempfile
 import time
-import os
+from pathlib import Path
 
 # Set up path for module imports
 PROJECT_ROOT = Path(__file__).parent
@@ -98,7 +98,7 @@ async def test_tool_registry():
     print("\n🛠️  Testing Tool Registry...")
 
     try:
-        from mycoder.tool_registry import ToolRegistry, BaseTool
+        from mycoder.tool_registry import BaseTool, ToolRegistry
 
         # Test registry creation
         registry = ToolRegistry()
@@ -160,10 +160,11 @@ async def test_basic_system():
 
     try:
         # Test that core components work together
+        from dataclasses import asdict
+
+        from mycoder.api_providers import APIProviderType
         from mycoder.config_manager import ConfigManager, MyCoderConfig
         from mycoder.tool_registry import ToolRegistry
-        from mycoder.api_providers import APIProviderType
-        from dataclasses import asdict
 
         # Create basic config
         config_data = {

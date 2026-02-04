@@ -1,11 +1,17 @@
 import subprocess
 
+
 def run_command(cmd):
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
-        return result.stdout.strip() if result.returncode == 0 else f"Error: {result.stderr}"
+        return (
+            result.stdout.strip()
+            if result.returncode == 0
+            else f"Error: {result.stderr}"
+        )
     except Exception as e:
         return f"Exception: {str(e)}"
+
 
 def main():
     print("🚀 --- GIT SUMMARY SKILL ---")
@@ -28,6 +34,7 @@ def main():
         print(status)
 
     print("\n--- KONEC PŘEHLEDU ---")
+
 
 if __name__ == "__main__":
     main()

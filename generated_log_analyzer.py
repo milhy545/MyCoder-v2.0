@@ -5,12 +5,12 @@ Log Analyzer - Analýza log souborů s pokročilými funkcemi
 """
 
 import json
+import logging
 import re
 from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
-import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -227,8 +227,7 @@ def main():
     sample_log = Path("sample.log")
     if not sample_log.exists():
         with open(sample_log, "w") as f:
-            f.write(
-                """2024-08-08 10:30:15 INFO Server started successfully
+            f.write("""2024-08-08 10:30:15 INFO Server started successfully
 2024-08-08 10:30:20 WARNING High memory usage detected: 85%
 2024-08-08 10:35:22 ERROR Database connection failed: Connection timeout
 2024-08-08 10:35:23 ERROR Database connection failed: Connection timeout  
@@ -238,8 +237,7 @@ def main():
 2024-08-08 10:55:42 ERROR Database connection failed: Connection timeout
 2024-08-08 11:00:18 WARNING High CPU usage: 92%
 2024-08-08 11:05:55 ERROR Authentication failed for user admin
-"""
-            )
+""")
 
     # Analyze the log
     analyzer = LogAnalyzer(sample_log)
