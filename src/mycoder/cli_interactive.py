@@ -11,6 +11,7 @@ import os
 import re
 import shutil
 import sys
+import threading
 import time
 from contextlib import suppress
 from datetime import datetime
@@ -160,6 +161,8 @@ class MyCoderCompleter(Completer):
         self._file_cache: List[str] = []
         self._last_cache_time: float = 0.0
         self._cache_ttl: float = 30.0  # Refresh every 30s
+        self._refresh_lock = threading.Lock()
+        self._is_refreshing = False
         self._ignored_dirs = {
             ".git",
             "__pycache__",
@@ -171,11 +174,21 @@ class MyCoderCompleter(Completer):
         }
 
     def _refresh_file_cache(self) -> None:
-        """Refreshes the file cache if TTL expired."""
+        """Refreshes the file cache if TTL expired (async)."""
         if time.time() - self._last_cache_time < self._cache_ttl and self._file_cache:
             return
 
-        self._file_cache = []
+        with self._refresh_lock:
+            if self._is_refreshing:
+                return
+            self._is_refreshing = True
+
+        # Start background thread
+        threading.Thread(target=self._bg_refresh_task, daemon=True).start()
+
+    def _bg_refresh_task(self) -> None:
+        """Background task to refresh file cache."""
+        new_cache = []
         try:
             # Recursive walk from current directory
             for root, dirs, files in os.walk(".", topdown=True):
@@ -191,10 +204,17 @@ class MyCoderCompleter(Completer):
                     if rel_path.startswith("./"):
                         rel_path = rel_path[2:]
 
-                    self._file_cache.append(rel_path)
+                    new_cache.append(rel_path)
+
+            # Atomic update
+            self._file_cache = new_cache
+            self._last_cache_time = time.time()
+
         except Exception as exc:
             logger.debug("Failed to refresh file cache: %s", exc)
-        self._last_cache_time = time.time()
+        finally:
+            with self._refresh_lock:
+                self._is_refreshing = False
 
     def get_completions(
         self, document: Document, complete_event
