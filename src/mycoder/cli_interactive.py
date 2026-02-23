@@ -1840,15 +1840,23 @@ class InteractiveCLI:
         if attached_files:
             context_files.extend(attached_files)
 
+        last_refresh_time = 0.0
+
         def _stream_handler(chunk: str) -> None:
-            nonlocal stream_text
+            nonlocal stream_text, last_refresh_time
             if not chunk:
                 return
             stream_text += chunk
             if len(stream_text) > 1000:
                 stream_text = stream_text[-1000:]
             self.activity_panel.set_thinking(stream_text)
-            self._refresh_live()
+
+            # Bolt Optimization: Throttle UI updates to ~20 FPS to prevent
+            # high CPU usage when LLM streams very fast (e.g. 50+ tokens/sec).
+            now = time.monotonic()
+            if now - last_refresh_time >= 0.05:
+                self._refresh_live()
+                last_refresh_time = now
 
         with self.console.status(
             "[bold magenta]Přemýšlím a generuji kód...[/]", spinner="dots"
