@@ -518,7 +518,9 @@ class ThermalAwareTool(BaseTool):
                 try:
                     process.kill()
                 except ProcessLookupError:
-                    pass
+                    # Process already exited before kill; safe to ignore.
+                    if "logger" in globals():
+                        logger.debug("Thermal check timeout: process already terminated.")
                 return True  # Fail open on timeout
 
             if process.returncode == 0:
