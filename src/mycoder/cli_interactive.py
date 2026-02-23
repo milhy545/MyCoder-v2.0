@@ -7,6 +7,7 @@ Left: Chat History (Auto-scrolling Markdown). Right: Activity Panel (Live Activi
 import asyncio
 import functools
 import json
+import logging
 import os
 import re
 import shutil
@@ -16,8 +17,7 @@ import time
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Iterable
-import logging
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import psutil
 
@@ -45,9 +45,9 @@ except ImportError:
 try:
     from prompt_toolkit import PromptSession
     from prompt_toolkit import prompt as pt_prompt
-    from prompt_toolkit.key_binding import KeyBindings
     from prompt_toolkit.completion import Completer, Completion
     from prompt_toolkit.document import Document
+    from prompt_toolkit.key_binding import KeyBindings
 except ImportError:
     pt_prompt = None
     KeyBindings = None

@@ -50,3 +50,7 @@
 ## 2026-10-27 - [Blocking DNS in Async WebFetcher]
 **Learning:** `WebFetcher._is_safe_url` was using synchronous `socket.gethostbyname` to validate IPs for SSRF protection. This function blocks the entire `asyncio` event loop during DNS resolution (which can take seconds), freezing the TUI or API handling.
 **Action:** Replaced with `await loop.getaddrinfo` in an `async` method to ensure non-blocking resolution. Always check for synchronous I/O calls (socket, file) inside `async` methods.
+
+## 2026-12-07 - [Async Thermal Monitoring]
+**Learning:** Thermal monitoring scripts were being executed using synchronous `subprocess.run` inside `async` methods (`_get_thermal_status`). This caused the entire event loop to freeze for ~1 second during thermal checks, affecting UI responsiveness and concurrency.
+**Action:** Replaced synchronous subprocess calls with `asyncio.create_subprocess_exec` and `process.communicate()`. This allows the event loop to continue processing other tasks (like UI updates) while waiting for the thermal check to complete. Verified with reproduction script showing concurrent execution.

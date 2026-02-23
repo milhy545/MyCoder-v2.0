@@ -775,14 +775,17 @@ class TestOllamaProvider:
         assert status == APIProviderStatus.UNAVAILABLE
 
     @pytest.mark.asyncio
-    @patch("subprocess.run")
+    @patch("asyncio.create_subprocess_exec")
     async def test_check_thermal_status_local(self, mock_subprocess):
         """Test thermal status check for local provider"""
         # Mock thermal script success
-        mock_result = Mock()
-        mock_result.returncode = 0
-        mock_result.stdout = "Temperature: 75°C - NORMAL"
-        mock_subprocess.return_value = mock_result
+        mock_process = AsyncMock()
+        mock_process.communicate.return_value = (
+            b"Temperature: 75\xc2\xb0C - NORMAL",
+            b"",
+        )
+        mock_process.returncode = 0
+        mock_subprocess.return_value = mock_process
 
         provider = self.create_local_provider()
         thermal_status = await provider._check_thermal_status()
@@ -792,16 +795,19 @@ class TestOllamaProvider:
     @pytest.mark.asyncio
     @patch("os.path.exists", return_value=True)
     @patch("os.environ.get", return_value="/fake/thermal_script.sh")
-    @patch("subprocess.run")
+    @patch("asyncio.create_subprocess_exec")
     async def test_check_thermal_status_critical(
         self, mock_subprocess, mock_env, mock_exists
     ):
         """Test thermal status check with critical temperature"""
         # Mock thermal script with critical temperature
-        mock_result = Mock()
-        mock_result.returncode = 0
-        mock_result.stdout = "Temperature: 87°C - CRITICAL"
-        mock_subprocess.return_value = mock_result
+        mock_process = AsyncMock()
+        mock_process.communicate.return_value = (
+            b"Temperature: 87\xc2\xb0C - CRITICAL",
+            b"",
+        )
+        mock_process.returncode = 0
+        mock_subprocess.return_value = mock_process
 
         provider = self.create_local_provider()
         thermal_status = await provider._check_thermal_status()
@@ -812,14 +818,17 @@ class TestOllamaProvider:
     @pytest.mark.asyncio
     @patch("os.path.exists", return_value=True)
     @patch("os.environ.get", return_value="/fake/thermal_script.sh")
-    @patch("subprocess.run")
+    @patch("asyncio.create_subprocess_exec")
     async def test_thermal_aware_query(self, mock_subprocess, mock_env, mock_exists):
         """Test query with thermal monitoring"""
         # Mock thermal script indicating high temperature
-        mock_result = Mock()
-        mock_result.returncode = 0
-        mock_result.stdout = "Temperature: 82°C - HIGH"
-        mock_subprocess.return_value = mock_result
+        mock_process = AsyncMock()
+        mock_process.communicate.return_value = (
+            b"Temperature: 82\xc2\xb0C - HIGH",
+            b"",
+        )
+        mock_process.returncode = 0
+        mock_subprocess.return_value = mock_process
 
         with patch("aiohttp.ClientSession.post") as mock_post:
             mock_response = AsyncMock()

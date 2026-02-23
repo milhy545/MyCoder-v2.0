@@ -19,29 +19,29 @@ def _bool_flag_from_env(name: str, default: bool) -> bool:
 async def network_demo():
     print("🌐 MyCoder v2.1.0 - ADAPTIVNÍ REŽIMY DEMO")
     print("=" * 60)
-    
+
     manager = AdaptiveModeManager()
-    
+
     print(f"🔄 Počáteční režim: {manager.current_mode.value}")
     print("\n📊 Testování síťových podmínek...")
-    
+
     # Simulace testování sítě
     print("🔍 Kontrola internetu...")
     internet_ok = _bool_flag_from_env("MYCODER_NETWORK_INTERNET", True)
     print(f"   Internet: {'✅' if internet_ok else '❌'}")
-    
+
     print("🔍 Kontrola MCP orchestrátoru (192.168.0.58:8020)...")
     orchestrator_ok = _bool_flag_from_env("MYCODER_NETWORK_ORCHESTRATOR", False)
     print(f"   MCP Orchestrator: {'✅' if orchestrator_ok else '❌'}")
-    
+
     print("🔍 Kontrola Claude CLI autentifikace...")
     claude_ok = _bool_flag_from_env("MYCODER_NETWORK_CLAUDE", False)
     print(f"   Claude CLI: {'✅' if claude_ok else '❌'}")
-    
+
     print("\n" + "="*60)
     print("🎯 DOSTUPNÉ REŽIMY A JEJICH SCHOPNOSTI:")
     print("="*60)
-    
+
     modes = {
         OperationalMode.FULL: {
             "name": "FULL 💪",
@@ -50,7 +50,7 @@ async def network_demo():
             "capabilities": [
                 "✅ Claude AI dotazy",
                 "✅ MCP orchestrátor (27 nástrojů)",
-                "✅ Pokročilá paměť", 
+                "✅ Pokročilá paměť",
                 "✅ Git operace",
                 "✅ Databázové operace",
                 "✅ Web browsing"
@@ -73,7 +73,7 @@ async def network_demo():
             "requirements": "Pouze lokální systém",
             "capabilities": [
                 "❌ Claude AI",
-                "❌ MCP orchestrátor", 
+                "❌ MCP orchestrátor",
                 "✅ Lokální template odpovědi",
                 "✅ Základní file operace",
                 "✅ Systémové nástroje"
@@ -91,7 +91,7 @@ async def network_demo():
             ]
         }
     }
-    
+
     for mode, info in modes.items():
         print(f"\n{info['name']}")
         print(f"📋 {info['description']}")
@@ -99,11 +99,11 @@ async def network_demo():
         print("🎯 Schopnosti:")
         for cap in info['capabilities']:
             print(f"   {cap}")
-    
+
     print("\n" + "="*60)
     print("🔄 AUTOMATICKÉ PŘEPÍNÁNÍ REŽIMŮ:")
     print("="*60)
-    
+
     if orchestrator_ok and claude_ok:
         optimal_mode = OperationalMode.FULL
     elif claude_ok:
@@ -112,15 +112,15 @@ async def network_demo():
         optimal_mode = OperationalMode.AUTONOMOUS
     else:
         optimal_mode = OperationalMode.RECOVERY
-    
+
     print(f"🎯 Na základě dostupných služeb doporučuji: {optimal_mode.value}")
     print(f"📊 Současný režim: {manager.current_mode.value}")
-    
+
     if optimal_mode != manager.current_mode:
         print(f"🔄 Automatické přepnutí na optimální režim...")
         await manager.transition_to_mode(optimal_mode, "Network conditions optimization")
         print(f"✅ Přepnuto na: {manager.current_mode.value}")
-    
+
     print(f"\n🏆 MyCoder v2.1.0 je nyní v režimu: {manager.current_mode.value}")
     print("💡 V tomto režimu jsou k dispozici funkce uvedené výše.")
 

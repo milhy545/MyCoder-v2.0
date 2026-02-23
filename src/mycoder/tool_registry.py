@@ -11,6 +11,7 @@ Features:
 - Intelligent tool routing based on context and capabilities
 """
 
+import asyncio
 import logging
 import os
 import time
@@ -497,22 +498,31 @@ class ThermalAwareTool(BaseTool):
                 return temp < 80  # Safe threshold for Q9550
 
             # Fallback: check PowerManagement system directly
-            import subprocess
-
             thermal_script = os.environ.get("MYCODER_THERMAL_SCRIPT", "")
             if not thermal_script or not os.path.exists(thermal_script):
                 return True  # Assume safe if no script configured
 
-            result = subprocess.run(
-                [thermal_script, "status"],
-                capture_output=True,
-                text=True,
-                timeout=5,
+            process = await asyncio.create_subprocess_exec(
+                thermal_script,
+                "status",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
             )
 
-            if result.returncode == 0:
+            try:
+                stdout, stderr = await asyncio.wait_for(
+                    process.communicate(), timeout=5.0
+                )
+            except asyncio.TimeoutError:
+                try:
+                    process.kill()
+                except ProcessLookupError:
+                    logger.debug("Thermal subprocess already exited before kill().")
+                return True  # Fail open on timeout
+
+            if process.returncode == 0:
                 # If status contains "CRITICAL" or temperature warnings, block
-                return "CRITICAL" not in result.stdout.upper()
+                return "CRITICAL" not in stdout.decode().upper()
 
             return True  # Assume safe if can't check
 

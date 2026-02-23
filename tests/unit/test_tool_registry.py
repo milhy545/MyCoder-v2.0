@@ -611,14 +611,17 @@ class TestThermalAwareTool:
         assert is_safe is False
 
     @pytest.mark.asyncio
-    @patch("subprocess.run")
+    @patch("asyncio.create_subprocess_exec")
     async def test_check_thermal_status_script_success(self, mock_subprocess):
         """Test thermal status check via script"""
         # Mock successful thermal script
-        mock_result = Mock()
-        mock_result.returncode = 0
-        mock_result.stdout = "Temperature: 75°C - NORMAL operation"
-        mock_subprocess.return_value = mock_result
+        mock_process = AsyncMock()
+        mock_process.communicate.return_value = (
+            b"Temperature: 75\xc2\xb0C - NORMAL operation",
+            b"",
+        )
+        mock_process.returncode = 0
+        mock_subprocess.return_value = mock_process
 
         tool = self.create_tool()
         context = ToolExecutionContext(mode="AUTONOMOUS")
@@ -629,16 +632,19 @@ class TestThermalAwareTool:
     @pytest.mark.asyncio
     @patch("os.path.exists", return_value=True)
     @patch("os.environ.get", return_value="/fake/thermal_script.sh")
-    @patch("subprocess.run")
+    @patch("asyncio.create_subprocess_exec")
     async def test_check_thermal_status_script_critical(
         self, mock_subprocess, mock_env, mock_exists
     ):
         """Test thermal status check with critical temperature"""
         # Mock thermal script indicating critical temperature
-        mock_result = Mock()
-        mock_result.returncode = 0
-        mock_result.stdout = "Temperature: 87°C - CRITICAL - throttling required"
-        mock_subprocess.return_value = mock_result
+        mock_process = AsyncMock()
+        mock_process.communicate.return_value = (
+            b"Temperature: 87\xc2\xb0C - CRITICAL - throttling required",
+            b"",
+        )
+        mock_process.returncode = 0
+        mock_subprocess.return_value = mock_process
 
         tool = self.create_tool()
         context = ToolExecutionContext(mode="AUTONOMOUS")
@@ -647,7 +653,7 @@ class TestThermalAwareTool:
         assert is_safe is False
 
     @pytest.mark.asyncio
-    @patch("subprocess.run")
+    @patch("asyncio.create_subprocess_exec")
     async def test_check_thermal_status_script_error(self, mock_subprocess):
         """Test thermal status check when script fails"""
         # Mock script failure

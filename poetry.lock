@@ -272,23 +272,23 @@ files = [
 
 [[package]]
 name = "azure-cognitiveservices-speech"
-version = "1.48.1"
+version = "1.47.0"
 description = "Microsoft Cognitive Services Speech SDK for Python"
 optional = true
 python-versions = ">=3.7"
 groups = ["main"]
 markers = "extra == \"cloud\""
 files = [
-    {file = "azure_cognitiveservices_speech-1.48.1-py3-none-macosx_10_14_x86_64.whl", hash = "sha256:73afc1d8fc2d14a53f45350fe7c2a209108d87564346a6e8a82674911e3035af"},
-    {file = "azure_cognitiveservices_speech-1.48.1-py3-none-macosx_11_0_arm64.whl", hash = "sha256:1674c75ce39a4bc6e683675aa91b45e24721b0fe86f55187230da98cd6a53cf1"},
-    {file = "azure_cognitiveservices_speech-1.48.1-py3-none-manylinux1_x86_64.whl", hash = "sha256:b562978616231e70a761ceaeb916ab777aeafffbecafb0b63f8117c4a24d0a7d"},
-    {file = "azure_cognitiveservices_speech-1.48.1-py3-none-manylinux2014_aarch64.whl", hash = "sha256:0bced7b5181c970747cdd7fa194050c1fd7ec6702321a8e325d45c49601c9553"},
-    {file = "azure_cognitiveservices_speech-1.48.1-py3-none-win_amd64.whl", hash = "sha256:f0bfeaa81265609bdf2127718681ff2d34ee441177e267a9524d80060fef2618"},
-    {file = "azure_cognitiveservices_speech-1.48.1-py3-none-win_arm64.whl", hash = "sha256:646537627d8064c09a8da5544db6747bb5dc07a5ac0d396bfd338eb6ac9c5787"},
+    {file = "azure_cognitiveservices_speech-1.47.0-py3-none-macosx_10_14_x86_64.whl", hash = "sha256:656577ed01ed4b8cd7c70fab2c921b300181b906f101758a16406bc99b133681"},
+    {file = "azure_cognitiveservices_speech-1.47.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:afd91653ceca482ccea5459eedda1ec9aa95ee07df12a15fc588c42d4f90f0a9"},
+    {file = "azure_cognitiveservices_speech-1.47.0-py3-none-manylinux1_x86_64.whl", hash = "sha256:577b702ee30d35ecc581e7e2ac23f4387782f93c241d7f8f3c86f72bb883d02d"},
+    {file = "azure_cognitiveservices_speech-1.47.0-py3-none-manylinux2014_aarch64.whl", hash = "sha256:ff72c74abe4b4c0f5a527eabf8511a8c0e689d884a95c54a46495b293e302e73"},
+    {file = "azure_cognitiveservices_speech-1.47.0-py3-none-win_amd64.whl", hash = "sha256:ecfce57d66907afe305fb2950cc781ea8f327274facd2db66950e701b6cfd715"},
+    {file = "azure_cognitiveservices_speech-1.47.0-py3-none-win_arm64.whl", hash = "sha256:4351734cf240d11340a057ecb388397e5ecf40e97e4b67a6a990fffe2791b56c"},
 ]
 
 [package.dependencies]
-azure-core = ">=1.33.0"
+azure-core = ">=1.31.0"
 
 [[package]]
 name = "azure-core"
@@ -394,19 +394,19 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
 name = "boto3"
-version = "1.42.53"
+version = "1.42.38"
 description = "The AWS SDK for Python"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "extra == \"cloud\""
 files = [
-    {file = "boto3-1.42.53-py3-none-any.whl", hash = "sha256:3bd32f3508a6e9851671d0ef3b1f9e8ee7e8c095aa0488bcd9e86074aef5b7eb"},
-    {file = "boto3-1.42.53.tar.gz", hash = "sha256:56bc79388763995852b6d3fe48023e661e63fc2e60a921273c422d0171b9fbfb"},
+    {file = "boto3-1.42.38-py3-none-any.whl", hash = "sha256:b5a748b3fdddba8aa2988af0e462996ef72dc2760b0eab30329b9d201d4b38f2"},
+    {file = "boto3-1.42.38.tar.gz", hash = "sha256:af2e5c08972d35fa4b4bc457031794343a6ddb1df5692db43302d5b5feaac23e"},
 ]
 
 [package.dependencies]
-botocore = ">=1.42.53,<1.43.0"
+botocore = ">=1.42.38,<1.43.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.16.0,<0.17.0"
 
@@ -415,15 +415,15 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.42.53"
+version = "1.42.38"
 description = "Low-level, data-driven core of boto 3."
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "extra == \"cloud\""
 files = [
-    {file = "botocore-1.42.53-py3-none-any.whl", hash = "sha256:1255db56bc0a284a8caa182c20966277e6c8871b6881cf816d40e993fa5da503"},
-    {file = "botocore-1.42.53.tar.gz", hash = "sha256:0bc1a2e1b6ae4c8397c9bede3bb9007b4f16e159ef2ca7f24837e31d5860caac"},
+    {file = "botocore-1.42.38-py3-none-any.whl", hash = "sha256:b67e0c4989a6bdd459cb49274df05003179165567b7789d8d920cdbdc6c2661f"},
+    {file = "botocore-1.42.38.tar.gz", hash = "sha256:eb36d09b5c61b3ede6129f7b54630049f3eeeccf1327a32cf8944563027a4002"},
 ]
 
 [package.dependencies]
@@ -432,7 +432,7 @@ python-dateutil = ">=2.1,<3.0.0"
 urllib3 = {version = ">=1.25.4,<2.2.0 || >2.2.0,<3", markers = "python_version >= \"3.10\""}
 
 [package.extras]
-crt = ["awscrt (==0.31.2)"]
+crt = ["awscrt (==0.29.2)"]
 
 [[package]]
 name = "certifi"
@@ -966,14 +966,14 @@ test = ["pytest (>=6)"]
 
 [[package]]
 name = "filelock"
-version = "3.24.3"
+version = "3.20.3"
 description = "A platform independent file lock."
 optional = false
 python-versions = ">=3.10"
 groups = ["main", "dev"]
 files = [
-    {file = "filelock-3.24.3-py3-none-any.whl", hash = "sha256:426e9a4660391f7f8a810d71b0555bce9008b0a1cc342ab1f6947d37639e002d"},
-    {file = "filelock-3.24.3.tar.gz", hash = "sha256:011a5644dc937c22699943ebbfc46e969cdde3e171470a6e40b9533e5a72affa"},
+    {file = "filelock-3.20.3-py3-none-any.whl", hash = "sha256:4b0dda527ee31078689fc205ec4f1c1bf7d56cf88b6dc9426c4f230e46c2dce1"},
+    {file = "filelock-3.20.3.tar.gz", hash = "sha256:18c57ee915c7ec61cff0ecf7f0f869936c7c30191bb0cf406f1341778d0834e1"},
 ]
 
 [[package]]
@@ -1593,18 +1593,19 @@ files = [
 
 [[package]]
 name = "isort"
-version = "8.0.0"
+version = "7.0.0"
 description = "A Python utility / library to sort Python imports."
 optional = false
 python-versions = ">=3.10.0"
 groups = ["dev"]
 files = [
-    {file = "isort-8.0.0-py3-none-any.whl", hash = "sha256:184916a933041c7cf718787f7e52064f3c06272aff69a5cb4dc46497bd8911d9"},
-    {file = "isort-8.0.0.tar.gz", hash = "sha256:fddea59202f231e170e52e71e3510b99c373b6e571b55d9c7b31b679c0fed47c"},
+    {file = "isort-7.0.0-py3-none-any.whl", hash = "sha256:1bcabac8bc3c36c7fb7b98a76c8abb18e0f841a3ba81decac7691008592499c1"},
+    {file = "isort-7.0.0.tar.gz", hash = "sha256:5513527951aadb3ac4292a41a16cbc50dd1642432f5e8c20057d414bdafb4187"},
 ]
 
 [package.extras]
 colors = ["colorama"]
+plugins = ["setuptools"]
 
 [[package]]
 name = "jinja2"
@@ -2640,15 +2641,15 @@ files = [
 
 [[package]]
 name = "openai"
-version = "2.21.0"
+version = "2.16.0"
 description = "The official Python library for the openai API"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "extra == \"speech\""
 files = [
-    {file = "openai-2.21.0-py3-none-any.whl", hash = "sha256:0bc1c775e5b1536c294eded39ee08f8407656537ccc71b1004104fe1602e267c"},
-    {file = "openai-2.21.0.tar.gz", hash = "sha256:81b48ce4b8bbb2cc3af02047ceb19561f7b1dc0d4e52d1de7f02abfd15aa59b7"},
+    {file = "openai-2.16.0-py3-none-any.whl", hash = "sha256:5f46643a8f42899a84e80c38838135d7038e7718333ce61396994f887b09a59b"},
+    {file = "openai-2.16.0.tar.gz", hash = "sha256:42eaa22ca0d8ded4367a77374104d7a2feafee5bd60a107c3c11b5243a11cd12"},
 ]
 
 [package.dependencies]
@@ -7373,14 +7374,14 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "rich"
-version = "14.3.3"
+version = "14.3.1"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
 optional = false
 python-versions = ">=3.8.0"
 groups = ["main"]
 files = [
-    {file = "rich-14.3.3-py3-none-any.whl", hash = "sha256:793431c1f8619afa7d3b52b2cdec859562b950ea0d4b6b505397612db8d5362d"},
-    {file = "rich-14.3.3.tar.gz", hash = "sha256:b8daa0b9e4eef54dd8cf7c86c03713f53241884e814f4e2f5fb342fe520f639b"},
+    {file = "rich-14.3.1-py3-none-any.whl", hash = "sha256:da750b1aebbff0b372557426fb3f35ba56de8ef954b3190315eb64076d6fb54e"},
+    {file = "rich-14.3.1.tar.gz", hash = "sha256:b8c5f568a3a749f9290ec6bddedf835cec33696bfc1e48bcfecb276c7386e4b8"},
 ]
 
 [package.dependencies]
@@ -7782,14 +7783,14 @@ dev = ["hypothesis (>=6.70.0)", "pytest (>=7.1.0)"]
 
 [[package]]
 name = "tenacity"
-version = "9.1.4"
+version = "9.1.2"
 description = "Retry code until it succeeds"
 optional = false
-python-versions = ">=3.10"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "tenacity-9.1.4-py3-none-any.whl", hash = "sha256:6095a360c919085f28c6527de529e76a06ad89b23659fa881ae0649b867a9d55"},
-    {file = "tenacity-9.1.4.tar.gz", hash = "sha256:adb31d4c263f2bd041081ab33b498309a57c77f9acf2db65aadf0898179cf93a"},
+    {file = "tenacity-9.1.2-py3-none-any.whl", hash = "sha256:f77bf36710d8b73a50b2dd155c97b870017ad21afe6ab300326b0371b3b05138"},
+    {file = "tenacity-9.1.2.tar.gz", hash = "sha256:1169d376c297e7de388d18b4481760d478b0e99a777cad3a9c86e556f4b697cb"},
 ]
 
 [package.extras]
@@ -7945,10 +7946,6 @@ python-versions = ">=3.10"
 groups = ["main"]
 markers = "extra == \"speech\""
 files = [
-    {file = "torch-2.10.0-2-cp310-none-macosx_11_0_arm64.whl", hash = "sha256:2b980edd8d7c0a68c4e951ee1856334a43193f98730d97408fbd148c1a933313"},
-    {file = "torch-2.10.0-2-cp311-none-macosx_11_0_arm64.whl", hash = "sha256:418997cb02d0a0f1497cf6a09f63166f9f5df9f3e16c8a716ab76a72127c714f"},
-    {file = "torch-2.10.0-2-cp312-none-macosx_11_0_arm64.whl", hash = "sha256:13ec4add8c3faaed8d13e0574f5cd4a323c11655546f91fbe6afa77b57423574"},
-    {file = "torch-2.10.0-2-cp313-none-macosx_11_0_arm64.whl", hash = "sha256:e521c9f030a3774ed770a9c011751fb47c4d12029a3d6522116e48431f2ff89e"},
     {file = "torch-2.10.0-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:5276fa790a666ee8becaffff8acb711922252521b28fbce5db7db5cf9cb2026d"},
     {file = "torch-2.10.0-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:aaf663927bcd490ae971469a624c322202a2a1e68936eb952535ca4cd3b90444"},
     {file = "torch-2.10.0-cp310-cp310-win_amd64.whl", hash = "sha256:a4be6a2a190b32ff5c8002a0977a25ea60e64f7ba46b1be37093c141d9c49aeb"},
@@ -8309,4 +8306,4 @@ speech = ["PyQt5", "numpy", "openai", "openai-whisper", "pynput", "pyperclip", "
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.14"
-content-hash = "dbad5c7514b0d0c9ffc5e2812e07918fb0cdfb82610c9258b8b570df295dbc1f"
+content-hash = "97b6200ebd34894036a212ba861e8b4260188c4f28c9d9cb9c77853215567f13"
