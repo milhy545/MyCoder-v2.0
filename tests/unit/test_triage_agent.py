@@ -203,9 +203,9 @@ class TestTriageAgent(unittest.TestCase):
         self.assertIn(
             "Functionality > Aesthetics", prompt_sent
         )  # Check for Goat Principle
-        self.assertNotIn(
+        self.assertIn(
             "Final Command Construction", prompt_sent
-        )  # Check for sanitized prompt
+        )  # Check for command construction instructions
         self.assertIn(github_env_val, prompt_sent)
 
 
