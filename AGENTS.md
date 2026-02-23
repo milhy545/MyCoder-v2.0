@@ -5,6 +5,7 @@
 ## Recent Changes & Updates
 *Agents: Add entries here when making significant changes*
 
+- 2026-02-23: Codex - Fixed remaining CodeQL `py/empty-except` alerts in async thermal timeout handlers (`enhanced_mycoder_v2.py`, `providers/llm/ollama.py`, `tool_registry.py`) by replacing silent `pass` with `logger.debug(...)`; tests run: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
 - 2026-02-01: Jules - Refined `src/mycoder/triage_agent.py` system prompt to clarify output target (file vs stdout) while maintaining strict JSON constraints and safety adaptations; tests run: `poetry run pytest tests/unit/test_triage_agent.py`.
 - 2026-01-30: Jules - Updated `src/mycoder/triage_agent.py` system prompt to align with new issue requirements (strict JSON, removed shell command generation) and enforced "Goat Principle" v2; tests run: `poetry run pytest tests/unit/test_triage_agent.py`.
 - 2026-01-30: Jules - Implemented synchronous `get_available_voices` for ElevenLabs provider using `urllib.request` with caching and formatted output; added tests in `tests/providers/tts/test_elevenlabs.py`; tests run: `poetry run pytest tests/providers/tts/test_elevenlabs.py`.
