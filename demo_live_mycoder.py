@@ -10,8 +10,7 @@ import time
 from datetime import datetime
 
 # Přidej src do PATH
-sys.path.insert(0, "src")
-
+sys.path.insert(0, 'src')
 
 def show_header():
     """Ukáž MyCoder header."""
@@ -24,7 +23,6 @@ def show_header():
     print("🔥 CPU Throttling: Aktivní")
     print("🌡️  Safety: Monitored")
     print()
-
 
 def show_prompt_interface():
     """Simuluje MyCoder prompt interface."""
@@ -44,7 +42,6 @@ def show_prompt_interface():
     print("│  > _                                               │")
     print("└─" + "─" * 58 + "─┘")
 
-
 async def demo_ai_coding():
     """Demo AI kódování s TinyLlama."""
 
@@ -53,8 +50,7 @@ async def demo_ai_coding():
     # Import MyCoder komponenty
     print("🔧 Inicializace MyCoder...")
     try:
-        from ollama_integration import CodeGenerationProvider, OllamaClient
-
+        from ollama_integration import OllamaClient, CodeGenerationProvider
         print("✅ MyCoder komponenty načteny")
     except ImportError as e:
         print(f"❌ Import error: {e}")
@@ -73,8 +69,8 @@ async def demo_ai_coding():
         models = await client.list_models()
         print(f"🤖 Dostupné AI modely: {len(models)}")
         for model in models:
-            name = model.get("name", "")
-            if "tinyllama" in name.lower():
+            name = model.get('name', '')
+            if 'tinyllama' in name.lower():
                 print(f"   ✅ {name} (aktivní)")
             else:
                 print(f"   • {name}")
@@ -96,20 +92,20 @@ async def demo_ai_coding():
         # Demo úlohy
         demo_tasks = [
             {
-                "name": "📄 CSV Reader",
-                "prompt": "Create a Python function that reads CSV file and returns pandas DataFrame",
-                "language": "python",
+                'name': '📄 CSV Reader',
+                'prompt': 'Create a Python function that reads CSV file and returns pandas DataFrame',
+                'language': 'python'
             },
             {
-                "name": "📧 Email Validator",
-                "prompt": "Write JavaScript function to validate email address using regex",
-                "language": "javascript",
+                'name': '📧 Email Validator',
+                'prompt': 'Write JavaScript function to validate email address using regex',
+                'language': 'javascript'
             },
             {
-                "name": "🌐 REST API",
-                "prompt": "Create FastAPI endpoint for user registration with validation",
-                "language": "python",
-            },
+                'name': '🌐 REST API',
+                'prompt': 'Create FastAPI endpoint for user registration with validation',
+                'language': 'python'
+            }
         ]
 
         print("🎬 LIVE DEMO - AI kódování v akci!")
@@ -130,36 +126,37 @@ async def demo_ai_coding():
             # Generování kódu
             start_time = time.time()
             result = await provider.generate_code(
-                task["prompt"], language=task["language"]
+                task['prompt'],
+                language=task['language']
             )
             end_time = time.time()
 
-            if result.get("error"):
+            if result.get('error'):
                 print(f"❌ Chyba: {result.get('content')}")
                 continue
 
             # Zobraz výsledek
-            content = result.get("content", "")
+            content = result.get('content', '')
             duration = end_time - start_time
 
             print(f"✅ Generováno za {duration:.1f}s")
             print("┌─ AI Generated Code " + "─" * 32 + "┐")
 
             # Zobraz kód s číslováním řádků
-            lines = content.split("\n")[:15]  # Prvních 15 řádků
+            lines = content.split('\n')[:15]  # Prvních 15 řádků
             for j, line in enumerate(lines, 1):
                 if line.strip():
                     print(f"│ {j:2d} │ {line:<40} │")
                 else:
                     print(f"│    │{'':<40} │")
 
-            if len(content.split("\n")) > 15:
+            if len(content.split('\n')) > 15:
                 print(f"│    │ ... (celkem {len(content.split('\n'))} řádků)         │")
 
             print("└─" + "─" * 47 + "┘")
 
             # Performance info
-            tokens = result.get("tokens_used", 0)
+            tokens = result.get('tokens_used', 0)
             print(f"📊 Statistiky: {tokens} tokenů, {duration:.1f}s")
 
             if i < len(demo_tasks):
@@ -185,7 +182,7 @@ async def demo_ai_coding():
             try:
                 user_prompt = input("\n💻 Tvůj prompt: ").strip()
 
-                if user_prompt.lower() in ["exit", "quit", "konec"]:
+                if user_prompt.lower() in ['exit', 'quit', 'konec']:
                     print("👋 Děkuji za testování MyCoder!")
                     break
 
@@ -193,21 +190,13 @@ async def demo_ai_coding():
                     continue
 
                 # Detekce jazyka z promptu
-                language = "python"  # default
-                if any(
-                    word in user_prompt.lower()
-                    for word in ["javascript", "js", "html", "css"]
-                ):
-                    language = "javascript"
-                elif any(
-                    word in user_prompt.lower()
-                    for word in ["sql", "database", "select"]
-                ):
-                    language = "sql"
-                elif any(
-                    word in user_prompt.lower() for word in ["bash", "shell", "script"]
-                ):
-                    language = "bash"
+                language = 'python'  # default
+                if any(word in user_prompt.lower() for word in ['javascript', 'js', 'html', 'css']):
+                    language = 'javascript'
+                elif any(word in user_prompt.lower() for word in ['sql', 'database', 'select']):
+                    language = 'sql'
+                elif any(word in user_prompt.lower() for word in ['bash', 'shell', 'script']):
+                    language = 'bash'
 
                 print(f"🎯 Detekovaný jazyk: {language}")
                 print("🤔 Generuji...", end="", flush=True)
@@ -218,10 +207,10 @@ async def demo_ai_coding():
 
                 print(f" ✅ ({end_time-start_time:.1f}s)")
 
-                if result.get("error"):
+                if result.get('error'):
                     print(f"❌ Chyba: {result.get('content')}")
                 else:
-                    content = result.get("content", "")
+                    content = result.get('content', '')
                     print("\n📄 Výsledek:")
                     print("─" * 60)
                     print(content)
@@ -233,7 +222,6 @@ async def demo_ai_coding():
             except Exception as e:
                 print(f"\n❌ Chyba: {e}")
 
-
 def main():
     """Main funkce."""
     try:
@@ -243,9 +231,7 @@ def main():
     except Exception as e:
         print(f"💥 Chyba: {e}")
         import traceback
-
         traceback.print_exc()
-
 
 if __name__ == "__main__":
     main()

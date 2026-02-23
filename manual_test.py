@@ -1,8 +1,6 @@
 import asyncio
 from pathlib import Path
-
-from src.mycoder.tool_registry import ToolExecutionContext, ToolRegistry
-
+from src.mycoder.tool_registry import ToolRegistry, ToolExecutionContext
 
 async def main():
     print("--- 🚀 START MANUAL MEMORY TEST ---")
@@ -46,7 +44,6 @@ async def main():
         print(f"✅ BLOCK FUNGUJE!")
 
     print("\n--- 🏁 KONEC TESTU ---")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

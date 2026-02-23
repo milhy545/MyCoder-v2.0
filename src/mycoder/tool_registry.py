@@ -11,6 +11,7 @@ Features:
 - Intelligent tool routing based on context and capabilities
 """
 
+import asyncio
 import logging
 import os
 import time
@@ -497,8 +498,6 @@ class ThermalAwareTool(BaseTool):
                 return temp < 80  # Safe threshold for Q9550
 
             # Fallback: check PowerManagement system directly
-            import asyncio
-
             thermal_script = os.environ.get("MYCODER_THERMAL_SCRIPT", "")
             if not thermal_script or not os.path.exists(thermal_script):
                 return True  # Assume safe if no script configured
@@ -518,9 +517,7 @@ class ThermalAwareTool(BaseTool):
                 try:
                     process.kill()
                 except ProcessLookupError:
-                    # Process already exited before kill; safe to ignore.
-                    if "logger" in globals():
-                        logger.debug("Thermal check timeout: process already terminated.")
+                    pass
                 return True  # Fail open on timeout
 
             if process.returncode == 0:

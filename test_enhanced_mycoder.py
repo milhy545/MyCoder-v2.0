@@ -7,9 +7,7 @@ import time
 from pathlib import Path
 
 # Set up logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 for logger_name in ["urllib3", "aiohttp"]:
     logging.getLogger(logger_name).setLevel(logging.WARNING)
 
@@ -30,21 +28,14 @@ async def test_mcp_connector():
                 print("   Checking service health...")
                 health = await connector.check_services_health()
                 zen_services = health.get("zen_coordinator", {}).get("services", {})
-                running_services = sum(
-                    1
-                    for s in zen_services.values()
-                    if isinstance(s, dict) and s.get("status") == "running"
-                )
+                running_services = sum(1 for s in zen_services.values()
+                                     if isinstance(s, dict) and s.get("status") == "running")
                 print(f"     Services running: {running_services}/{len(zen_services)}")
 
                 print("   Testing tool availability...")
                 from claude_cli_auth.adaptive_modes import OperationalMode
 
-                for mode in [
-                    OperationalMode.FULL,
-                    OperationalMode.DEGRADED,
-                    OperationalMode.AUTONOMOUS,
-                ]:
+                for mode in [OperationalMode.FULL, OperationalMode.DEGRADED, OperationalMode.AUTONOMOUS]:
                     tools = await connector.get_available_tools_for_mode(mode)
                     print(f"     {mode.value}: {len(tools)} tools available")
 
@@ -55,7 +46,7 @@ async def test_mcp_connector():
                         "file_list",
                         {"path": str(Path.cwd())},
                         OperationalMode.FULL,
-                        timeout=10,
+                        timeout=10
                     )
 
                     if result.get("success"):
@@ -71,7 +62,6 @@ async def test_mcp_connector():
     except Exception as e:
         print(f"   ❌ MCP Connector test failed: {e}")
         import traceback
-
         traceback.print_exc()
         return False
 
@@ -81,8 +71,8 @@ async def test_enhanced_mycoder():
     print("\n🚀 Testing Enhanced MyCoder...")
 
     try:
-        from claude_cli_auth.adaptive_modes import OperationalMode
         from claude_cli_auth.enhanced_mycoder import EnhancedMyCoder
+        from claude_cli_auth.adaptive_modes import OperationalMode
 
         # Initialize Enhanced MyCoder
         print("1️⃣  Initializing Enhanced MyCoder...")
@@ -92,13 +82,11 @@ async def test_enhanced_mycoder():
         # Get status
         status = mycoder.get_enhanced_status()
         print(f"   Mode: {status['mode']}")
-        print(
-            f"   MCP Connected: {'✅' if status['mcp_orchestrator']['connected'] else '❌'}"
-        )
+        print(f"   MCP Connected: {'✅' if status['mcp_orchestrator']['connected'] else '❌'}")
 
-        if status["mcp_orchestrator"]["connected"]:
-            mcp_status = status["mcp_orchestrator"]["status"]
-            tools_count = len(mcp_status.get("available_tools", []))
+        if status['mcp_orchestrator']['connected']:
+            mcp_status = status['mcp_orchestrator']['status']
+            tools_count = len(mcp_status.get('available_tools', []))
             print(f"   Available Tools: {tools_count}")
 
         # Test basic request with MCP enhancements
@@ -108,7 +96,7 @@ async def test_enhanced_mycoder():
                 "Hello! Can you tell me about the current system status and available capabilities?",
                 use_mcp_memory=True,
                 research_context=False,
-                timeout=30,
+                timeout=30
             )
 
             if result.get("success"):
@@ -116,9 +104,7 @@ async def test_enhanced_mycoder():
                 print(f"   MCP Tools Used: {result.get('mcp_tools_used', [])}")
                 print(f"   Response: {result['content'][:150]}...")
             else:
-                print(
-                    f"   ℹ️  Response: {result.get('content', 'No content')[:100]}..."
-                )
+                print(f"   ℹ️  Response: {result.get('content', 'No content')[:100]}...")
 
         except Exception as e:
             print(f"   ❌ Request failed: {e}")
@@ -153,7 +139,8 @@ if __name__ == "__main__":
 
             # Test command execution
             command_result = await mycoder.execute_command_enhanced(
-                "wc -l enhanced_test.py", working_dir=str(Path.cwd())
+                "wc -l enhanced_test.py",
+                working_dir=str(Path.cwd())
             )
 
             if command_result.get("success"):
@@ -176,23 +163,17 @@ if __name__ == "__main__":
                 "What are the latest best practices for Python async programming?",
                 use_mcp_memory=True,
                 research_context=True,
-                timeout=45,
+                timeout=45
             )
 
-            print(
-                f"   Memory Context: {'✅' if result.get('memory_context') else '❌'}"
-            )
-            print(
-                f"   Research Context: {'✅' if result.get('research_context') else '❌'}"
-            )
+            print(f"   Memory Context: {'✅' if result.get('memory_context') else '❌'}")
+            print(f"   Research Context: {'✅' if result.get('research_context') else '❌'}")
             print(f"   MCP Tools Used: {len(result.get('mcp_tools_used', []))}")
 
             if result.get("success"):
                 print(f"   ✅ Enhanced request with context successful")
             else:
-                print(
-                    f"   ℹ️  Response: {result.get('content', 'No response')[:100]}..."
-                )
+                print(f"   ℹ️  Response: {result.get('content', 'No response')[:100]}...")
 
         except Exception as e:
             print(f"   ❌ Context integration test failed: {e}")
@@ -208,11 +189,12 @@ if __name__ == "__main__":
 
                 # Test capability in this mode
                 result = await mycoder.process_request(
-                    f"Test enhanced capabilities in {test_mode.value} mode", timeout=20
+                    f"Test enhanced capabilities in {test_mode.value} mode",
+                    timeout=20
                 )
 
                 status = mycoder.get_enhanced_status()
-                mcp_connected = status["mcp_orchestrator"]["connected"]
+                mcp_connected = status['mcp_orchestrator']['connected']
 
                 print(f"     Mode: {result['mode']}")
                 print(f"     MCP Connected: {'✅' if mcp_connected else '❌'}")
@@ -232,12 +214,8 @@ if __name__ == "__main__":
 
         print(f"   Current mode: {final_status['mode']}")
         print(f"   MCP orchestrator: {final_status['mcp_orchestrator']['url']}")
-        print(
-            f"   Connected: {'✅' if final_status['mcp_orchestrator']['connected'] else '❌'}"
-        )
-        print(
-            f"   Enhanced capabilities: {list(final_status['enhanced_capabilities'].keys())}"
-        )
+        print(f"   Connected: {'✅' if final_status['mcp_orchestrator']['connected'] else '❌'}")
+        print(f"   Enhanced capabilities: {list(final_status['enhanced_capabilities'].keys())}")
 
         # Cleanup
         await mycoder.shutdown()
@@ -252,7 +230,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Enhanced MyCoder test failed: {e}")
         import traceback
-
         traceback.print_exc()
         return False
 
@@ -272,19 +249,19 @@ async def test_integration_scenarios():
                 "name": "Code Review with Memory",
                 "prompt": "Review this code and remember the issues found for future reference",
                 "files": ["test_enhanced_mycoder.py"],
-                "use_mcp_memory": True,
+                "use_mcp_memory": True
             },
             {
                 "name": "Research-Enhanced Development",
                 "prompt": "What's the current state of async Python frameworks?",
-                "research_context": True,
+                "research_context": True
             },
             {
                 "name": "File Analysis with Context",
                 "prompt": "Analyze my project structure and suggest improvements",
                 "files": ["."],
-                "use_mcp_memory": True,
-            },
+                "use_mcp_memory": True
+            }
         ]
 
         for i, scenario in enumerate(scenarios, 1):
@@ -296,12 +273,12 @@ async def test_integration_scenarios():
                     files=scenario.get("files"),
                     use_mcp_memory=scenario.get("use_mcp_memory", False),
                     research_context=scenario.get("research_context", False),
-                    timeout=30,
+                    timeout=30
                 )
 
                 if result.get("success"):
                     print(f"     ✅ Success - {result.get('source', 'unknown')} source")
-                    tools_used = result.get("mcp_tools_used", [])
+                    tools_used = result.get('mcp_tools_used', [])
                     if tools_used:
                         print(f"     MCP Tools: {', '.join(tools_used)}")
                 else:
@@ -336,9 +313,7 @@ async def main():
     print(f"🏁 Test suite completed in {duration:.1f}s")
 
     if mcp_test_ok and enhanced_test_ok and integration_test_ok:
-        print(
-            "✅ All tests passed! Enhanced MyCoder with MCP integration is working correctly."
-        )
+        print("✅ All tests passed! Enhanced MyCoder with MCP integration is working correctly.")
         return True
     else:
         print("❌ Some tests failed. Check the logs above for details.")

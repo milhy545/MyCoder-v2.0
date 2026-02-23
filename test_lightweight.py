@@ -20,7 +20,7 @@ async def test_tinyllama_quick():
 
     # Import s TinyLlama prioritou
     sys.path.insert(0, "src")
-    from ollama_integration import CodeGenerationProvider, OllamaClient
+    from ollama_integration import OllamaClient, CodeGenerationProvider
 
     # Test 1: Connection
     print("1️⃣ Test Ollama připojení...")

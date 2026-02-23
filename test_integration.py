@@ -16,16 +16,16 @@ try:
     # Test MyCoder imports from local package
     from mycoder import (
         AdaptiveModeManager,
-        EnhancedMyCoder,
         MyCoder,
+        EnhancedMyCoder,
     )
 
     print("✅ MyCoder-specific imports successful")
 
     # Test local package structure
     from mycoder.adaptive_modes import AdaptiveModeManager
-    from mycoder.enhanced_mycoder import EnhancedMyCoder
     from mycoder.mycoder import MyCoder
+    from mycoder.enhanced_mycoder import EnhancedMyCoder
 
     print("✅ Local module imports successful")
 

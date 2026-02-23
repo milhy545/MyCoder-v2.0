@@ -4,9 +4,7 @@ Demo: MyCoder v2.1.0 generování kódu v AUTONOMOUS režimu
 """
 
 import asyncio
-
 from mycoder import MyCoder
-
 
 async def code_demo():
     print("💻 MyCoder v2.1.0 - GENEROVÁNÍ KÓDU DEMO")
@@ -16,9 +14,9 @@ async def code_demo():
 
     # Přepnutí do AUTONOMOUS režimu (simulace offline práce)
     from mycoder.adaptive_modes import OperationalMode
-
     await mycoder.mode_manager.transition_to_mode(
-        OperationalMode.AUTONOMOUS, "Demo code generation"
+        OperationalMode.AUTONOMOUS,
+        "Demo code generation"
     )
 
     print(f"🤖 Režim: {mycoder.mode_manager.current_mode.value}")
@@ -29,15 +27,15 @@ async def code_demo():
         "Vytvoř Python funkci pro analýzu log souborů s error handling a type hints"
     )
 
-    print("\n" + "=" * 60)
+    print("\n" + "="*60)
     print("🎯 VYGENEROVANÝ KÓD:")
-    print("=" * 60)
-    print(result.get("content", "No content"))
+    print("="*60)
+    print(result.get('content', 'No content'))
 
     # Ukázka dalších schopností
-    print("\n" + "=" * 60)
+    print("\n" + "="*60)
     print("🔧 DALŠÍ SCHOPNOSTI V AUTONOMOUS REŽIMU:")
-    print("=" * 60)
+    print("="*60)
 
     capabilities = [
         "✅ Template-based kód generování",
@@ -47,7 +45,7 @@ async def code_demo():
         "✅ Syntax checking",
         "✅ Dokumentace templates",
         "✅ Error handling patterns",
-        "✅ Best practices doporučení",
+        "✅ Best practices doporučení"
     ]
 
     for cap in capabilities:
@@ -58,7 +56,6 @@ async def code_demo():
     print("   • S lokálními templates a patterns")
     print("   • S built-in knowledge base")
     print("   • Rychle a spolehlivě offline")
-
 
 if __name__ == "__main__":
     asyncio.run(code_demo())

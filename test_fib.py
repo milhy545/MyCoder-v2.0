@@ -7,10 +7,8 @@ def fibonacci(n):
         a, b = b, a + b
     return a
 
-
 def main():
     import sys
-
     if len(sys.argv) != 2:
         print("Použití: python test_fib.py <pořadí>")
         sys.exit(1)
@@ -20,7 +18,6 @@ def main():
     except ValueError as e:
         print(f"Chyba: {e}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

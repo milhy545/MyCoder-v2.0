@@ -10,13 +10,12 @@ logging.basicConfig(level=logging.DEBUG)
 for logger_name in ["claude_cli_auth"]:
     logging.getLogger(logger_name).setLevel(logging.WARNING)
 
-
 async def test_real_query():
     """Test real Claude CLI query."""
     print("🌟 Testing real Claude CLI query...")
 
     try:
-        from claude_cli_auth import AuthConfig, ClaudeAuthManager
+        from claude_cli_auth import ClaudeAuthManager, AuthConfig
 
         # Create config with CLI-only mode
         config = AuthConfig(
@@ -28,13 +27,16 @@ async def test_real_query():
 
         print("1️⃣  Initializing with CLI-only mode...")
         claude = ClaudeAuthManager(
-            config=config, prefer_sdk=False, enable_fallback=False
+            config=config,
+            prefer_sdk=False,
+            enable_fallback=False
         )
         print("   ✅ Manager initialized")
 
         print("2️⃣  Testing simple query...")
         response = await claude.query(
-            prompt="Say 'Hello from Claude CLI Auth module!' briefly", timeout=30
+            prompt="Say 'Hello from Claude CLI Auth module!' briefly",
+            timeout=30
         )
 
         print(f"   ✅ Query successful!")
@@ -60,10 +62,8 @@ async def test_real_query():
     except Exception as e:
         print(f"\n❌ Real-world test failed: {str(e)}")
         import traceback
-
         traceback.print_exc()
         return False
-
 
 if __name__ == "__main__":
     success = asyncio.run(test_real_query())

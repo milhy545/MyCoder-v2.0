@@ -3,10 +3,9 @@
 Rychlý test MyCoder s lokálním Ollama (bez Dockeru)
 """
 
+import sys
 import asyncio
 import subprocess
-import sys
-
 
 def test_ollama_connection():
     """Test jestli běží Ollama lokálně."""
@@ -15,26 +14,20 @@ def test_ollama_connection():
             ["curl", "-s", "http://localhost:11434/api/tags"],
             capture_output=True,
             text=True,
-            timeout=5,
+            timeout=5
         )
         return result.returncode == 0
     except Exception:
         return False
-
 
 def start_ollama_if_needed():
     """Spustí Ollama pokud neběží."""
     if not test_ollama_connection():
         print("🚀 Spouštím Ollama...")
         try:
-            subprocess.Popen(
-                ["ollama", "serve"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
+            subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             # Počkej chvilku než se spustí
             import time
-
             for i in range(10):
                 time.sleep(1)
                 if test_ollama_connection():
@@ -46,7 +39,6 @@ def start_ollama_if_needed():
             print(f"❌ Nepodařilo se spustit Ollama: {e}")
             return False
     return True
-
 
 async def test_mycoder_quick():
     """Rychlý test MyCoder komponenty."""
@@ -64,10 +56,8 @@ async def test_mycoder_quick():
     print("\n2️⃣ Test importů...")
     try:
         import sys
-
-        sys.path.insert(0, "src")
-        from ollama_integration import CodeGenerationProvider, OllamaClient
-
+        sys.path.insert(0, 'src')
+        from ollama_integration import OllamaClient, CodeGenerationProvider
         print("✅ Importy OK")
     except ImportError as e:
         print(f"❌ Import selhał: {e}")
@@ -83,7 +73,7 @@ async def test_mycoder_quick():
                 models = await client.list_models()
                 print(f"📋 Dostupné modely: {len(models)}")
                 for model in models:
-                    name = model.get("name", "unknown")
+                    name = model.get('name', 'unknown')
                     print(f"   • {name}")
             else:
                 print("❌ Ollama API nedostupné")
@@ -106,19 +96,20 @@ async def test_mycoder_quick():
                 if model:
                     print("\n🎯 Testování generování kódu...")
                     result = await provider.generate_code(
-                        "Create a simple hello world function", language="python"
+                        "Create a simple hello world function",
+                        language="python"
                     )
 
-                    if not result.get("error"):
-                        content = result.get("content", "")
+                    if not result.get('error'):
+                        content = result.get('content', '')
                         print(f"✅ Kód vygenerován ({len(content)} znaků)")
                         print("📄 Vygenerovaný kód:")
                         print("-" * 30)
                         # Zobraz prvních pár řádků
-                        lines = content.split("\n")[:5]
+                        lines = content.split('\n')[:5]
                         for line in lines:
                             print(f"💻 {line}")
-                        if len(content.split("\n")) > 5:
+                        if len(content.split('\n')) > 5:
                             print("...")
                         print("-" * 30)
                         print(f"🤖 Model: {result.get('model', 'unknown')}")
@@ -134,7 +125,6 @@ async def test_mycoder_quick():
     except Exception as e:
         print(f"❌ Code generation test selhał: {e}")
         import traceback
-
         traceback.print_exc()
         return False
 
@@ -142,18 +132,16 @@ async def test_mycoder_quick():
     print("🚀 MyCoder je připraven k použití!")
     return True
 
-
 async def demo_mycoder():
     """Demo MyCoder funkcionality."""
-    print("\n" + "=" * 50)
+    print("\n" + "="*50)
     print("🎬 MyCoder DEMO - Lokální test bez internetu!")
-    print("=" * 50)
+    print("="*50)
 
     try:
         import sys
-
-        sys.path.insert(0, "src")
-        from ollama_integration import CodeGenerationProvider, OllamaClient
+        sys.path.insert(0, 'src')
+        from ollama_integration import OllamaClient, CodeGenerationProvider
 
         async with OllamaClient() as client:
             provider = CodeGenerationProvider(client)
@@ -167,7 +155,7 @@ async def demo_mycoder():
                 tasks = [
                     ("Vytvoř funkci pro výpočet faktoriálu", "python"),
                     ("Napiš jednoduchý REST endpoint", "python"),
-                    ("Vytvoř funkci pro validaci emailu", "javascript"),
+                    ("Vytvoř funkci pro validaci emailu", "javascript")
                 ]
 
                 for i, (task, lang) in enumerate(tasks, 1):
@@ -175,9 +163,9 @@ async def demo_mycoder():
 
                     result = await provider.generate_code(task, language=lang)
 
-                    if not result.get("error"):
-                        content = result.get("content", "")
-                        lines = content.split("\n")[:3]  # První 3 řádky
+                    if not result.get('error'):
+                        content = result.get('content', '')
+                        lines = content.split('\n')[:3]  # První 3 řádky
 
                         print("📄 Výsledek:")
                         for line in lines:
@@ -197,7 +185,6 @@ async def demo_mycoder():
 
     except Exception as e:
         print(f"❌ Demo selhalo: {e}")
-
 
 def main():
     """Main funkce."""
@@ -222,7 +209,6 @@ def main():
     except Exception as e:
         print(f"\n💥 Neočekávaná chyba: {e}")
         return 1
-
 
 if __name__ == "__main__":
     sys.exit(main())

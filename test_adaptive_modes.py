@@ -7,20 +7,17 @@ import time
 from pathlib import Path
 
 # Set up logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 for logger_name in ["urllib3", "aiohttp"]:
     logging.getLogger(logger_name).setLevel(logging.WARNING)
-
 
 async def test_adaptive_modes():
     """Test MyCoder with adaptive modes in different scenarios."""
     print("🚀 Testing MyCoder Adaptive Modes Integration...")
 
     try:
-        from claude_cli_auth.adaptive_modes import OperationalMode
         from claude_cli_auth.mycoder import MyCoder
+        from claude_cli_auth.adaptive_modes import OperationalMode
 
         # Initialize MyCoder
         print("\n1️⃣  Initializing MyCoder with adaptive modes...")
@@ -31,7 +28,7 @@ async def test_adaptive_modes():
         status = await mycoder.health_check()
         print(f"   Initial mode: {status['mode']}")
         print(f"   Health status:")
-        for key, value in status["health"].items():
+        for key, value in status['health'].items():
             emoji = "✅" if value else "❌"
             print(f"     {emoji} {key}: {value}")
 
@@ -40,7 +37,7 @@ async def test_adaptive_modes():
         try:
             result = await mycoder.process_request(
                 "Hello! Please respond with a brief greeting and your current status.",
-                timeout=30,
+                timeout=30
             )
 
             if result.get("success"):
@@ -72,7 +69,7 @@ if __name__ == "__main__":
             result = await mycoder.process_request(
                 "Analyze this Python file and suggest improvements",
                 files=[test_file],
-                timeout=45,
+                timeout=45
             )
 
             if result.get("success"):
@@ -93,27 +90,22 @@ if __name__ == "__main__":
         print("\n5️⃣  Testing manual mode transitions...")
         original_mode = mycoder.mode_manager.current_mode
 
-        for test_mode in [
-            OperationalMode.DEGRADED,
-            OperationalMode.AUTONOMOUS,
-            OperationalMode.RECOVERY,
-        ]:
+        for test_mode in [OperationalMode.DEGRADED, OperationalMode.AUTONOMOUS, OperationalMode.RECOVERY]:
             try:
                 print(f"   Testing {test_mode.value} mode...")
                 await mycoder.force_mode(test_mode, "testing")
 
                 # Test request in forced mode
                 result = await mycoder.process_request(
-                    f"Test request in {test_mode.value} mode", timeout=30
+                    f"Test request in {test_mode.value} mode",
+                    timeout=30
                 )
 
                 if result.get("success"):
                     print(f"     ✅ {test_mode.value} mode working")
                     print(f"     Source: {result.get('source', 'unknown')}")
                 else:
-                    print(
-                        f"     ℹ️  {test_mode.value} mode response: {result.get('content', 'No content')[:50]}..."
-                    )
+                    print(f"     ℹ️  {test_mode.value} mode response: {result.get('content', 'No content')[:50]}...")
 
                 await asyncio.sleep(1)  # Brief pause between tests
 
@@ -131,9 +123,9 @@ if __name__ == "__main__":
         print(f"   Active sessions: {status['active_sessions']}")
         print(f"   Mode transitions: {len(status.get('mode_history', []))}")
 
-        if status.get("mode_history"):
+        if status.get('mode_history'):
             print("   Recent mode changes:")
-            for transition in status["mode_history"][-3:]:  # Last 3
+            for transition in status['mode_history'][-3:]:  # Last 3
                 print(f"     → {transition['mode']} ({transition['reason']})")
 
         # Cleanup
@@ -151,7 +143,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Test failed with exception: {e}")
         import traceback
-
         traceback.print_exc()
         return False
 

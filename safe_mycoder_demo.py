@@ -7,8 +7,7 @@ Minimální zátěž, jen ukázka interface
 import sys
 import time
 
-sys.path.insert(0, "src")
-
+sys.path.insert(0, 'src')
 
 def show_mycoder_interface():
     """Ukáže MyCoder interface bez AI zatížení."""
@@ -43,16 +42,14 @@ def show_mycoder_interface():
     print("└─" + "─" * 58 + "─┘")
     print()
 
-
 def check_temperature():
     """Zkontroluje teplotu."""
     try:
-        with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
+        with open('/sys/class/thermal/thermal_zone0/temp', 'r') as f:
             temp = int(f.read()) // 1000
             return temp
     except OSError:
         return 0
-
 
 def safe_test():
     """Bezpečný test bez AI generování."""
@@ -66,8 +63,7 @@ def safe_test():
     print(f"🌡️  Teplota před testem: {temp1}°C")
 
     try:
-        from ollama_integration import CodeGenerationProvider, OllamaClient
-
+        from ollama_integration import OllamaClient, CodeGenerationProvider
         print("✅ MyCoder importy: OK")
 
         temp2 = check_temperature()
@@ -119,9 +115,9 @@ def safe_test():
         print("def hello_world():")
         print('    """Simple hello world function."""')
         print('    return "Hello, World!"')
-        print("")
-        print("# Usage")
-        print("print(hello_world())")
+        print('')
+        print('# Usage')
+        print('print(hello_world())')
         print("```")
         print("─" * 50)
 
@@ -145,7 +141,6 @@ def safe_test():
         print(f"❌ Chyba: {e}")
         temp_error = check_temperature()
         print(f"🌡️  Teplota při chybě: {temp_error}°C")
-
 
 if __name__ == "__main__":
     try:

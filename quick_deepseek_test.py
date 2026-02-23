@@ -4,11 +4,9 @@ Quick DeepSeek configuration test for MyCoder
 Tests model priority without complex imports
 """
 
-import os
 import sys
-
+import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 
 def test_deepseek_config():
     """Test DeepSeek configuration directly."""
@@ -19,7 +17,7 @@ def test_deepseek_config():
     print("1️⃣ Checking ollama_integration.py configuration...")
 
     try:
-        with open("src/ollama_integration.py", "r") as f:
+        with open('src/ollama_integration.py', 'r') as f:
             content = f.read()
 
         # Check primary model
@@ -30,9 +28,7 @@ def test_deepseek_config():
             return False
 
         # Check fallback order
-        if "deepseek-coder:1.3b-base-q4_0" in content and content.index(
-            "deepseek-coder:1.3b-base-q4_0"
-        ) < content.index("codestral"):
+        if 'deepseek-coder:1.3b-base-q4_0' in content and content.index('deepseek-coder:1.3b-base-q4_0') < content.index('codestral'):
             print("✅ DeepSeek has priority over Codestral in fallbacks")
         else:
             print("❌ DeepSeek doesn't have proper priority")
@@ -53,21 +49,19 @@ def test_deepseek_config():
     print("\n2️⃣ Checking docker-entrypoint.sh configuration...")
 
     try:
-        with open("docker-entrypoint.sh", "r") as f:
+        with open('docker-entrypoint.sh', 'r') as f:
             content = f.read()
 
-        if "deepseek-coder:1.3b-base-q4_0" in content:
+        if 'deepseek-coder:1.3b-base-q4_0' in content:
             print("✅ DeepSeek model in Docker entrypoint")
         else:
             print("❌ DeepSeek model missing from Docker entrypoint")
             return False
 
         # Check DeepSeek is prioritized (no Codestral references)
-        codestral_count = content.count("codestral")
+        codestral_count = content.count('codestral')
         if codestral_count == 0:
-            print(
-                "✅ DeepSeek is prioritized (Codestral removed from Docker entrypoint)"
-            )
+            print("✅ DeepSeek is prioritized (Codestral removed from Docker entrypoint)")
         else:
             print("❌ Codestral still referenced in Docker entrypoint")
             return False
@@ -80,10 +74,10 @@ def test_deepseek_config():
     print("\n3️⃣ Checking docker-compose.yml configuration...")
 
     try:
-        with open("docker-compose.yml", "r") as f:
+        with open('docker-compose.yml', 'r') as f:
             content = f.read()
 
-        if "MYCODER_LLM_MODEL=deepseek-coder:1.3b-base-q4_0" in content:
+        if 'MYCODER_LLM_MODEL=deepseek-coder:1.3b-base-q4_0' in content:
             print("✅ DeepSeek set as default model in Docker Compose")
         else:
             print("❌ DeepSeek not set as default in Docker Compose")
@@ -97,16 +91,16 @@ def test_deepseek_config():
     print("\n4️⃣ Checking hardware requirements update...")
 
     try:
-        with open("HW_REQUIREMENTS.md", "r") as f:
+        with open('HW_REQUIREMENTS.md', 'r') as f:
             content = f.read()
 
-        if "**🚀 DeepSeek**" in content:
+        if '**🚀 DeepSeek**' in content:
             print("✅ DeepSeek scenario added to hardware requirements")
         else:
             print("❌ DeepSeek scenario missing from hardware requirements")
             return False
 
-        if "Why DeepSeek?" in content:
+        if 'Why DeepSeek?' in content:
             print("✅ DeepSeek benefits documented")
         else:
             print("❌ DeepSeek benefits not documented")
@@ -126,12 +120,11 @@ def test_deepseek_config():
 
     return True
 
-
 def show_deepseek_summary():
     """Show summary of DeepSeek optimization."""
-    print("\n" + "=" * 50)
+    print("\n" + "="*50)
     print("🎯 DeepSeek Optimization Summary")
-    print("=" * 50)
+    print("="*50)
 
     print("\n🔧 Configuration Changes:")
     print("   • Primary model: deepseek-coder:1.3b-base-q4_0")
@@ -147,7 +140,6 @@ def show_deepseek_summary():
 
     print("\n🚀 Ready to use MyCoder with DeepSeek!")
 
-
 def main():
     """Main test function."""
     if test_deepseek_config():
@@ -156,7 +148,6 @@ def main():
     else:
         print("\n❌ Configuration test failed")
         return 1
-
 
 if __name__ == "__main__":
     sys.exit(main())

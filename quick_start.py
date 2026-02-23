@@ -20,10 +20,10 @@ async def quick_demo():
         # Import test
         print("📦 1. Test importů...")
         from mycoder import (
-            AdaptiveModeManager,
-            EnhancedMyCoder,
             MyCoder,
+            AdaptiveModeManager,
             OperationalMode,
+            EnhancedMyCoder,
         )
 
         print("   ✅ Všechny moduly nalezeny")

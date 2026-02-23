@@ -14,9 +14,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from speech_recognition import (
-    ConfigManager,
     GlobalDictationApp,
     WhisperProvider,
+    ConfigManager,
     setup_logging,
 )
 

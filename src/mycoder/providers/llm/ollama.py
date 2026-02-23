@@ -154,7 +154,6 @@ class OllamaProvider(BaseAPIProvider):
                 try:
                     process.kill()
                 except ProcessLookupError:
-                    # Process already terminated; nothing left to clean up.
                     pass
                 return {"should_throttle": False}
 

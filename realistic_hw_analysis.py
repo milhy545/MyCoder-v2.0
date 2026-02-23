@@ -3,7 +3,6 @@
 Realistická analýza HW požadavků pro běžné servery a PC
 """
 
-
 def realistic_hw_analysis():
     print("💻 REALISTICKÁ HW ANALÝZA PRO MyCoder")
     print("=" * 60)
@@ -24,7 +23,7 @@ def realistic_hw_analysis():
             "disk_space": "1 GB",
             "description": "Funguje na čemkoliv",
             "quality": "⭐⭐☆☆☆",
-            "realistic": "✅ Funguje i na 4GB RAM PC",
+            "realistic": "✅ Funguje i na 4GB RAM PC"
         },
         "deepseek-coder-1.3b": {
             "model_size": "750 MB",
@@ -32,7 +31,7 @@ def realistic_hw_analysis():
             "disk_space": "1 GB",
             "description": "Malý ale použitelný",
             "quality": "⭐⭐⭐☆☆",
-            "realistic": "✅ Funguje na 8GB RAM PC",
+            "realistic": "✅ Funguje na 8GB RAM PC"
         },
         "llama3.2-3b": {
             "model_size": "2 GB",
@@ -40,7 +39,7 @@ def realistic_hw_analysis():
             "disk_space": "3 GB",
             "description": "Dobrý kompromis",
             "quality": "⭐⭐⭐⭐☆",
-            "realistic": "✅ Funguje na 16GB RAM PC",
+            "realistic": "✅ Funguje na 16GB RAM PC"
         },
         "codellama-7b": {
             "model_size": "3.8 GB",
@@ -48,7 +47,7 @@ def realistic_hw_analysis():
             "disk_space": "5 GB",
             "description": "Solidní kódování",
             "quality": "⭐⭐⭐⭐⭐",
-            "realistic": "⚠️  Potřebuje min. 16GB RAM",
+            "realistic": "⚠️  Potřebuje min. 16GB RAM"
         },
         "codestral-22b": {
             "model_size": "13 GB",
@@ -56,17 +55,15 @@ def realistic_hw_analysis():
             "disk_space": "15 GB",
             "description": "Premium, ale žere RAM",
             "quality": "⭐⭐⭐⭐⭐",
-            "realistic": "❌ Potřebuje 32GB+ RAM reálně",
-        },
+            "realistic": "❌ Potřebuje 32GB+ RAM reálně"
+        }
     }
 
     print("   Model              Velikost  RAM potřeba  Disk  Kvalita     Realita")
-    print("   " + "=" * 80)
+    print("   " + "="*80)
 
     for model, specs in models.items():
-        print(
-            f"   {model:<17} {specs['model_size']:<9} {specs['ram_needed']:<11} {specs['disk_space']:<5} {specs['quality']:<11} {specs['realistic']}"
-        )
+        print(f"   {model:<17} {specs['model_size']:<9} {specs['ram_needed']:<11} {specs['disk_space']:<5} {specs['quality']:<11} {specs['realistic']}")
         print(f"   {'':>18} → {specs['description']}")
         print()
 
@@ -87,38 +84,36 @@ def realistic_hw_analysis():
             "max_model": "llama3.2-1b",
             "docker_size": "1.5 GB",
             "performance": "Pomalé, ale funkční",
-            "coding_quality": "Základní kódování OK",
+            "coding_quality": "Základní kódování OK"
         },
         "Běžný PC (16GB RAM)": {
             "recommended": "llama3.2-3b + deepseek",
             "max_model": "codellama-7b (s omezením)",
             "docker_size": "4-5 GB",
             "performance": "Dobrá rychlost",
-            "coding_quality": "Výborné pro běžný vývoj",
+            "coding_quality": "Výborné pro běžný vývoj"
         },
         "Gaming PC (32GB RAM)": {
             "recommended": "codellama-7b + llama3.2-3b",
             "max_model": "codestral-22b (těsně)",
             "docker_size": "18 GB",
             "performance": "Velmi dobrá",
-            "coding_quality": "Profesionální úroveň",
+            "coding_quality": "Profesionální úroveň"
         },
         "Server/Workstation (64GB+)": {
             "recommended": "codestral-22b + více modelů",
             "max_model": "Všechny modely",
             "docker_size": "35+ GB",
             "performance": "Excelentní",
-            "coding_quality": "Maximum možné",
-        },
+            "coding_quality": "Maximum možné"
+        }
     }
 
     print("   HW Konfigurace         Doporučený model        Docker  Výkon")
-    print("   " + "=" * 75)
+    print("   " + "="*75)
 
     for hw, specs in hw_scenarios.items():
-        print(
-            f"   {hw:<22} {specs['recommended']:<23} {specs['docker_size']:<7} {specs['performance']}"
-        )
+        print(f"   {hw:<22} {specs['recommended']:<23} {specs['docker_size']:<7} {specs['performance']}")
         print(f"   {'':>23} Max: {specs['max_model']}")
         print(f"   {'':>23} → {specs['coding_quality']}")
         print()
@@ -149,12 +144,11 @@ def realistic_hw_analysis():
         "📦 Minimum viable: deepseek + tinyllama (1.4GB, 8GB RAM)",
         "🎯 Doporučeno: llama3.2-3b + deepseek (2.8GB, 16GB RAM)",
         "🚀 Premium: codellama-7b + llama3.2 (5.8GB, 24GB RAM)",
-        "👑 Ultimate: codestral jen pokud máš 32GB+ RAM",
+        "👑 Ultimate: codestral jen pokud máš 32GB+ RAM"
     ]
 
     for plan in server_plans:
         print(f"   {plan}")
-
 
 if __name__ == "__main__":
     realistic_hw_analysis()
