@@ -47,3 +47,6 @@
 ## 2026-06-16 - [Async File Cache Refresh in TUI]
 **Learning:** The `MyCoderCompleter` in `src/mycoder/cli_interactive.py` was executing `os.walk` synchronously on the main thread during autocomplete triggering. For large projects (>10k files), this caused a 150ms+ UI freeze every 30 seconds when the user typed `@`.
 **Action:** Offloaded the file system walk to a background `threading.Thread` and implemented atomic cache swapping. This reduced blocking time to <2ms, ensuring smooth TUI responsiveness.
+## 2026-10-27 - [Blocking DNS in Async WebFetcher]
+**Learning:** `WebFetcher._is_safe_url` was using synchronous `socket.gethostbyname` to validate IPs for SSRF protection. This function blocks the entire `asyncio` event loop during DNS resolution (which can take seconds), freezing the TUI or API handling.
+**Action:** Replaced with `await loop.getaddrinfo` in an `async` method to ensure non-blocking resolution. Always check for synchronous I/O calls (socket, file) inside `async` methods.
