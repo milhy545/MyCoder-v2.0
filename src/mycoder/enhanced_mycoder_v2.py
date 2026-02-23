@@ -904,7 +904,10 @@ class EnhancedMyCoderV2:
                 try:
                     process.kill()
                 except ProcessLookupError:
-                    pass
+                    # Process already exited before kill(); this is a benign race condition.
+                    logger.debug(
+                        "Thermal status check timeout: process already terminated before kill()."
+                    )
                 return {"status": "unknown", "safe_operation": True}
 
             if process.returncode == 0:
