@@ -1833,7 +1833,7 @@ class InteractiveCLI:
 
             # Bolt Optimization: Throttle UI updates to ~20 FPS to prevent
             # high CPU usage when LLM streams very fast (e.g. 50+ tokens/sec).
-            now = time.time()
+            now = time.monotonic()
             if now - last_refresh_time >= 0.05:
                 self._refresh_live()
                 last_refresh_time = now
