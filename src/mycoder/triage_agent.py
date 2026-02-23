@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import sys
+import re
 from typing import Any, Dict, List
 
 try:
@@ -44,6 +45,7 @@ Analyze the provided GitHub issues and assign labels based on the project's cont
 1.  **Strict JSON Only:** Your final output must be **only** the JSON array. No markdown, no "Here is the JSON", no fluff.
 2.  **Label Discipline:** Use ONLY the labels provided in `{available_labels}`. Do not hallucinate new labels.
 3.  **Variable Safety:** Reference variables strictly.
+4.  **No Command Injection:** Do not use command substitution `$()` in generated shell commands.
 4. **No Command Injection:** Do not use command substitution $() in any part of the generated output.
 
 ## Input Data
@@ -94,8 +96,8 @@ Write a JSON array to the output file. Format:
         "explanation": "Request to beautify logging. Low priority per Goat Principle (current logs are ugly but functional)."
     }}
 ]
-```
-"""
+Final Command Construction
+Generate the final shell command to write the JSON to the environment variable. Ensure the JSON string is single-quoted to handle special characters correctly. """
 
 
 async def triage_issues_with_llm(
@@ -195,13 +197,19 @@ async def triage_issues_with_llm(
     # 5. Parse JSON
     content = response.content.strip()
 
-    # Strip Markdown code blocks if present
-    if content.startswith("```json"):
-        content = content[7:]
-    if content.startswith("```"):
-        content = content[3:]
-    if content.endswith("```"):
-        content = content[:-3]
+    # Attempt to extract JSON array using regex if markdown or extra text is present
+    # Matches [...] with DOTALL
+    json_match = re.search(r"\[.*\]", content, re.DOTALL)
+    if json_match:
+        content = json_match.group(0)
+    else:
+        # Fallback to simple stripping if regex fails (e.g. no brackets)
+        if content.startswith("```json"):
+            content = content[7:]
+        if content.startswith("```"):
+            content = content[3:]
+        if content.endswith("```"):
+            content = content[:-3]
 
     content = content.strip()
 
