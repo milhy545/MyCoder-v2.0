@@ -43,3 +43,7 @@
 ## 2026-06-15 - [Caching System Metrics in TUI]
 **Learning:** Retrieving system metrics via `psutil` (especially `sensors_temperatures()`) inside the TUI render loop (4Hz) introduces significant overhead (up to 12ms per frame) and potential jitter due to file I/O on `/proc` and `/sys`.
 **Action:** Implemented a 2-second cache for system metrics in `ActivityPanel` and `ExecutionMonitor`. Benchmarks show `get_system_metrics` time reduced from ~0.6ms to ~0.03ms (19x speedup) and eliminates I/O blocks in the UI thread.
+
+## 2026-10-27 - [Blocking DNS in Async WebFetcher]
+**Learning:** `WebFetcher._is_safe_url` was using synchronous `socket.gethostbyname` to validate IPs for SSRF protection. This function blocks the entire `asyncio` event loop during DNS resolution (which can take seconds), freezing the TUI or API handling.
+**Action:** Replaced with `await loop.getaddrinfo` in an `async` method to ensure non-blocking resolution. Always check for synchronous I/O calls (socket, file) inside `async` methods.
