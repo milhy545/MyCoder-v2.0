@@ -904,7 +904,9 @@ class EnhancedMyCoderV2:
                 try:
                     process.kill()
                 except ProcessLookupError:
-                    pass
+                    logger.debug(
+                        "Thermal monitor process finished before kill after timeout"
+                    )
                 return {"status": "unknown", "safe_operation": True}
 
             if process.returncode == 0:
