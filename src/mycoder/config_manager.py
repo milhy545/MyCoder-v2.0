@@ -299,7 +299,7 @@ class ConfigManager:
             if not candidate.exists():
                 continue
             try:
-                with candidate.open("r") as file_obj:
+                with open(candidate, "r") as file_obj:
                     return json.load(file_obj)
             except PermissionError:
                 logger.warning("Permission denied reading %s", candidate)
@@ -416,7 +416,7 @@ class ConfigManager:
                     config_dict[provider]["api_key"] = ""
 
             destination.parent.mkdir(parents=True, exist_ok=True)
-            with destination.open("w") as file_obj:
+            with open(destination, "w") as file_obj:
                 json.dump(config_dict, file_obj, indent=2)
             return True
         except PermissionError:

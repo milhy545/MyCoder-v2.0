@@ -164,12 +164,10 @@ class TestTriageAgent(unittest.TestCase):
 
         self.assertIn("**Available Labels:**\nbug", prompt_sent)
         self.assertIn('"number": 1', prompt_sent)
-        self.assertIn(
-            "Functionality > Aesthetics", prompt_sent
-        )  # Check for Goat Principle
-        self.assertNotIn(
-            "Final Command Construction", prompt_sent
-        )  # Check for sanitized prompt
+        # Check for Goat Principle.
+        self.assertIn("Functionality > Aesthetics", prompt_sent)
+        # Check for sanitized prompt.
+        self.assertNotIn("Final Command Construction", prompt_sent)
 
 
 if __name__ == "__main__":
