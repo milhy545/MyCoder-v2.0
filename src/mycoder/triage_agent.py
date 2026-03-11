@@ -97,8 +97,7 @@ Write a JSON array to the output. Format:
         "explanation": "Request to beautify logging. Low priority per Goat Principle (current logs are ugly but functional)."
     }}
 ]
-Final Command Construction
-Generate the final shell command to write the JSON to the environment variable. Ensure the JSON string is single-quoted to handle special characters correctly. """
+"""
 
 
 async def triage_issues_with_llm(
