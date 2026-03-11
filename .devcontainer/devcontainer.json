@@ -33,7 +33,7 @@
 		"ghcr.io/devcontainers-extra/features/zsh-plugins:0": {},
 		"ghcr.io/bascodes/devcontainer-features/tailscale.com:1": {},
 		"ghcr.io/davzucky/devcontainers-features-wolfi/python:1": {},
-		"ghcr.io/coder/devcontainer-features/code-server:2": {}
+		"ghcr.io/coder/devcontainer-features/code-server:1": {}
 	}
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
