@@ -797,45 +797,51 @@ class TestConfigManagerIntegration:
 
     def test_config_save_load_roundtrip(self):
         """Test saving and loading config maintains data integrity"""
-        # Create initial config
-        manager1 = ConfigManager()
-        original_config = manager1._dict_to_config(manager1._get_default_config())
-        original_config.debug_mode = True
-        original_config.preferred_provider = "gemini"
-        original_config.claude_anthropic.timeout_seconds = 45
-        original_config.thermal.max_temp = 78
-        manager1.config = original_config
+        with patch.dict(os.environ, {}, clear=True):
+            # Create initial config
+            manager1 = ConfigManager()
+            original_config = manager1._dict_to_config(manager1._get_default_config())
+            original_config.debug_mode = True
+            original_config.preferred_provider = "gemini"
+            original_config.claude_anthropic.timeout_seconds = 45
+            original_config.thermal.max_temp = 78
+            manager1.config = original_config
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            save_path = Path(f.name)
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False
+            ) as f:
+                save_path = Path(f.name)
 
-        try:
-            # Save config
-            success = manager1.save_config(save_path)
-            assert success is True
+            try:
+                # Save config
+                success = manager1.save_config(save_path)
+                assert success is True
 
-            # Load with new manager
-            manager2 = ConfigManager(save_path)
-            loaded_config = manager2.load_config()
+                # Load with new manager
+                manager2 = ConfigManager(save_path)
+                loaded_config = manager2.load_config()
 
-            # Should match original
-            assert loaded_config.debug_mode == original_config.debug_mode
-            assert (
-                loaded_config.preferred_provider == original_config.preferred_provider
-            )
-            assert (
-                loaded_config.claude_anthropic.timeout_seconds
-                == original_config.claude_anthropic.timeout_seconds
-            )
-            assert loaded_config.thermal.max_temp == original_config.thermal.max_temp
-            assert (
-                loaded_config.claude_oauth.enabled
-                == original_config.claude_oauth.enabled
-            )
+                # Should match original
+                assert loaded_config.debug_mode == original_config.debug_mode
+                assert (
+                    loaded_config.preferred_provider
+                    == original_config.preferred_provider
+                )
+                assert (
+                    loaded_config.claude_anthropic.timeout_seconds
+                    == original_config.claude_anthropic.timeout_seconds
+                )
+                assert (
+                    loaded_config.thermal.max_temp == original_config.thermal.max_temp
+                )
+                assert (
+                    loaded_config.claude_oauth.enabled
+                    == original_config.claude_oauth.enabled
+                )
 
-        finally:
-            if save_path.exists():
-                save_path.unlink()
+            finally:
+                if save_path.exists():
+                    save_path.unlink()
 
     def test_config_validation_realistic(self):
         """Test configuration validation with realistic scenarios"""
