@@ -3,6 +3,7 @@
 **Poznámka:** Tento soubor je hlavním zdrojem pravdy pro všechny AI agenty (Claude Code, Jules/Gemini, Codex) pracující na tomto projektu. Definuje architekturu projektu, konvence a provozní protokoly.
 
 ## Nedávné změny a aktualizace
+- 2026-03-11: Jules - Oprava bezpečnostních hlášení CodeQL odebráním nepoužívaných importů `Mock` z `tests/unit/test_tool_registry.py` a `subprocess` z `src/mycoder/providers/llm/ollama.py`; spuštěné testy: `poetry run flake8`, `poetry run mypy`, `poetry run pytest`.
 *Agenti: Zde přidávejte záznamy při provádění významných změn*
 - 2026-01-30: Codex - Opraveny CodeQL alerty (nepoužité importy, smíšené návraty, nedosažitelný kód, guard proti nevolatelnému objektu) a upraveny testy; testy: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
 - 2026-01-30: Codex - Zpřísněny kontroly instancování OverlayButton kvůli CodeQL; testy: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
