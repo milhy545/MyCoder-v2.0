@@ -96,6 +96,7 @@ def test_stop_pyttsx3(monkeypatch):
 async def test_gtts_initialization(mock_gtts_class):
     mock_provider = Mock()
     from unittest.mock import AsyncMock
+
     mock_provider.speak = AsyncMock()
     mock_gtts_class.return_value = mock_provider
 
@@ -111,6 +112,7 @@ async def test_gtts_initialization(mock_gtts_class):
 async def test_azure_initialization(mock_azure_class):
     mock_provider = Mock()
     from unittest.mock import AsyncMock
+
     mock_provider.speak = AsyncMock()
     mock_azure_class.return_value = mock_provider
 
@@ -126,6 +128,7 @@ async def test_azure_initialization(mock_azure_class):
 async def test_polly_initialization(mock_polly_class):
     mock_provider = Mock()
     from unittest.mock import AsyncMock
+
     mock_provider.speak = AsyncMock()
     mock_polly_class.return_value = mock_provider
 
@@ -141,6 +144,7 @@ async def test_polly_initialization(mock_polly_class):
 async def test_elevenlabs_initialization(mock_elevenlabs_class):
     mock_provider = Mock()
     from unittest.mock import AsyncMock
+
     mock_provider.speak = AsyncMock()
     mock_elevenlabs_class.return_value = mock_provider
 
