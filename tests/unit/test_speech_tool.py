@@ -26,7 +26,9 @@ class TestSpeechTool:
         mock_app = Mock()
         mock_app_class.return_value = mock_app
 
-        result = await speech_tool.execute(execution_context, mode="gui", action="start")
+        result = await speech_tool.execute(
+            execution_context, mode="gui", action="start"
+        )
 
         assert result.success is True
         assert result.data["running"] is True
@@ -51,7 +53,9 @@ class TestSpeechTool:
         mock_app.shutdown.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_cli_mode_transcribe(self, monkeypatch, speech_tool, execution_context):
+    async def test_cli_mode_transcribe(
+        self, monkeypatch, speech_tool, execution_context
+    ):
         mock_recorder = Mock()
         mock_recorder.start_recording.return_value = None
         mock_recorder.stop_recording.return_value = b"audio"
