@@ -1,5 +1,6 @@
 import sys
 import types
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -88,3 +89,55 @@ def test_stop_pyttsx3(monkeypatch):
     tts = TTSEngine(provider="pyttsx3", voice="cs", rate=150)
     tts.stop()
     assert engine.properties["stopped"] is True
+
+
+@pytest.mark.asyncio
+@patch("mycoder.tts_engine.GTTSProvider")
+async def test_gtts_initialization(mock_gtts_class):
+    mock_provider = Mock()
+    mock_gtts_class.return_value = mock_provider
+
+    tts = TTSEngine(provider="gtts")
+    assert tts.provider_name == "gtts"
+
+    await tts.speak_async("Hello")
+    mock_provider.speak.assert_called_once_with("Hello")
+
+
+@pytest.mark.asyncio
+@patch("mycoder.tts_engine.AzureTTSProvider")
+async def test_azure_initialization(mock_azure_class):
+    mock_provider = Mock()
+    mock_azure_class.return_value = mock_provider
+
+    tts = TTSEngine(provider="azure")
+    assert tts.provider_name == "azure"
+
+    await tts.speak_async("Hello")
+    mock_provider.speak.assert_called_once_with("Hello")
+
+
+@pytest.mark.asyncio
+@patch("mycoder.tts_engine.AmazonPollyProvider")
+async def test_polly_initialization(mock_polly_class):
+    mock_provider = Mock()
+    mock_polly_class.return_value = mock_provider
+
+    tts = TTSEngine(provider="polly")
+    assert tts.provider_name == "polly"
+
+    await tts.speak_async("Hello")
+    mock_provider.speak.assert_called_once_with("Hello")
+
+
+@pytest.mark.asyncio
+@patch("mycoder.tts_engine.ElevenLabsProvider")
+async def test_elevenlabs_initialization(mock_elevenlabs_class):
+    mock_provider = Mock()
+    mock_elevenlabs_class.return_value = mock_provider
+
+    tts = TTSEngine(provider="elevenlabs")
+    assert tts.provider_name == "elevenlabs"
+
+    await tts.speak_async("Hello")
+    mock_provider.speak.assert_called_once_with("Hello")
