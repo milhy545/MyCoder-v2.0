@@ -907,6 +907,7 @@ class EnhancedMyCoderV2:
                     logger.debug(
                         "Thermal monitor process finished before kill after timeout"
                     )
+                    logger.debug("Thermal subprocess already exited before kill().")
                 return {"status": "unknown", "safe_operation": True}
 
             if process.returncode == 0:
