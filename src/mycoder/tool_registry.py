@@ -518,6 +518,7 @@ class ThermalAwareTool(BaseTool):
                     process.kill()
                 except ProcessLookupError:
                     logger.debug("Thermal check process already exited before kill.")
+                    logger.debug("Thermal subprocess already exited before kill().")
                 return True  # Fail open on timeout
 
             if process.returncode == 0:
