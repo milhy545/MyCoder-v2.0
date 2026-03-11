@@ -904,7 +904,6 @@ class EnhancedMyCoderV2:
                 try:
                     process.kill()
                 except ProcessLookupError:
-                    pass
                     logger.debug("Thermal subprocess already exited before kill().")
                 return {"status": "unknown", "safe_operation": True}
 
