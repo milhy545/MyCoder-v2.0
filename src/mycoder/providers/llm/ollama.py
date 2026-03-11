@@ -154,7 +154,6 @@ class OllamaProvider(BaseAPIProvider):
                 try:
                     process.kill()
                 except ProcessLookupError:
-                    pass
                     logger.debug(
                         "Thermal status subprocess already terminated before kill"
                     )
