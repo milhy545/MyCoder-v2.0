@@ -200,7 +200,7 @@ class SpeechTool(BaseTool):
         # but to be completely safe, we could thread them. In this case start_recording returns immediately.
         recorder.start_recording()
         await asyncio.sleep(max(1, duration))
-        audio_data = recorder.stop_recording()
+        audio_data = await asyncio.to_thread(recorder.stop_recording)
 
         if not audio_data:
             return None, provider
