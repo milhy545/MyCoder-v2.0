@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import sys
+import re
 from typing import Any, Dict, List
 
 try:
@@ -45,6 +46,8 @@ Analyze the provided GitHub issues and assign labels based on the project's cont
 2.  **Label Discipline:** Use ONLY the labels provided in `{available_labels}`. Do not hallucinate new labels.
 3.  **Variable Safety:** Reference variables strictly.
 4.  **No Command Injection:** Do not use command substitution `$()` in generated output.
+4.  **No Command Injection:** Do not use command substitution `$()` in generated shell commands.
+4. **No Command Injection:** Do not use command substitution $() in any part of the generated output.
 
 ## Input Data
 
@@ -55,6 +58,8 @@ Analyze the provided GitHub issues and assign labels based on the project's cont
 **Issues to Triage:**
 {issues_to_triage}
 
+
+**Output Target:** `{github_env}`
 
 ## Analysis Protocol
 
@@ -92,12 +97,14 @@ Write a JSON array to the output. Format:
         "explanation": "Request to beautify logging. Low priority per Goat Principle (current logs are ugly but functional)."
     }}
 ]
-```
-"""
+Final Command Construction
+Generate the final shell command to write the JSON to the environment variable. Ensure the JSON string is single-quoted to handle special characters correctly. """
 
 
 async def triage_issues_with_llm(
-    issues: List[Dict[str, Any]], available_labels: List[str]
+    issues: List[Dict[str, Any]],
+    available_labels: List[str],
+    github_env: str = "stdout",
 ) -> List[Dict[str, Any]]:
     """
     Uses LLM (Jules) to triage issues based on the Goat Principle.
@@ -164,7 +171,9 @@ async def triage_issues_with_llm(
 
     try:
         prompt = JULES_SYSTEM_PROMPT.format(
-            available_labels=labels_str, issues_to_triage=issues_json
+            available_labels=labels_str,
+            issues_to_triage=issues_json,
+            github_env=github_env,
         )
     except Exception as e:
         logger.error(f"Failed to format prompt: {e}")
@@ -189,13 +198,19 @@ async def triage_issues_with_llm(
     # 5. Parse JSON
     content = response.content.strip()
 
-    # Strip Markdown code blocks if present
-    if content.startswith("```json"):
-        content = content[7:]
-    if content.startswith("```"):
-        content = content[3:]
-    if content.endswith("```"):
-        content = content[:-3]
+    # Attempt to extract JSON array using regex if markdown or extra text is present
+    # Matches [...] with DOTALL
+    json_match = re.search(r"\[.*\]", content, re.DOTALL)
+    if json_match:
+        content = json_match.group(0)
+    else:
+        # Fallback to simple stripping if regex fails (e.g. no brackets)
+        if content.startswith("```json"):
+            content = content[7:]
+        if content.startswith("```"):
+            content = content[3:]
+        if content.endswith("```"):
+            content = content[:-3]
 
     content = content.strip()
 
@@ -217,6 +232,7 @@ def main() -> None:
     # Read from environment variables
     issues_env = os.environ.get("ISSUES_TO_TRIAGE")
     labels_env = os.environ.get("AVAILABLE_LABELS")
+    github_env = os.environ.get("GITHUB_ENV", "stdout")
 
     # Handle input arguments (fallback for manual testing)
     if not issues_env:
@@ -256,7 +272,9 @@ def main() -> None:
 
     # Run async triage
     try:
-        triage_results = asyncio.run(triage_issues_with_llm(issues, available_labels))
+        triage_results = asyncio.run(
+            triage_issues_with_llm(issues, available_labels, github_env=github_env)
+        )
         # Output strictly JSON to stdout
         print(json.dumps(triage_results, indent=2))
     except Exception as e:

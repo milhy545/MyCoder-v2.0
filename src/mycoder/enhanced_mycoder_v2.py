@@ -14,6 +14,7 @@ Features:
 - Session persistence across provider transitions
 """
 
+import asyncio
 import logging
 import os
 import shlex
@@ -887,18 +888,28 @@ class EnhancedMyCoderV2:
     async def _get_thermal_status(self) -> Dict[str, Any]:
         """Get current thermal status for Q9550 system"""
         try:
-            import subprocess
-
-            result = subprocess.run(
-                [self.thermal_monitor["script_path"], "status"],
-                capture_output=True,
-                text=True,
-                timeout=5,
+            # Bolt Optimization: Use asyncio subprocess to avoid blocking event loop
+            process = await asyncio.create_subprocess_exec(
+                self.thermal_monitor["script_path"],
+                "status",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
             )
 
-            if result.returncode == 0:
+            try:
+                stdout, stderr = await asyncio.wait_for(
+                    process.communicate(), timeout=5.0
+                )
+            except asyncio.TimeoutError:
+                try:
+                    process.kill()
+                except ProcessLookupError:
+                    logger.debug("Thermal subprocess already exited before kill().")
+                return {"status": "unknown", "safe_operation": True}
+
+            if process.returncode == 0:
                 # Parse temperature from output
-                output = result.stdout.lower()
+                output = stdout.decode().lower()
 
                 # Extract temperature if available
                 cpu_temp = 60  # Default safe assumption

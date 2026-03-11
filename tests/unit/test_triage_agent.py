@@ -105,7 +105,12 @@ class TestTriageAgent(unittest.TestCase):
     @patch("mycoder.triage_agent.triage_issues_with_llm")
     @patch.dict(
         "os.environ",
-        {"ISSUES_TO_TRIAGE": '[{"id": 1}]', "AVAILABLE_LABELS": "bug,enhancement"},
+        {
+            "ISSUES_TO_TRIAGE": '[{"id": 1}]',
+            "AVAILABLE_LABELS": "bug,enhancement",
+            "GITHUB_ENV": "stdout",
+        },
+        clear=True,  # Clear the environment to prevent leaking CI GITHUB_ENV.
     )
     @patch("builtins.print")
     def test_main(self, mock_print, mock_triage):
@@ -125,12 +130,42 @@ class TestTriageAgent(unittest.TestCase):
         triage_main()
 
         mock_triage.assert_called_once()
+        # Verify Github env passed to triage_issues_with_llm
+        # main() defaults to 'stdout' if env var not set
+        # We set GITHUB_ENV to 'stdout' explicitly to avoid CI leaking it.
+        # Let's check call args.
+        call_args = mock_triage.call_args
+        # args[0] is issues, args[1] is labels. kwargs might have github_env
+        _, kwargs = call_args
+        self.assertEqual(kwargs.get("github_env"), "stdout")
+
         mock_print.assert_called_once()
         # Verify print was called with JSON
         import json
 
         args, _ = mock_print.call_args
         self.assertIn('"issue_number": 1', args[0])
+
+    @patch("mycoder.triage_agent.triage_issues_with_llm")
+    @patch.dict(
+        "os.environ",
+        {
+            "ISSUES_TO_TRIAGE": '[{"id": 1}]',
+            "AVAILABLE_LABELS": "bug",
+            "GITHUB_ENV": "/tmp/env",
+        },
+    )
+    @patch("builtins.print")
+    def test_main_with_github_env(self, mock_print, mock_triage):
+        async def async_mock(*args, **kwargs):
+            return []
+
+        mock_triage.side_effect = async_mock
+        triage_main()
+
+        call_args = mock_triage.call_args
+        _, kwargs = call_args
+        self.assertEqual(kwargs.get("github_env"), "/tmp/env")
 
     @patch("mycoder.triage_agent.APIProviderRouter")
     @patch("mycoder.triage_agent.ContextManager")
@@ -155,8 +190,9 @@ class TestTriageAgent(unittest.TestCase):
 
         issues = [{"number": 1, "title": "Test"}]
         labels = ["bug"]
+        github_env_val = "/custom/path/to/env"
 
-        asyncio.run(triage_issues_with_llm(issues, labels))
+        asyncio.run(triage_issues_with_llm(issues, labels, github_env=github_env_val))
 
         # Verify prompt content
         args, kwargs = mock_router_instance.query.call_args
@@ -168,6 +204,13 @@ class TestTriageAgent(unittest.TestCase):
         self.assertIn("Functionality > Aesthetics", prompt_sent)
         # Check for sanitized prompt.
         self.assertNotIn("Final Command Construction", prompt_sent)
+        self.assertIn(
+            "Functionality > Aesthetics", prompt_sent
+        )  # Check for Goat Principle
+        self.assertIn(
+            "Final Command Construction", prompt_sent
+        )  # Check for command construction instructions
+        self.assertIn(github_env_val, prompt_sent)
 
 
 if __name__ == "__main__":

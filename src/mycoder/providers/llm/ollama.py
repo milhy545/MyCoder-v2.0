@@ -139,17 +139,29 @@ class OllamaProvider(BaseAPIProvider):
             if not thermal_script or not os.path.exists(thermal_script):
                 return {"should_throttle": False}
 
-            result = subprocess.run(
-                [thermal_script, "status"],
-                capture_output=True,
-                text=True,
-                timeout=5,
+            process = await asyncio.create_subprocess_exec(
+                thermal_script,
+                "status",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
             )
 
-            if result.returncode == 0:
-                if "CRITICAL" in result.stdout:
+            try:
+                stdout, stderr = await asyncio.wait_for(
+                    process.communicate(), timeout=5.0
+                )
+            except asyncio.TimeoutError:
+                try:
+                    process.kill()
+                except ProcessLookupError:
+                    logger.debug("Thermal subprocess already exited before kill().")
+                return {"should_throttle": False}
+
+            if process.returncode == 0:
+                output = stdout.decode()
+                if "CRITICAL" in output:
                     return {"should_throttle": True, "reason": "critical_temp"}
-                elif "HIGH" in result.stdout:
+                elif "HIGH" in output:
                     return {"should_throttle": True, "reason": "high_temp"}
 
             return {"should_throttle": False}

@@ -7,16 +7,17 @@ Left: Chat History (Auto-scrolling Markdown). Right: Activity Panel (Live Activi
 import asyncio
 import functools
 import json
+import logging
 import os
 import re
 import shutil
 import sys
+import threading
 import time
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Iterable
-import logging
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import psutil
 
@@ -44,9 +45,9 @@ except ImportError:
 try:
     from prompt_toolkit import PromptSession
     from prompt_toolkit import prompt as pt_prompt
-    from prompt_toolkit.key_binding import KeyBindings
     from prompt_toolkit.completion import Completer, Completion
     from prompt_toolkit.document import Document
+    from prompt_toolkit.key_binding import KeyBindings
 except ImportError:
     pt_prompt = None
     KeyBindings = None
@@ -160,6 +161,8 @@ class MyCoderCompleter(Completer):
         self._file_cache: List[str] = []
         self._last_cache_time: float = 0.0
         self._cache_ttl: float = 30.0  # Refresh every 30s
+        self._refresh_lock = threading.Lock()
+        self._is_refreshing = False
         self._ignored_dirs = {
             ".git",
             "__pycache__",
@@ -171,11 +174,21 @@ class MyCoderCompleter(Completer):
         }
 
     def _refresh_file_cache(self) -> None:
-        """Refreshes the file cache if TTL expired."""
+        """Refreshes the file cache if TTL expired (async)."""
         if time.time() - self._last_cache_time < self._cache_ttl and self._file_cache:
             return
 
-        self._file_cache = []
+        with self._refresh_lock:
+            if self._is_refreshing:
+                return
+            self._is_refreshing = True
+
+        # Start background thread
+        threading.Thread(target=self._bg_refresh_task, daemon=True).start()
+
+    def _bg_refresh_task(self) -> None:
+        """Background task to refresh file cache."""
+        new_cache = []
         try:
             # Recursive walk from current directory
             for root, dirs, files in os.walk(".", topdown=True):
@@ -191,10 +204,17 @@ class MyCoderCompleter(Completer):
                     if rel_path.startswith("./"):
                         rel_path = rel_path[2:]
 
-                    self._file_cache.append(rel_path)
+                    new_cache.append(rel_path)
+
+            # Atomic update
+            self._file_cache = new_cache
+            self._last_cache_time = time.time()
+
         except Exception as exc:
             logger.debug("Failed to refresh file cache: %s", exc)
-        self._last_cache_time = time.time()
+        finally:
+            with self._refresh_lock:
+                self._is_refreshing = False
 
     def get_completions(
         self, document: Document, complete_event
@@ -481,6 +501,55 @@ class ExecutionMonitor:
             subtitle=subtitle,
             expand=True,
         )
+
+
+@functools.lru_cache(maxsize=2048)
+def _calculate_message_height(content: str, role: str, content_width: int) -> int:
+    """
+    Conservatively estimate how many terminal lines this message will consume.
+    Cached module-level function to optimize TUI rendering loop.
+    """
+    # Start with header line (timestamp + role label)
+    lines = 1
+
+    # Count explicit newlines - critical for code blocks and lists
+    newline_count = content.count("\n")
+
+    # Calculate wrapped lines based on content length
+    # Use effective width (slightly less than actual to account for padding)
+    effective_width = max(30, content_width - 4)
+    char_based_lines = max(1, len(content) // effective_width)
+
+    # Take the MAXIMUM of newline-based and char-based estimates
+    # This handles both long single-line text and multi-line code blocks
+    content_lines = max(newline_count + 1, char_based_lines)
+
+    # Apply role-specific safety multipliers
+    if role == "ai":
+        # AI messages use Markdown which adds significant overhead:
+        # - Code blocks add borders and syntax highlighting
+        # - Lists add bullet points and indentation
+        # - Headers add extra spacing
+        # - Tables add grid lines
+        # Use 1.5x multiplier + fixed buffer of 3 lines
+        content_lines = int(content_lines * 1.5) + 3
+
+        # Additional penalty for very long AI responses
+        if len(content) > 1000:
+            content_lines += 2
+    else:
+        # User/system messages are plain text, but still add buffer
+        content_lines = int(content_lines * 1.1) + 1
+
+    lines += content_lines
+
+    # Separator line
+    lines += 1
+
+    # Add small buffer per message to account for Rich rendering quirks
+    lines += 1
+
+    return lines
 
 
 class InteractiveCLI:
@@ -1771,15 +1840,23 @@ class InteractiveCLI:
         if attached_files:
             context_files.extend(attached_files)
 
+        last_refresh_time = 0.0
+
         def _stream_handler(chunk: str) -> None:
-            nonlocal stream_text
+            nonlocal stream_text, last_refresh_time
             if not chunk:
                 return
             stream_text += chunk
             if len(stream_text) > 1000:
                 stream_text = stream_text[-1000:]
             self.activity_panel.set_thinking(stream_text)
-            self._refresh_live()
+
+            # Bolt Optimization: Throttle UI updates to ~20 FPS to prevent
+            # high CPU usage when LLM streams very fast (e.g. 50+ tokens/sec).
+            now = time.monotonic()
+            if now - last_refresh_time >= 0.05:
+                self._refresh_live()
+                last_refresh_time = now
 
         with self.console.status(
             "[bold magenta]Přemýšlím a generuji kód...[/]", spinner="dots"
@@ -1947,50 +2024,9 @@ class InteractiveCLI:
         Returns:
             Estimated line count (always rounds up for safety)
         """
-        content = entry["content"]
-        role = entry["role"]
-
-        # Start with header line (timestamp + role label)
-        lines = 1
-
-        # Count explicit newlines - critical for code blocks and lists
-        newline_count = content.count("\n")
-
-        # Calculate wrapped lines based on content length
-        # Use effective width (slightly less than actual to account for padding)
-        effective_width = max(30, content_width - 4)
-        char_based_lines = max(1, len(content) // effective_width)
-
-        # Take the MAXIMUM of newline-based and char-based estimates
-        # This handles both long single-line text and multi-line code blocks
-        content_lines = max(newline_count + 1, char_based_lines)
-
-        # Apply role-specific safety multipliers
-        if role == "ai":
-            # AI messages use Markdown which adds significant overhead:
-            # - Code blocks add borders and syntax highlighting
-            # - Lists add bullet points and indentation
-            # - Headers add extra spacing
-            # - Tables add grid lines
-            # Use 1.5x multiplier + fixed buffer of 3 lines
-            content_lines = int(content_lines * 1.5) + 3
-
-            # Additional penalty for very long AI responses
-            if len(content) > 1000:
-                content_lines += 2
-        else:
-            # User/system messages are plain text, but still add buffer
-            content_lines = int(content_lines * 1.1) + 1
-
-        lines += content_lines
-
-        # Separator line
-        lines += 1
-
-        # Add small buffer per message to account for Rich rendering quirks
-        lines += 1
-
-        return lines
+        return _calculate_message_height(
+            entry.get("content", ""), entry.get("role", "user"), content_width
+        )
 
     def _render_chat_panel(self) -> Panel:
         """
