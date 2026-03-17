@@ -3,6 +3,9 @@
 **Note:** This file is the primary source of truth for all AI agents (Claude Code, Jules/Gemini, Codex) working on this project. It defines the project's architecture, conventions, and operational protocols.
 
 ## Recent Changes & Updates
+- [2026-01-23] **Optimization:** Implemented module-level caching for `execute_command_quick` in `tool_orchestrator.py` to prevent repeated heavy object initialization (I/O, config).
+
+- 2026-03-11: Jules - Fixed CodeQL security alerts by removing unused imports `Mock` from `tests/unit/test_tool_registry.py` and `subprocess` from `src/mycoder/providers/llm/ollama.py`; tests run: `poetry run flake8`, `poetry run mypy`, `poetry run pytest`.
 *Agents: Add entries here when making significant changes*
 
 - 2026-03-03: Codex - Prepared local merge workflow for branch `work` (validated formatter + unit/provider tests), merged into local `main`, and deleted merged `work` branch; tests run: `poetry run black --check src/ tests/`, `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
