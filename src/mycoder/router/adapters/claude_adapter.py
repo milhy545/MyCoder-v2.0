@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Optional
 
 import aiohttp
 
@@ -105,7 +105,7 @@ class ClaudeAdapter(BaseModelAdapter):
 
                     if stream_callback:
                         # Handle streaming
-                        content_parts: List[str] = []
+                        content = ""
                         input_tokens = 0
                         output_tokens = 0
                         time_to_first_token = None
@@ -134,7 +134,7 @@ class ClaudeAdapter(BaseModelAdapter):
                                         )
 
                                     text_delta = data.get("delta", {}).get("text", "")
-                                    content_parts.append(text_delta)
+                                    content += text_delta
                                     stream_callback(text_delta)
 
                                 elif type_ == "message_delta":
@@ -144,7 +144,6 @@ class ClaudeAdapter(BaseModelAdapter):
                             except json.JSONDecodeError:
                                 continue
 
-                        content = "".join(content_parts)
                         duration_ms = int((time.time() - start_time) * 1000)
                         cost = self.estimate_cost(input_tokens, output_tokens)
 
