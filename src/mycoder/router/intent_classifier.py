@@ -67,6 +67,10 @@ class IntentClassifier:
     TOKENS_PER_FUNCTION = 100  # Average tokens per function
     BASE_PROMPT_TOKENS = 200  # Base overhead
 
+    _COMPILED_COMPLEX = [(re.compile(p), r) for p, r in COMPLEX_PATTERNS]
+    _COMPILED_SIMPLE = [(re.compile(p), r) for p, r in SIMPLE_PATTERNS]
+    _COMPILED_REVIEW = [(re.compile(p), r) for p, r in REVIEW_PATTERNS]
+
     def classify(
         self, prompt: str, file_context: Optional[List[str]] = None
     ) -> ClassificationResult:
@@ -85,22 +89,22 @@ class IntentClassifier:
 
         # Check for COMPLEX patterns
         complex_score = 0
-        for pattern, reason in self.COMPLEX_PATTERNS:
-            if re.search(pattern, prompt_lower):
+        for pattern, reason in self._COMPILED_COMPLEX:
+            if pattern.search(prompt_lower):
                 complex_score += 1
                 reasons.append(f"[COMPLEX] {reason}")
 
         # Check for SIMPLE patterns
         simple_score = 0
-        for pattern, reason in self.SIMPLE_PATTERNS:
-            if re.search(pattern, prompt_lower):
+        for pattern, reason in self._COMPILED_SIMPLE:
+            if pattern.search(prompt_lower):
                 simple_score += 1
                 reasons.append(f"[SIMPLE] {reason}")
 
         # Check for REVIEW patterns
         review_score = 0
-        for pattern, reason in self.REVIEW_PATTERNS:
-            if re.search(pattern, prompt_lower):
+        for pattern, reason in self._COMPILED_REVIEW:
+            if pattern.search(prompt_lower):
                 review_score += 1
                 reasons.append(f"[REVIEW] {reason}")
 
