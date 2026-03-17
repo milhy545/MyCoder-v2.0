@@ -139,7 +139,9 @@ class StorageManager:
                 else:
                     raise e
         logger.error(
-            "Critical DB failure after %d attempts: %s", _MAX_RETRIES, last_error
+                        "Critical DB failure after %d attempts: %s",
+            _MAX_RETRIES,
+            last_error,
         )
         raise last_error
 
