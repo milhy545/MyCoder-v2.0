@@ -2,10 +2,16 @@
 
 **Note:** This file is the primary source of truth for all AI agents (Claude Code, Jules/Gemini, Codex) working on this project. It defines the project's architecture, conventions, and operational protocols.
 
--## Recent Changes & Updates
+## Recent Changes & Updates
 - [2026-01-23] **Optimization:** Implemented module-level caching for `execute_command_quick` in `tool_orchestrator.py` to prevent repeated heavy object initialization (I/O, config).
+
+- 2026-03-11: Jules - Fixed CodeQL security alerts by removing unused imports `Mock` from `tests/unit/test_tool_registry.py` and `subprocess` from `src/mycoder/providers/llm/ollama.py`; tests run: `poetry run flake8`, `poetry run mypy`, `poetry run pytest`.
 *Agents: Add entries here when making significant changes*
 
+- 2026-02-01: Jules - Implemented background message sync service in `MessageSyncService.kt` and basic sync logic in `ChatRepository.kt` for Android app.
+- 2026-03-03: Codex - Prepared local merge workflow for branch `work` (validated formatter + unit/provider tests), merged into local `main`, and deleted merged `work` branch; tests run: `poetry run black --check src/ tests/`, `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
+- 2026-02-23: Codex - Fixed remaining CodeQL `py/empty-except` alerts in async thermal timeout handlers (`enhanced_mycoder_v2.py`, `providers/llm/ollama.py`, `tool_registry.py`) by replacing silent `pass` with `logger.debug(...)`; tests run: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
+- 2026-02-01: Jules - Refined `src/mycoder/triage_agent.py` system prompt to clarify output target (file vs stdout) while maintaining strict JSON constraints and safety adaptations; tests run: `poetry run pytest tests/unit/test_triage_agent.py`.
 - 2026-01-30: Jules - Updated `src/mycoder/triage_agent.py` system prompt to align with new issue requirements (strict JSON, removed shell command generation) and enforced "Goat Principle" v2; tests run: `poetry run pytest tests/unit/test_triage_agent.py`.
 - 2026-01-30: Jules - Implemented synchronous `get_available_voices` for ElevenLabs provider using `urllib.request` with caching and formatted output; added tests in `tests/providers/tts/test_elevenlabs.py`; tests run: `poetry run pytest tests/providers/tts/test_elevenlabs.py`.
 - 2026-01-30: Codex - Fixed SyntaxError in `cli_interactive.py` file cache ignored dirs and restored logging; tests run: `poetry run flake8 src/ tests/`, `poetry run black --check src/ tests/`, `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.

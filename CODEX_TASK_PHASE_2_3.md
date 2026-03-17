@@ -288,7 +288,7 @@ class TTSEngine:
             # TODO: Implementovat espeak via subprocess
             pass
         elif self.provider == "gtts":
-            # TODO: Implementovat Google TTS
+            # DONE: Implementovat Google TTS
             pass
         elif self.provider == "gemini":
             # TODO: Implementovat Gemini TTS
