@@ -2,7 +2,8 @@
 
 **Note:** This file is the primary source of truth for all AI agents (Claude Code, Jules/Gemini, Codex) working on this project. It defines the project's architecture, conventions, and operational protocols.
 
-## Recent Changes & Updates
+-## Recent Changes & Updates
+- [2026-01-23] **Optimization:** Implemented module-level caching for `execute_command_quick` in `tool_orchestrator.py` to prevent repeated heavy object initialization (I/O, config).
 *Agents: Add entries here when making significant changes*
 
 - 2026-01-30: Jules - Updated `src/mycoder/triage_agent.py` system prompt to align with new issue requirements (strict JSON, removed shell command generation) and enforced "Goat Principle" v2; tests run: `poetry run pytest tests/unit/test_triage_agent.py`.
