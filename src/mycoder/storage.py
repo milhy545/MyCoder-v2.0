@@ -6,6 +6,7 @@ Responsibility:
 2. File Checkpointing (Snapshots) & Rollback Capability
 3. Asynchronous operations that are safe in async contexts
 """
+
 import asyncio
 import json
 import logging
@@ -139,7 +140,7 @@ class StorageManager:
                 else:
                     raise e
         logger.error(
-                        "Critical DB failure after %d attempts: %s",
+            "Critical DB failure after %d attempts: %s",
             _MAX_RETRIES,
             last_error,
         )
