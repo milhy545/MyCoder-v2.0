@@ -1,9 +1,11 @@
 """
 Google Translate TTS Provider.
 """
+
 import asyncio
 import logging
 import os
+import subprocess
 import tempfile
 from typing import Any, Dict, List
 
@@ -19,7 +21,7 @@ class GTTSProvider(BaseTTSProvider):
         super().__init__(config)
         self._current_process = None
         try:
-            import gtts  # noqa: F401
+            import gtts
         except ImportError:
             logger.error("gtts not installed")
 
@@ -33,10 +35,12 @@ class GTTSProvider(BaseTTSProvider):
                 return tmp.name
 
         path = await asyncio.to_thread(_generate)
+
         player = self._get_audio_player()
         if player:
             self._current_process = await asyncio.create_subprocess_exec(*player, path)
             await self._current_process.wait()
+
         try:
             os.unlink(path)
         except Exception as exc:

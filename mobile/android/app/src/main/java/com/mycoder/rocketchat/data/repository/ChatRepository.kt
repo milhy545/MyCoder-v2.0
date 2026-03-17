@@ -182,22 +182,9 @@ class ChatRepository private constructor(
 
     // ========== Sync ==========
 
-    /**
-     * Synchronize local database with RocketChat server.
-     * Fetches latest messages, room updates, and subscriptions.
-     */
     suspend fun syncWithServer() {
-        android.util.Log.d(TAG, "Syncing with RocketChat server...")
-        try {
-            // Implementation note: This will involve calling RocketChat REST API endpoints
-            // like /api/v1/channels.history or /api/v1/groups.history for each open room.
-            // For now, we rely on WebSocket for real-time updates and this periodic sync
-            // ensures we don't miss anything during offline periods.
-
-            // TODO: Implement actual REST API calls to fetch missed messages
-        } catch (e: Exception) {
-            android.util.Log.e(TAG, "Failed to sync with server", e)
-        }
+        // TODO: Implement server sync
+        // This would fetch latest messages, rooms, etc. from RocketChat REST API
     }
 
     private suspend fun handleWebSocketMessage(wsMessage: RocketChatWebSocket.RocketChatMessage) {
@@ -234,8 +221,6 @@ class ChatRepository private constructor(
     }
 
     companion object {
-        private const val TAG = "ChatRepository"
-
         @Volatile
         private var INSTANCE: ChatRepository? = null
 

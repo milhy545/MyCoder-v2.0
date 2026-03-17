@@ -54,13 +54,13 @@ class Pyttsx3Provider(BaseTTSProvider):
                     return getattr(voice, "id", None)
         return None
 
-    def speak_sync(self, text: str) -> None:
-        self.engine.say(text)
-        self.engine.runAndWait()
-
     async def speak(self, text: str) -> None:
         # pyttsx3 runAndWait is blocking, so run in thread
-        await asyncio.to_thread(self.speak_sync, text)
+        def _speak():
+            self.engine.say(text)
+            self.engine.runAndWait()
+
+        await asyncio.to_thread(_speak)
 
     def stop(self) -> None:
         self.engine.stop()
@@ -77,7 +77,7 @@ class EspeakProvider(BaseTTSProvider):
         if not shutil.which("espeak"):
             logger.warning("espeak not found")
 
-    def speak_sync(self, text: str) -> None:
+    async def speak(self, text: str) -> None:
         args = [
             "espeak",
             "-v",
@@ -86,10 +86,7 @@ class EspeakProvider(BaseTTSProvider):
             str(self.config.get("rate", 150)),
             text,
         ]
-        subprocess.run(args)
-
-    async def speak(self, text: str) -> None:
-        await asyncio.to_thread(self.speak_sync, text)
+        await asyncio.to_thread(subprocess.run, args)
 
     def stop(self) -> None:
         subprocess.run(["pkill", "espeak"])

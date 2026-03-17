@@ -5,6 +5,7 @@ Ollama Provider.
 import asyncio
 import logging
 import os
+import subprocess
 import time
 from typing import Any, Dict
 
