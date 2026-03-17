@@ -24,7 +24,7 @@ class GTTSProvider(BaseTTSProvider):
         except ImportError:
             logger.error("gtts not installed")
 
-    async def speak(self, text: str) -> None:
+        async def speak(self, text: str) -> None:
         from gtts import gTTS
 
         def _generate():
@@ -43,6 +43,9 @@ class GTTSProvider(BaseTTSProvider):
             os.unlink(path)
         except Exception as exc:
             logger.debug("Failed to remove temp audio file %s: %s", path, exc)
+
+    async def speak(self, text: str) -> None:
+        await asyncio.to_thread(self.speak_sync, text)
 
     def stop(self) -> None:
         if self._current_process:

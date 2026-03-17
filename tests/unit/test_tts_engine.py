@@ -69,14 +69,14 @@ def test_espeak_fallback(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_speak_async_calls_sync(monkeypatch):
+async def test_speak_async_calls_provider_speak(monkeypatch):
     tts = TTSEngine(provider="espeak")
     called = {"value": False}
 
-    def fake_speak(text):
+    async def fake_speak(text):
         called["value"] = True
 
-    monkeypatch.setattr(tts, "_speak_sync", fake_speak)
+    monkeypatch.setattr(tts.provider, "speak", fake_speak)
     await tts.speak_async("test")
     assert called["value"] is True
 
@@ -95,6 +95,9 @@ def test_stop_pyttsx3(monkeypatch):
 @patch("mycoder.tts_engine.GTTSProvider")
 async def test_gtts_initialization(mock_gtts_class):
     mock_provider = Mock()
+    from unittest.mock import AsyncMock
+
+    mock_provider.speak = AsyncMock()
     mock_gtts_class.return_value = mock_provider
 
     tts = TTSEngine(provider="gtts")
@@ -108,6 +111,9 @@ async def test_gtts_initialization(mock_gtts_class):
 @patch("mycoder.tts_engine.AzureTTSProvider")
 async def test_azure_initialization(mock_azure_class):
     mock_provider = Mock()
+    from unittest.mock import AsyncMock
+
+    mock_provider.speak = AsyncMock()
     mock_azure_class.return_value = mock_provider
 
     tts = TTSEngine(provider="azure")
@@ -121,6 +127,9 @@ async def test_azure_initialization(mock_azure_class):
 @patch("mycoder.tts_engine.AmazonPollyProvider")
 async def test_polly_initialization(mock_polly_class):
     mock_provider = Mock()
+    from unittest.mock import AsyncMock
+
+    mock_provider.speak = AsyncMock()
     mock_polly_class.return_value = mock_provider
 
     tts = TTSEngine(provider="polly")
@@ -134,6 +143,9 @@ async def test_polly_initialization(mock_polly_class):
 @patch("mycoder.tts_engine.ElevenLabsProvider")
 async def test_elevenlabs_initialization(mock_elevenlabs_class):
     mock_provider = Mock()
+    from unittest.mock import AsyncMock
+
+    mock_provider.speak = AsyncMock()
     mock_elevenlabs_class.return_value = mock_provider
 
     tts = TTSEngine(provider="elevenlabs")
