@@ -1,105 +1,40 @@
-"""Enhanced file editing tool with unique string validation."""
-
-from __future__ import annotations
-
-from dataclasses import dataclass
+import os
+import logging
 from pathlib import Path
-from typing import Optional, Tuple
 
-
-@dataclass
-class EditResult:
-    success: bool
-    message: str
-    old_content: Optional[str] = None
-    new_content: Optional[str] = None
-
+logger = logging.getLogger(__name__)
 
 class EditTool:
-    """Edit tool with unique string validation."""
+    def __init__(self, workspace_root: str = "."):
+        self.workspace_root = Path(workspace_root).resolve()
 
-    def __init__(self, working_dir: Path) -> None:
-        self.working_dir = working_dir
-        self.read_files: set[str] = set()
+    def execute(self, file_path: str, old_text: str, new_text: str) -> str:
+        target_path = (self.workspace_root / file_path).resolve()
 
-    def edit(
-        self,
-        file_path: str,
-        old_string: str,
-        new_string: str,
-        replace_all: bool = False,
-    ) -> EditResult:
-        path = Path(file_path)
+        if not str(target_path).startswith(str(self.workspace_root)):
+            return f"ERROR: Security violation. Path outside workspace ({target_path})"
 
-        # Normalize to absolute path for consistency
-        if not path.is_absolute():
-            path = self.working_dir / path
-        path = path.resolve()
+        if not target_path.exists():
+            return f"ERROR: File {file_path} does not exist."
 
-        if str(path) not in self.read_files:
-            return EditResult(
-                success=False,
-                message=f"File must be read before editing: {file_path}",
-            )
+        try:
+            with open(target_path, 'r', encoding='utf-8') as f:
+                content = f.read()
 
-        if not path.exists():
-            return EditResult(
-                success=False,
-                message=f"File not found: {file_path}",
-            )
+            occurrences = content.count(old_text)
+            if occurrences == 0:
+                return "ERROR: old_text not found. Ensure exact matching including whitespace/indentation."
+            elif occurrences > 1:
+                return f"ERROR: old_text found {occurrences} times. Add more context to old_text to make it unique."
 
-        content = path.read_text(encoding="utf-8")
-        count = content.count(old_string)
-        if count == 0:
-            return EditResult(
-                success=False,
-                message=f"String not found in file: {old_string[:50]}...",
-            )
+            new_content = content.replace(old_text, new_text)
 
-        if count > 1 and not replace_all:
-            return EditResult(
-                success=False,
-                message=(
-                    f"String is not unique ({count} occurrences). "
-                    "Use replace_all=True or provide more context."
-                ),
-            )
+            with open(target_path, 'w', encoding='utf-8') as f:
+                f.write(new_content)
 
-        if replace_all:
-            new_content = content.replace(old_string, new_string)
-        else:
-            new_content = content.replace(old_string, new_string, 1)
+            logger.info(f"Successfully edited: {file_path}")
+            return f"SUCCESS: File {file_path} successfully updated."
 
-        path.write_text(new_content, encoding="utf-8")
-        return EditResult(
-            success=True,
-            message=f"Replaced {count if replace_all else 1} occurrence(s)",
-            old_content=content,
-            new_content=new_content,
-        )
-
-    def mark_as_read(self, file_path: str) -> None:
-        # Normalize to absolute path for consistency
-        path = Path(file_path)
-        if not path.is_absolute():
-            path = self.working_dir / path
-        path = path.resolve()
-        self.read_files.add(str(path))
-
-    def validate_edit(self, file_path: str, old_string: str) -> Tuple[bool, str]:
-        path = Path(file_path)
-        if not path.is_absolute():
-            path = self.working_dir / path
-        path = path.resolve()
-
-        if not path.exists():
-            return False, f"File not found: {file_path}"
-
-        content = path.read_text(encoding="utf-8")
-        count = content.count(old_string)
-        if count == 0:
-            return False, "String not found"
-        if count > 1:
-            return False, f"String not unique ({count} occurrences)"
-
-        return True, "Valid edit"
+        except Exception as e:
+            logger.error(f"Error editing {file_path}: {e}")
+            return f"ERROR: Unexpected write error: {str(e)}"
