@@ -4,7 +4,6 @@ Google Translate TTS Provider.
 import asyncio
 import logging
 import os
-import subprocess
 import tempfile
 from typing import Any, Dict, List
 
@@ -20,21 +19,20 @@ class GTTSProvider(BaseTTSProvider):
         super().__init__(config)
         self._current_process = None
         try:
-            import gtts
+            import gtts  # noqa: F401
         except ImportError:
             logger.error("gtts not installed")
 
-        async def speak(self, text: str) -> None:
+    async def speak(self, text: str) -> None:
         from gtts import gTTS
 
         def _generate():
             with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
                 tts = gTTS(text=text, lang=self.config.get("language", "en"))
                 tts.save(tmp.name)
-            return tmp.name
+                return tmp.name
 
         path = await asyncio.to_thread(_generate)
-
         player = self._get_audio_player()
         if player:
             self._current_process = await asyncio.create_subprocess_exec(*player, path)
@@ -43,9 +41,6 @@ class GTTSProvider(BaseTTSProvider):
             os.unlink(path)
         except Exception as exc:
             logger.debug("Failed to remove temp audio file %s: %s", path, exc)
-
-    async def speak(self, text: str) -> None:
-        await asyncio.to_thread(self.speak_sync, text)
 
     def stop(self) -> None:
         if self._current_process:
