@@ -19,8 +19,30 @@ class BaseTTSProvider(ABC):
 
     @abstractmethod
     async def speak(self, text: str) -> None:
-        """Speak the text."""
+        """Speak the text asynchronously."""
         pass
+
+    def speak_sync(self, text: str) -> None:
+        """Speak the text synchronously (blocking).
+
+        Subclasses should ideally override this with native synchronous implementations.
+        """
+        import asyncio
+        import concurrent.futures
+
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop and loop.is_running():
+            logger.warning(
+                "speak_sync called from within an active event loop without native sync support."
+            )
+            with concurrent.futures.ThreadPoolExecutor(1) as pool:
+                pool.submit(asyncio.run, self.speak(text)).result()
+        else:
+            asyncio.run(self.speak(text))
 
     @abstractmethod
     def stop(self) -> None:
