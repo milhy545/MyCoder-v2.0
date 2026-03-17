@@ -356,10 +356,10 @@ class ModelRouter:
 
         # Inject FailureMemory warnings
         if self.failure_memory and context.failure_warnings:
-            constraints_parts = ["\n## CONSTRAINTS (from previous failures)\n"]
+            constraints = "\n## CONSTRAINTS (from previous failures)\n"
             for warning in context.failure_warnings:
-                constraints_parts.append(f"- {warning}\n")
-            parts.append("".join(constraints_parts))
+                constraints += f"- {warning}\n"
+            parts.append(constraints)
 
         # Check current tool/pattern failures
         # Simple hash for demo purposes; in prod use semantic analysis or tool name
