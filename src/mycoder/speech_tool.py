@@ -163,8 +163,7 @@ class SpeechTool(BaseTool):
         provider = kwargs.get("provider", "whisper_api")
         model = kwargs.get("model")
 
-        text, provider_name = await asyncio.to_thread(
-            self._record_and_transcribe,
+        text, provider_name = await self._record_and_transcribe(
             duration=duration,
             language=language,
             provider=provider,
@@ -180,7 +179,7 @@ class SpeechTool(BaseTool):
             "duration_seconds": duration,
         }
 
-    def _record_and_transcribe(
+    async def _record_and_transcribe(
         self,
         duration: int,
         language: str,
@@ -196,9 +195,12 @@ class SpeechTool(BaseTool):
         )
 
         recorder = AudioRecorder(max_duration=duration)
+
+        # Audio recording start/stop is safe on main loop (they use sounddevice non-blocking streams internally)
+        # but to be completely safe, we could thread them. In this case start_recording returns immediately.
         recorder.start_recording()
-        time.sleep(max(1, duration))
-        audio_data = recorder.stop_recording()
+        await asyncio.sleep(max(1, duration))
+        audio_data = await asyncio.to_thread(recorder.stop_recording)
 
         if not audio_data:
             return None, provider
@@ -208,7 +210,7 @@ class SpeechTool(BaseTool):
             transcriber = GeminiTranscriber(
                 language=language, model=model or "gemini-1.5-flash"
             )
-            text = transcriber.transcribe(audio_data)
+            text = await asyncio.to_thread(transcriber.transcribe, audio_data)
             return text, "gemini"
 
         whisper_provider = (
@@ -221,7 +223,7 @@ class SpeechTool(BaseTool):
             local_model=model or "base",
             language=language,
         )
-        text = transcriber.transcribe(audio_data)
+        text = await asyncio.to_thread(transcriber.transcribe, audio_data)
         return text, whisper_provider.value
 
     async def validate_context(self, context: ToolExecutionContext) -> bool:
