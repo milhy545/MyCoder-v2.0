@@ -1,7 +1,6 @@
 """
 Google Translate TTS Provider.
 """
-
 import asyncio
 import logging
 import os
@@ -32,7 +31,7 @@ class GTTSProvider(BaseTTSProvider):
             with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
                 tts = gTTS(text=text, lang=self.config.get("language", "en"))
                 tts.save(tmp.name)
-                return tmp.name
+            return tmp.name
 
         path = await asyncio.to_thread(_generate)
 
@@ -40,7 +39,6 @@ class GTTSProvider(BaseTTSProvider):
         if player:
             self._current_process = await asyncio.create_subprocess_exec(*player, path)
             await self._current_process.wait()
-
         try:
             os.unlink(path)
         except Exception as exc:
