@@ -421,12 +421,16 @@ Respond in JSON format:
         }
 
 
+# Cache pro quick execute orchestrator
+_quick_orchestrator_cache: Dict[tuple, ToolExecutionOrchestrator] = {}
+
+
 # Convenience function pro rychlé použití
 async def execute_command_quick(
     command_str: str,
     tool_registry: ToolRegistry,
     mcp_bridge: MCPBridge,
-    working_directory: Path = Path.cwd(),
+    working_directory: Optional[Path] = None,
 ) -> ToolResult:
     """
     Convenience function pro rychlé spuštění příkazu.
@@ -440,6 +444,9 @@ async def execute_command_quick(
     Returns:
         ToolResult
     """
+    if working_directory is None:
+        working_directory = Path.cwd()
+
     parser = CommandParser()
     command = parser.parse(command_str)
 
@@ -455,9 +462,16 @@ async def execute_command_quick(
     context = ToolExecutionContext(mode="FULL", working_directory=working_directory)
 
     # Pro quick use vytvoříme dočasný orchestrator (není optimální ale funguje)
-    from .enhanced_mycoder_v2 import EnhancedMyCoderV2
+    # Bolt Optimization: Caching orchestrator instance
+    cache_key = (str(working_directory), id(tool_registry), id(mcp_bridge))
 
-    ai_client = EnhancedMyCoderV2()
-    orchestrator = ToolExecutionOrchestrator(tool_registry, mcp_bridge, ai_client)
+    if cache_key in _quick_orchestrator_cache:
+        orchestrator = _quick_orchestrator_cache[cache_key]
+    else:
+        from .enhanced_mycoder_v2 import EnhancedMyCoderV2
+
+        ai_client = EnhancedMyCoderV2(working_directory=working_directory)
+        orchestrator = ToolExecutionOrchestrator(tool_registry, mcp_bridge, ai_client)
+        _quick_orchestrator_cache[cache_key] = orchestrator
 
     return await orchestrator.execute_command(command, context)
