@@ -95,9 +95,14 @@ class StorageManager:
                 return conn
             except (sqlite3.OperationalError, sqlite3.DatabaseError) as e:
                 last_error = e
-                if "unable to open" in str(e).lower() or "locked" in str(e).lower():
+                err_str = str(e).lower()
+                if "unable to open" in err_str or "locked" in err_str:
                     logger.warning(
-                        f"[DB Retry {attempt+1}/{_MAX_RETRIES}] Connect failed: {e}. Waiting {delay}s..."
+                        "[DB Retry %d/%d] Connect failed: %s. Waiting %.1fs...",
+                        attempt + 1,
+                        _MAX_RETRIES,
+                        e,
+                        delay,
                     )
                     await asyncio.sleep(delay)
                     delay *= 2
@@ -123,15 +128,21 @@ class StorageManager:
                 return cursor
             except sqlite3.OperationalError as e:
                 last_error = e
-                if "database is locked" in str(e).lower() or "timeout" in str(e).lower():
+                err_str = str(e).lower()
+                if "database is locked" in err_str or "timeout" in err_str:
                     logger.warning(
-                        f"[DB Retry {attempt+1}/{_MAX_RETRIES}] DB locked/timeout. Waiting {delay}s..."
+                        "[DB Retry %d/%d] DB locked/timeout. Waiting %.1fs...",
+                        attempt + 1,
+                        _MAX_RETRIES,
+                        delay,
                     )
                     await asyncio.sleep(delay)
                     delay *= 2
                 else:
                     raise e
-        logger.error(f"Critical DB failure after {_MAX_RETRIES} attempts: {last_error}")
+        logger.error(
+            "Critical DB failure after %d attempts: %s", _MAX_RETRIES, last_error
+        )
         raise last_error
 
     async def connect(self):
@@ -145,7 +156,7 @@ class StorageManager:
                     raise
                 except sqlite3.Error as e:
                     logger.error(
-                        f"Failed to connect to database at {self.db_path}: {e}"
+                        "Failed to connect to database at %s: %s", self.db_path, e
                     )
                     raise StorageError("Unable to connect to storage") from e
 
@@ -169,7 +180,7 @@ class StorageManager:
             await self._conn.commit()
             self._initialized = True
         except sqlite3.Error as e:
-            logger.error(f"Failed to initialize database schema: {e}")
+            logger.error("Failed to initialize database schema: %s", e)
             raise StorageError("Unable to initialize storage schema") from e
 
     async def _ensure_conn(self):
@@ -196,7 +207,9 @@ class StorageManager:
         try:
             await self._execute_with_retry(
                 self._conn,
-                "INSERT INTO chat_history (session_id, role, content, timestamp, metadata) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO chat_history"
+                " (session_id, role, content, timestamp, metadata)"
+                " VALUES (?, ?, ?, ?, ?)",
                 (
                     session_id,
                     role,
@@ -209,7 +222,7 @@ class StorageManager:
             row = await cursor.fetchone()
             return row[0]
         except sqlite3.Error as e:
-            logger.error(f"Failed to save interaction: {e}")
+            logger.error("Failed to save interaction: %s", e)
             raise StorageError("Failed to save interaction") from e
 
     async def get_history(
@@ -219,7 +232,9 @@ class StorageManager:
         await self._ensure_conn()
         try:
             cursor = await self._conn.execute(
-                "SELECT * FROM chat_history WHERE session_id = ? ORDER BY timestamp ASC LIMIT ?",
+                "SELECT * FROM chat_history"
+                " WHERE session_id = ?"
+                " ORDER BY timestamp ASC LIMIT ?",
                 (session_id, limit),
             )
             rows = await cursor.fetchall()
@@ -241,7 +256,7 @@ class StorageManager:
                 )
             return history
         except sqlite3.Error as e:
-            logger.error(f"Failed to retrieve history: {e}")
+            logger.error("Failed to retrieve history: %s", e)
             raise StorageError("Failed to fetch history") from e
 
     async def create_snapshot(self, step_id: str, file_path: str) -> bool:
@@ -258,17 +273,18 @@ class StorageManager:
             try:
                 content = await asyncio.to_thread(full_path.read_bytes)
             except OSError as e:
-                logger.error(f"Failed to read file for snapshot {full_path}: {e}")
+                logger.error("Failed to read file for snapshot %s: %s", full_path, e)
                 raise StorageError("Unable to read file for snapshot") from e
         try:
             await self._execute_with_retry(
                 self._conn,
-                "INSERT INTO file_snapshots (step_id, file_path, content, timestamp) VALUES (?, ?, ?, ?)",
+                "INSERT INTO file_snapshots"
+                " (step_id, file_path, content, timestamp) VALUES (?, ?, ?, ?)",
                 (step_id, str(full_path), content, self._time_provider()),
             )
             return True
         except sqlite3.Error as e:
-            logger.error(f"Failed to save snapshot: {e}")
+            logger.error("Failed to save snapshot: %s", e)
             raise StorageError("Failed to save snapshot") from e
 
     async def rollback(self, step_id: str) -> List[str]:
@@ -285,7 +301,7 @@ class StorageManager:
             )
             rows = await cursor.fetchall()
             if not rows:
-                logger.warning(f"No snapshots found for step_id: {step_id}")
+                logger.warning("No snapshots found for step_id: %s", step_id)
                 return []
             for file_path, content in rows:
                 path = Path(file_path)
@@ -300,10 +316,10 @@ class StorageManager:
                         await asyncio.to_thread(path.write_bytes, content)
                     restored_files.append(file_path)
                 except OSError as e:
-                    logger.error(f"Failed to restore file {file_path}: {e}")
+                    logger.error("Failed to restore file %s: %s", file_path, e)
                     raise StorageError("Rollback failed during file restore") from e
         except sqlite3.Error as e:
-            logger.error(f"Rollback failed: {e}")
+            logger.error("Rollback failed: %s", e)
             raise StorageError("Rollback query failed") from e
         return restored_files
 
@@ -325,5 +341,5 @@ class StorageManager:
             await self._conn.execute("VACUUM")
             await self._conn.commit()
         except sqlite3.Error as e:
-            logger.error(f"Cleanup failed: {e}")
+            logger.error("Cleanup failed: %s", e)
             raise StorageError("Cleanup failed") from e
