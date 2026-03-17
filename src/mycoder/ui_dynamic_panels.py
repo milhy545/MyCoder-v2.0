@@ -4,11 +4,13 @@ Dynamic UI Panels for MyCoder v2.1.1
 Enhanced execution monitor with AI-aware features.
 """
 
+import time
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
 import psutil
 from rich import box
+from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
@@ -32,6 +34,10 @@ class DynamicExecutionMonitor:
         self.provider_health: Dict[str, str] = {}
         self.cost_estimate: float = 0.0
         self.thermal_warning: bool = False
+
+        # Metrics cache (from ExecutionMonitor)
+        self._last_metrics_time = 0.0
+        self._cached_metrics = {"cpu": 0.0, "ram": 0.0, "thermal": "N/A"}
 
     def add_log(self, action: str, resource: str = "") -> None:
         """Add a timestamped entry and trim logs to the configured cap."""
@@ -61,7 +67,7 @@ class DynamicExecutionMonitor:
         """Set thermal warning state."""
         self.thermal_warning = warning
 
-    def render(self, console) -> Panel:
+    def render(self, console: Console) -> Panel:
         """
         Smart rendering based on current context.
 
@@ -94,7 +100,7 @@ class DynamicExecutionMonitor:
                 table.add_row(Text(f"{icon} {provider}: {status}"))
             table.add_row("")
 
-        metrics = self._get_system_metrics()
+        metrics = self.get_system_metrics()
         table.add_row(Text("SYSTEM", style="bold cyan"))
         table.add_row(
             Text(f"CPU: {self._render_bar(metrics['cpu'])} {metrics['cpu']:.0f}%")
@@ -107,7 +113,7 @@ class DynamicExecutionMonitor:
 
         return Panel(table, title="EXECUTION MONITOR", border_style="cyan")
 
-    def _render_standard(self, console) -> Panel:
+    def _render_standard(self, console: Console) -> Panel:
         """Standard rendering (adapted from ExecutionMonitor)."""
         term_height = console.size.height
         term_width = console.size.width
@@ -149,7 +155,7 @@ class DynamicExecutionMonitor:
             for timestamp, action, resource in visible_logs:
                 table.add_row(timestamp, action, resource or "-")
 
-        metrics = self._get_system_metrics()
+        metrics = self.get_system_metrics()
         cpu_bar = self._render_bar(metrics["cpu"])
         ram_bar = self._render_bar(metrics["ram"])
 
@@ -200,8 +206,12 @@ class DynamicExecutionMonitor:
         }
         return icons.get(status, "UNK")
 
-    def _get_system_metrics(self) -> dict:
-        """Get system metrics."""
+    def get_system_metrics(self) -> dict:
+        """Return the latest CPU, RAM, and thermal measurements with 2s cache."""
+        current_time = time.time()
+        if current_time - self._last_metrics_time < 2.0:
+            return self._cached_metrics
+
         metrics = {"cpu": 0.0, "ram": 0.0, "thermal": "N/A"}
         try:
             metrics["cpu"] = psutil.cpu_percent(interval=None)
@@ -219,11 +229,14 @@ class DynamicExecutionMonitor:
                 if entries:
                     temp = entries[0]
                     if hasattr(temp, "current"):
-                        metrics["thermal"] = f"{temp.current:.1f}C"
+                        metrics["thermal"] = f"{temp.current:.1f}°C"
                     else:
                         metrics["thermal"] = str(temp)
                     break
         except (AttributeError, RuntimeError, OSError):
             # Sensor access may throw on unsupported systems.
             pass
+
+        self._cached_metrics = metrics
+        self._last_metrics_time = current_time
         return metrics
