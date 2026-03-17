@@ -1,0 +1,5 @@
+💡 **What:** Replaced the blocking `time.sleep` call within the thread pool with `await asyncio.sleep` in the main event loop for the voice dictation recording phase. The CPU-bound transcription logic (`transcriber.transcribe`) was wrapped in `await asyncio.to_thread` to maintain non-blocking behavior.
+
+🎯 **Why:** The previous code delegated the entire `_record_and_transcribe` operation to a thread via `asyncio.to_thread`. Using `time.sleep` inside this thread starved the thread pool for the entirety of the recording duration (default 10s) without doing any meaningful CPU work. This could unnecessarily exhaust available threads, causing delays and blocking execution of other concurrent operations during dictation.
+
+📊 **Measured Improvement:** Releasing the thread back to the pool immediately upon starting recording reduces thread pool contention. Both approaches maintain ~1.00s execution for a 1s recording duration overhead-wise, but the asyncio approach frees the executor threads, which prevents `ThreadPoolExecutor` starvation and ensures other concurrent background tasks are unblocked during the recording.

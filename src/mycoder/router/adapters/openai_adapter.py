@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import time
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import aiohttp
 
@@ -99,7 +99,7 @@ class OpenAIAdapter(BaseModelAdapter):
                         )
 
                     if stream_callback:
-                        content = ""
+                        content_parts: List[str] = []
                         input_tokens = 0  # OpenAI stream doesn't always send usage
                         output_tokens = 0
                         time_to_first_token = None
@@ -127,7 +127,7 @@ class OpenAIAdapter(BaseModelAdapter):
                                         time_to_first_token = int(
                                             (time.time() - start_time) * 1000
                                         )
-                                    content += content_delta
+                                    content_parts.append(content_delta)
                                     stream_callback(content_delta)
 
                                 # Some models/options might send usage in stream now
@@ -140,6 +140,7 @@ class OpenAIAdapter(BaseModelAdapter):
                             except json.JSONDecodeError:
                                 continue
 
+                        content = "".join(content_parts)
                         duration_ms = int((time.time() - start_time) * 1000)
 
                         # Estimate usage if not provided
