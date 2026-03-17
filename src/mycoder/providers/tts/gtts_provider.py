@@ -38,9 +38,7 @@ class GTTSProvider(BaseTTSProvider):
 
         player = self._get_audio_player()
         if player:
-            self._current_process = await asyncio.create_subprocess_exec(
-                *player, path
-            )
+            self._current_process = await asyncio.create_subprocess_exec(*player, path)
             await self._current_process.wait()
 
         try:
