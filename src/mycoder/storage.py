@@ -62,3 +62,10 @@ class DatabaseManager:
         self.execute_with_retry(
             "INSERT OR REPLACE INTO memory (key, value) VALUES (?, ?)", (key, value)
         )
+
+
+StorageManager = DatabaseManager
+
+
+class StorageError(Exception):
+    pass
