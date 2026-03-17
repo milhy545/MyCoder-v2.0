@@ -1,8 +1,8 @@
-import os
 import logging
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
 
 class EditTool:
     def __init__(self, workspace_root: str = "."):
@@ -18,7 +18,7 @@ class EditTool:
             return f"ERROR: File {file_path} does not exist."
 
         try:
-            with open(target_path, 'r', encoding='utf-8') as f:
+            with open(target_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             occurrences = content.count(old_text)
@@ -29,7 +29,7 @@ class EditTool:
 
             new_content = content.replace(old_text, new_text)
 
-            with open(target_path, 'w', encoding='utf-8') as f:
+            with open(target_path, "w", encoding="utf-8") as f:
                 f.write(new_content)
 
             logger.info(f"Successfully edited: {file_path}")
