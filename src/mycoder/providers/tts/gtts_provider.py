@@ -19,33 +19,40 @@ class GTTSProvider(BaseTTSProvider):
 
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
+        self._current_process = None
         try:
             import gtts
         except ImportError:
             logger.error("gtts not installed")
 
-    def speak_sync(self, text: str) -> None:
+    async def speak(self, text: str) -> None:
         from gtts import gTTS
 
-        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
-            tts = gTTS(text=text, lang=self.config.get("language", "en"))
-            tts.save(tmp.name)
-            path = tmp.name
+        def _generate():
+            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
+                tts = gTTS(text=text, lang=self.config.get("language", "en"))
+                tts.save(tmp.name)
+                return tmp.name
+
+        path = await asyncio.to_thread(_generate)
 
         player = self._get_audio_player()
         if player:
-            subprocess.run(player + [path])
+            self._current_process = await asyncio.create_subprocess_exec(*player, path)
+            await self._current_process.wait()
 
         try:
             os.unlink(path)
         except Exception as exc:
             logger.debug("Failed to remove temp audio file %s: %s", path, exc)
 
-    async def speak(self, text: str) -> None:
-        await asyncio.to_thread(self.speak_sync, text)
-
     def stop(self) -> None:
-        pass
+        if self._current_process:
+            try:
+                self._current_process.terminate()
+            except Exception as e:
+                logger.debug(f"Failed to terminate gTTS audio player: {e}")
+            self._current_process = None
 
     def get_available_voices(self) -> List[str]:
         from gtts.lang import tts_langs

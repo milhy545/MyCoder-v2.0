@@ -98,13 +98,15 @@ class TTSEngine:
         """Speak text asynchronously."""
         if not self.provider:
             return
-        await self.provider.speak(text)
+        result = self._speak_sync(text)
+        if asyncio.iscoroutine(result):
+            _ = await result
 
     def _speak_sync(self, text: str):
-        """Synchronous speech (blocking)."""
+        """Internal helper for speaking text."""
         if not self.provider:
             return None
-        self.provider.speak_sync(text)
+        return self.provider.speak(text)
 
     def stop(self) -> None:
         """Stop current speech."""
