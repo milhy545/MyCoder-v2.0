@@ -393,19 +393,19 @@ uvloop = ["uvloop (>=0.15.2) ; sys_platform != \"win32\"", "winloop (>=0.5.0) ; 
 
 [[package]]
 name = "boto3"
-version = "1.42.67"
+version = "1.42.72"
 description = "The AWS SDK for Python"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "extra == \"cloud\""
 files = [
-    {file = "boto3-1.42.67-py3-none-any.whl", hash = "sha256:aa900216bdc48bbd0115ed7128a4baed5548c6a60673160a38df8a8566df57cd"},
-    {file = "boto3-1.42.67.tar.gz", hash = "sha256:d4123ceb3be36c5cb7ddccc7a7c43701e1fb6af612ef46e3b5d667daf5447d4b"},
+    {file = "boto3-1.42.72-py3-none-any.whl", hash = "sha256:2b5fdac4f202b2ccb9ed21f8b84229463b15573ea16941c2b1b8db1c69e08b63"},
+    {file = "boto3-1.42.72.tar.gz", hash = "sha256:932f023ea3b54fd85df453dcfff7d8c5a0f8be144c0ad57568943505c72c1e6a"},
 ]
 
 [package.dependencies]
-botocore = ">=1.42.67,<1.43.0"
+botocore = ">=1.42.72,<1.43.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.16.0,<0.17.0"
 
@@ -414,15 +414,15 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.42.67"
+version = "1.42.72"
 description = "Low-level, data-driven core of boto 3."
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "extra == \"cloud\""
 files = [
-    {file = "botocore-1.42.67-py3-none-any.whl", hash = "sha256:a94317d2ce83deae230964beb2729639455de65595d0154f285b0ccfd29780cd"},
-    {file = "botocore-1.42.67.tar.gz", hash = "sha256:ee307f30fcb798d244fb35a87847b274e1e1f72cd5f7f2e31bd1826df0c45295"},
+    {file = "botocore-1.42.72-py3-none-any.whl", hash = "sha256:038f34553da68df2ce70edc729f170cc198678daaad43f98649727c59f6404d4"},
+    {file = "botocore-1.42.72.tar.gz", hash = "sha256:491b75eb41d46cf99cf8d6cab89f2e2c3602ce8e90d738a1da217a5fb6b2b7ef"},
 ]
 
 [package.dependencies]
@@ -2753,15 +2753,15 @@ files = [
 
 [[package]]
 name = "openai"
-version = "2.26.0"
+version = "2.29.0"
 description = "The official Python library for the openai API"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "extra == \"speech\""
 files = [
-    {file = "openai-2.26.0-py3-none-any.whl", hash = "sha256:6151bf8f83802f036117f06cc8a57b3a4da60da9926826cc96747888b57f394f"},
-    {file = "openai-2.26.0.tar.gz", hash = "sha256:b41f37c140ae0034a6e92b0c509376d907f3a66109935fba2c1b471a7c05a8fb"},
+    {file = "openai-2.29.0-py3-none-any.whl", hash = "sha256:b7c5de513c3286d17c5e29b92c4c98ceaf0d775244ac8159aeb1bddf840eb42a"},
+    {file = "openai-2.29.0.tar.gz", hash = "sha256:32d09eb2f661b38d3edd7d7e1a2943d1633f572596febe64c0cd370c86d52bec"},
 ]
 
 [package.dependencies]
@@ -2772,7 +2772,7 @@ jiter = ">=0.10.0,<1"
 pydantic = ">=1.9.0,<3"
 sniffio = "*"
 tqdm = ">4"
-typing-extensions = ">=4.11,<5"
+typing-extensions = ">=4.14,<5"
 
 [package.extras]
 aiohttp = ["aiohttp", "httpx-aiohttp (>=0.1.9)"]
@@ -8445,4 +8445,4 @@ speech = ["PyQt5", "numpy", "openai", "openai-whisper", "pynput", "pyperclip", "
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.14"
-content-hash = "969a9b6e19a35c902fd910898f4f1ad01fa95f34a428157e88fcf14a119bbf76"
+content-hash = "186ecd066cb1e66f636c6f19a39c0dbb8647bd583627cd52791e794efbf8e4aa"

@@ -48,7 +48,7 @@ httpx = { version = "^0.28.1", optional = true }
 click = ">=7.1,<8.2"
 
 # Cloud Provider dependencies
-boto3 = { version = "^1.42.67", optional = true }
+boto3 = { version = "^1.42.72", optional = true }
 azure-cognitiveservices-speech = { version = "^1.48.2", optional = true }
 google-generativeai = { version = "^0.8.6", optional = true }
 gtts = { version = "^2.5.1", optional = true }
@@ -58,7 +58,7 @@ PyQt5 = { version = "^5.15.0", optional = true }
 sounddevice = { version = "^0.5.5", optional = true }
 numpy = { version = "^2.2.6", optional = true }
 openai-whisper = { version = "20250625", optional = true }
-openai = { version = "^2.24.0", optional = true }
+openai = { version = "^2.29.0", optional = true }
 torch = { version = "^2.10.0", optional = true }
 pynput = { version = "^1.7.6", optional = true }
 python-xlib = { version = "^0.33", optional = true }
