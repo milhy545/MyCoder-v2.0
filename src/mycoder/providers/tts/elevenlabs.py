@@ -2,6 +2,7 @@
 ElevenLabs TTS Provider.
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -71,8 +72,10 @@ class ElevenLabsProvider(BaseTTSProvider):
             # This logic should ideally be shared but I'll replicate for now
             player = self._get_audio_player()
             if player:
-                self._current_process = subprocess.Popen(player + [tmp_path])
-                self._current_process.wait()
+                self._current_process = await asyncio.create_subprocess_exec(
+                    *player, tmp_path
+                )
+                await self._current_process.wait()
 
             try:
                 os.unlink(tmp_path)
