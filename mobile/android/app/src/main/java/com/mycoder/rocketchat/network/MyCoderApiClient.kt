@@ -3,6 +3,8 @@ package com.mycoder.rocketchat.network
 import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
 import com.mycoder.rocketchat.BuildConfig
 import com.mycoder.rocketchat.data.model.ApiProviderConfig
 import com.mycoder.rocketchat.data.model.ThermalStatus
@@ -177,6 +179,95 @@ class MyCoderApiClient private constructor(private val context: Context) {
     }
 
     /**
+     * Fetch incremental chat sync payload from backend.
+     */
+    suspend fun fetchChatSync(sinceEpochMs: Long?): ChatSyncPayload {
+        return withContext(Dispatchers.IO) {
+            try {
+                val requestUrl = buildString {
+                    append("$baseUrl/api/v2/chat/sync")
+                    sinceEpochMs?.let {
+                        append("?since=")
+                        append(it)
+                    }
+                }
+
+                val request = Request.Builder()
+                    .url(requestUrl)
+                    .get()
+                    .build()
+
+                val response = okHttpClient.newCall(request).execute()
+                val responseBody = response.body?.string() ?: ""
+
+                if (!response.isSuccessful) {
+                    val error = "HTTP ${response.code}: ${response.message}"
+                    response.close()
+                    return@withContext ChatSyncPayload(
+                        success = false,
+                        error = error
+                    )
+                }
+
+                val payload = parseChatSyncPayload(responseBody)
+                response.close()
+                payload
+            } catch (e: Exception) {
+                ChatSyncPayload(
+                    success = false,
+                    error = "Network error: ${e.message}"
+                )
+            }
+        }
+    }
+
+    private fun parseChatSyncPayload(responseBody: String): ChatSyncPayload {
+        val root = gson.fromJson(responseBody, JsonObject::class.java)
+
+        val roomsArray = root.getAsJsonArray("rooms") ?: JsonArray()
+        val messagesArray = root.getAsJsonArray("messages") ?: JsonArray()
+
+        return ChatSyncPayload(
+            success = root.get("success")?.asBoolean ?: true,
+            rooms = roomsArray.mapNotNull { element ->
+                element.asJsonObject?.let { roomJson ->
+                    ChatSyncRoom(
+                        id = roomJson.get("id")?.asString ?: roomJson.get("_id")?.asString ?: return@let null,
+                        name = roomJson.get("name")?.asString ?: roomJson.get("fname")?.asString ?: "",
+                        type = roomJson.get("type")?.asString ?: roomJson.get("t")?.asString,
+                        unread = roomJson.get("unread")?.asInt ?: 0,
+                        favorite = roomJson.get("favorite")?.asBoolean ?: false,
+                        archived = roomJson.get("archived")?.asBoolean ?: false,
+                        lastMessageAt = roomJson.get("lastMessageAt")?.asLong,
+                        updatedAt = roomJson.get("updatedAt")?.asLong
+                    )
+                }
+            },
+            messages = messagesArray.mapNotNull { element ->
+                element.asJsonObject?.let { messageJson ->
+                    ChatSyncMessage(
+                        id = messageJson.get("id")?.asString ?: messageJson.get("_id")?.asString ?: return@let null,
+                        roomId = messageJson.get("roomId")?.asString ?: messageJson.get("rid")?.asString ?: return@let null,
+                        message = messageJson.get("message")?.asString ?: messageJson.get("msg")?.asString ?: "",
+                        userId = messageJson.get("userId")?.asString
+                            ?: messageJson.getAsJsonObject("u")?.get("_id")?.asString
+                            ?: "",
+                        username = messageJson.get("username")?.asString
+                            ?: messageJson.getAsJsonObject("u")?.get("username")?.asString
+                            ?: "unknown",
+                        timestamp = messageJson.get("timestamp")?.asLong
+                            ?: messageJson.getAsJsonObject("ts")?.get("$date")?.asLong
+                            ?: System.currentTimeMillis(),
+                        synced = messageJson.get("synced")?.asBoolean ?: true
+                    )
+                }
+            },
+            serverTime = root.get("serverTime")?.asLong,
+            error = root.get("error")?.asString
+        )
+    }
+
+    /**
      * Connect to the specified URL and verify health.
      * Returns Success(Unit) if successful, or Failure(Exception) with error details.
      */
@@ -314,4 +405,33 @@ data class ProviderHealth(
  */
 data class ProvidersResponse(
     val providers: List<ApiProviderConfig>
+)
+
+data class ChatSyncPayload(
+    val success: Boolean,
+    val rooms: List<ChatSyncRoom> = emptyList(),
+    val messages: List<ChatSyncMessage> = emptyList(),
+    val serverTime: Long? = null,
+    val error: String? = null
+)
+
+data class ChatSyncRoom(
+    val id: String,
+    val name: String,
+    val type: String? = null,
+    val unread: Int = 0,
+    val favorite: Boolean = false,
+    val archived: Boolean = false,
+    val lastMessageAt: Long? = null,
+    val updatedAt: Long? = null
+)
+
+data class ChatSyncMessage(
+    val id: String,
+    val roomId: String,
+    val message: String,
+    val userId: String,
+    val username: String,
+    val timestamp: Long,
+    val synced: Boolean = true
 )
