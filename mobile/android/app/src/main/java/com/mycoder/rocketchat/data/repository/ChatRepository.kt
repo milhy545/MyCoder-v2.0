@@ -4,6 +4,8 @@ import com.mycoder.rocketchat.data.local.MyCoderDatabase
 import com.mycoder.rocketchat.data.model.Message
 import com.mycoder.rocketchat.data.model.Room
 import com.mycoder.rocketchat.data.model.User
+import com.mycoder.rocketchat.network.ChatSyncMessage
+import com.mycoder.rocketchat.network.ChatSyncRoom
 import com.mycoder.rocketchat.network.MyCoderApiClient
 import com.mycoder.rocketchat.network.RocketChatWebSocket
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +33,7 @@ class ChatRepository private constructor(
     private val messageDao = database.messageDao()
     private val roomDao = database.roomDao()
     private val userDao = database.userDao()
+    private var lastSyncEpochMs: Long? = null
 
     init {
         // Listen to WebSocket messages
@@ -189,14 +192,88 @@ class ChatRepository private constructor(
     suspend fun syncWithServer() {
         android.util.Log.d(TAG, "Syncing with RocketChat server...")
         try {
-            // Implementation note: This will involve calling RocketChat REST API endpoints
-            // like /api/v1/channels.history or /api/v1/groups.history for each open room.
-            // For now, we rely on WebSocket for real-time updates and this periodic sync
-            // ensures we don't miss anything during offline periods.
+            val syncPayload = apiClient.fetchChatSync(lastSyncEpochMs)
+            if (!syncPayload.success) {
+                android.util.Log.w(TAG, "Sync request failed: ${syncPayload.error}")
+                return
+            }
 
-            // TODO: Implement actual REST API calls to fetch missed messages
+            upsertRooms(syncPayload.rooms)
+            upsertMessages(syncPayload.messages)
+
+            lastSyncEpochMs = syncPayload.serverTime
+                ?: syncPayload.messages.maxOfOrNull { it.timestamp }
+                ?: System.currentTimeMillis()
+
+            android.util.Log.d(
+                TAG,
+                "Sync complete. rooms=${syncPayload.rooms.size}, messages=${syncPayload.messages.size}, since=$lastSyncEpochMs"
+            )
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Failed to sync with server", e)
+        }
+    }
+
+    private suspend fun upsertRooms(rooms: List<ChatSyncRoom>) {
+        if (rooms.isEmpty()) return
+
+        val mappedRooms = rooms.map { remoteRoom ->
+            val existing = roomDao.getRoomByIdSync(remoteRoom.id)
+            Room(
+                id = remoteRoom.id,
+                name = remoteRoom.name.ifBlank { existing?.name ?: remoteRoom.id },
+                type = remoteRoom.type.toRoomTypeOrDefault(existing?.type),
+                description = existing?.description,
+                topic = existing?.topic,
+                announcement = existing?.announcement,
+                createdAt = existing?.createdAt ?: Date(),
+                updatedAt = remoteRoom.updatedAt?.let(::Date) ?: Date(),
+                lastMessageAt = remoteRoom.lastMessageAt?.let(::Date) ?: existing?.lastMessageAt,
+                readonly = existing?.readonly ?: false,
+                archived = remoteRoom.archived,
+                favorite = remoteRoom.favorite,
+                open = existing?.open ?: true,
+                unread = remoteRoom.unread,
+                mentions = existing?.mentions ?: 0,
+                usernames = existing?.usernames ?: emptyList(),
+                numberOfUsers = existing?.numberOfUsers ?: 0,
+                aiEnabled = existing?.aiEnabled ?: true,
+                preferredAiProvider = existing?.preferredAiProvider,
+                thermalAware = existing?.thermalAware ?: true,
+                synced = true
+            )
+        }
+
+        roomDao.insertRooms(mappedRooms)
+    }
+
+    private suspend fun upsertMessages(messages: List<ChatSyncMessage>) {
+        if (messages.isEmpty()) return
+
+        val mappedMessages = messages.map { remoteMessage ->
+            Message(
+                id = remoteMessage.id,
+                roomId = remoteMessage.roomId,
+                message = remoteMessage.message,
+                userId = remoteMessage.userId,
+                username = remoteMessage.username,
+                timestamp = Date(remoteMessage.timestamp),
+                synced = remoteMessage.synced,
+                localOnly = false,
+                sendingStatus = Message.SendingStatus.SENT
+            )
+        }
+
+        messageDao.insertMessages(mappedMessages)
+    }
+
+    private fun String?.toRoomTypeOrDefault(defaultType: Room.RoomType?): Room.RoomType {
+        return when (this?.lowercase()) {
+            "c", "channel" -> Room.RoomType.CHANNEL
+            "p", "private", "private_group", "group" -> Room.RoomType.PRIVATE_GROUP
+            "d", "dm", "direct", "direct_message" -> Room.RoomType.DIRECT_MESSAGE
+            "l", "livechat" -> Room.RoomType.LIVECHAT
+            else -> defaultType ?: Room.RoomType.CHANNEL
         }
     }
 
