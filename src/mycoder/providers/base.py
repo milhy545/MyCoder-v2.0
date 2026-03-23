@@ -6,10 +6,13 @@ Defines the standard interface for all AI providers in MyCoder.
 import logging
 import time
 from abc import ABC, abstractmethod
+import asyncio
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
+
+import aiofiles
 
 from .rate_limiter import PersistentRateLimiter
 
@@ -211,14 +214,23 @@ class BaseAPIProvider(ABC):
     async def _process_file_context(
         self, files: List[Path], max_files: int = 5, max_chars: int = 8000
     ) -> str:
-        """Process file context for APIs."""
-        file_contents = []
-        for file_path in files[:max_files]:
+        """Process file context for APIs concurrently without blocking the event loop."""
+
+        async def _read_single_file(file_path: Path) -> Optional[str]:
             try:
-                if file_path.exists() and file_path.is_file():
-                    content = file_path.read_text(encoding="utf-8")[:max_chars]
-                    file_contents.append(f"File: {file_path.name}\n```\n{content}\n```")
+                # Fully async: rely on OS to throw IsADirectoryError or FileNotFoundError
+                async with aiofiles.open(file_path, mode="r", encoding="utf-8") as f:
+                    content = await f.read(max_chars)
+                return f"File: {file_path.name}\n```\n{content}\n```"
+            except (IsADirectoryError, FileNotFoundError):
+                # Ignore missing files or directories silently, similar to previous behavior
+                pass
             except Exception as e:
                 logger.warning(f"Error reading file {file_path}: {e}")
+            return None
 
+        tasks = [_read_single_file(f) for f in files[:max_files]]
+        results = await asyncio.gather(*tasks)
+
+        file_contents = [r for r in results if r]
         return "\n\n".join(file_contents) if file_contents else ""
