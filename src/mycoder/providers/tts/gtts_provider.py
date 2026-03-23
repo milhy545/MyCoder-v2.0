@@ -19,6 +19,7 @@ class GTTSProvider(BaseTTSProvider):
 
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
+        self._current_process = None
         try:
             import gtts
         except ImportError:
@@ -37,7 +38,8 @@ class GTTSProvider(BaseTTSProvider):
 
         player = self._get_audio_player()
         if player:
-            subprocess.run(player + [path])
+            self._current_process = await asyncio.create_subprocess_exec(*player, path)
+            await self._current_process.wait()
 
         try:
             os.unlink(path)
@@ -45,7 +47,12 @@ class GTTSProvider(BaseTTSProvider):
             logger.debug("Failed to remove temp audio file %s: %s", path, exc)
 
     def stop(self) -> None:
-        pass
+        if self._current_process:
+            try:
+                self._current_process.terminate()
+            except Exception as e:
+                logger.debug(f"Failed to terminate gTTS audio player: {e}")
+            self._current_process = None
 
     def get_available_voices(self) -> List[str]:
         from gtts.lang import tts_langs

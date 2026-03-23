@@ -32,6 +32,7 @@ class AmazonPollyProvider(BaseTTSProvider):
         # Standard voice ID
         self.voice_id = config.get("voice_id", "Joanna")
         self.engine = config.get("engine", "neural")  # or standard
+        self._current_process = None
 
         self.polly = None
         if BOTO3_AVAILABLE:
@@ -76,7 +77,10 @@ class AmazonPollyProvider(BaseTTSProvider):
         if tmp_path:
             player = self._get_audio_player()
             if player:
-                subprocess.run(player + [tmp_path])
+                self._current_process = await asyncio.create_subprocess_exec(
+                    *player, tmp_path
+                )
+                await self._current_process.wait()
 
             try:
                 os.unlink(tmp_path)
@@ -84,9 +88,12 @@ class AmazonPollyProvider(BaseTTSProvider):
                 logger.debug("Failed to remove temp audio file %s: %s", tmp_path, exc)
 
     def stop(self) -> None:
-        # Cannot stop boto3 stream easily once downloaded and playing via subprocess unless we track process
-        # For now, simplistic implementation
-        pass
+        if self._current_process:
+            try:
+                self._current_process.terminate()
+            except Exception as e:
+                logger.debug(f"Failed to terminate Polly audio player: {e}")
+            self._current_process = None
 
     def get_available_voices(self) -> List[str]:
         return ["Joanna", "Matthew", "Jitka"]  # Jitka is Czech standard

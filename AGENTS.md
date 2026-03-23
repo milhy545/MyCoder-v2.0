@@ -3,6 +3,7 @@
 **Note:** This file is the primary source of truth for all AI agents (Claude Code, Jules/Gemini, Codex) working on this project. It defines the project's architecture, conventions, and operational protocols.
 
 ## Recent Changes & Updates
+- 2026-03-11: Jules - Fixed CodeQL security alerts by removing unused imports `Mock` from `tests/unit/test_tool_registry.py` and `subprocess` from `src/mycoder/providers/llm/ollama.py`; tests run: `poetry run flake8`, `poetry run mypy`, `poetry run pytest`.
 *Agents: Add entries here when making significant changes*
 
 - 2026-03-12: Codex - Fixed Android background sync review blockers by promoting `MessageSyncService` to a foreground service with notification channel + persistent notification, and implemented real incremental sync in `ChatRepository.syncWithServer()` via new `MyCoderApiClient.fetchChatSync()` payload parsing/mapping for rooms/messages.
