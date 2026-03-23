@@ -5,6 +5,7 @@
 ## Recent Changes & Updates
 *Agents: Add entries here when making significant changes*
 
+- 2026-03-12: Codex - Fixed Android background sync review blockers by promoting `MessageSyncService` to a foreground service with notification channel + persistent notification, and implemented real incremental sync in `ChatRepository.syncWithServer()` via new `MyCoderApiClient.fetchChatSync()` payload parsing/mapping for rooms/messages.
 - 2026-02-01: Jules - Implemented background message sync service in `MessageSyncService.kt` and basic sync logic in `ChatRepository.kt` for Android app.
 - 2026-03-03: Codex - Prepared local merge workflow for branch `work` (validated formatter + unit/provider tests), merged into local `main`, and deleted merged `work` branch; tests run: `poetry run black --check src/ tests/`, `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
 - 2026-02-23: Codex - Fixed remaining CodeQL `py/empty-except` alerts in async thermal timeout handlers (`enhanced_mycoder_v2.py`, `providers/llm/ollama.py`, `tool_registry.py`) by replacing silent `pass` with `logger.debug(...)`; tests run: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
