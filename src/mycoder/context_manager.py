@@ -12,6 +12,7 @@ import logging
 import os
 import time
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -44,6 +45,7 @@ class ContextManager:
 
     CONFIG_FILENAMES = ["config.json", "mycoder_config.json", "config.toml"]
     CONTEXT_FILENAMES = ["AGENTS.md", "PROJECT_CONTEXT.md", "CLAUDE.md", "GEMINI.md"]
+    ROOT_MARKERS = {".git", "pyproject.toml", "AGENTS.md", "CLAUDE.md", "GEMINI.md"}
     CACHE_TTL_SECONDS = 300
 
     def __init__(
@@ -137,17 +139,17 @@ class ContextManager:
 
         return paths
 
+    @lru_cache(maxsize=128)
     def _find_project_root(self, current_path: Path) -> Path:
         """
         Finds project root by looking for markers.
         """
-        markers = {".git", "pyproject.toml", "AGENTS.md", "CLAUDE.md", "GEMINI.md"}
-
         path = current_path.resolve()
         # Traverse upwards
-        for parent in [path] + list(path.parents):
-            if any((parent / marker).exists() for marker in markers):
-                return parent
+        for parent in (path, *path.parents):
+            for marker in self.ROOT_MARKERS:
+                if (parent / marker).exists():
+                    return parent
         return current_path
 
     def _load_config_from_dir(
