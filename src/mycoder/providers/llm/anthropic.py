@@ -2,6 +2,7 @@
 Anthropic Claude Providers.
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -164,8 +165,8 @@ class ClaudeAnthropicProvider(BaseAPIProvider):
                             context.get("resource_limits") if context else None
                         ),
                     )
-                    tool_results = []
-                    for block in tool_uses:
+
+                    async def execute_and_format(block):
                         result_data = await tool_registry.execute_tool(
                             block.get("name"),
                             tool_context,
@@ -174,14 +175,16 @@ class ClaudeAnthropicProvider(BaseAPIProvider):
                         content_value = result_data.data
                         if not isinstance(content_value, str):
                             content_value = json.dumps(content_value)
-                        tool_results.append(
-                            {
-                                "type": "tool_result",
-                                "tool_use_id": block.get("id"),
-                                "content": content_value,
-                                "is_error": not result_data.success,
-                            }
-                        )
+                        return {
+                            "type": "tool_result",
+                            "tool_use_id": block.get("id"),
+                            "content": content_value,
+                            "is_error": not result_data.success,
+                        }
+
+                    tool_results = await asyncio.gather(
+                        *[execute_and_format(block) for block in tool_uses]
+                    )
 
                     followup_messages = list(messages)
                     followup_messages.append(
