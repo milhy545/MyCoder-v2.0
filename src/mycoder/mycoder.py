@@ -8,6 +8,7 @@ with the adaptive modes system for optimal performance under varying conditions.
 import asyncio
 import logging
 from pathlib import Path
+import aiofiles
 from typing import Any, Dict, List, Optional, Union
 
 try:
@@ -328,17 +329,15 @@ class MyCoder:
             prompt_parts.append("=== FILE CONTEXT ===")
             for file_path in context["files"][:3]:  # Limit to first 3 files
                 try:
-                    if file_path.exists() and file_path.is_file():
-                        content = file_path.read_text(encoding="utf-8")[
-                            :2000
-                        ]  # Limit size
-                        prompt_parts.append(
-                            f"File: {file_path.name}\n```\n{content}\n```\n"
-                        )
+                    async with aiofiles.open(
+                        file_path, mode="r", encoding="utf-8"
+                    ) as f:
+                        content = await f.read(2000)  # Limit size
+                    prompt_parts.append(f"File: {file_path.name}\n```\n{content}\n```\n")
+                except (FileNotFoundError, IsADirectoryError, PermissionError):
+                    continue
                 except Exception as e:
-                    prompt_parts.append(
-                        f"File: {file_path.name} (error reading: {e})\n"
-                    )
+                    prompt_parts.append(f"File: {file_path.name} (error reading: {e})\n")
 
         # Add user prompt
         prompt_parts.append("=== USER REQUEST ===")
@@ -361,14 +360,16 @@ class MyCoder:
 
             results = []
             for file_path in files[:5]:  # Limit to 5 files
-                if file_path.exists() and file_path.is_file():
-                    try:
-                        content = file_path.read_text(encoding="utf-8")
-                        results.append(f"=== {file_path.name} ===\n{content}")
-                    except Exception as e:
-                        results.append(f"=== {file_path.name} ===\nError: {e}")
-                else:
+                try:
+                    async with aiofiles.open(
+                        file_path, mode="r", encoding="utf-8"
+                    ) as f:
+                        content = await f.read()
+                    results.append(f"=== {file_path.name} ===\n{content}")
+                except (FileNotFoundError, IsADirectoryError):
                     results.append(f"=== {file_path.name} ===\nFile not found")
+                except Exception as e:
+                    results.append(f"=== {file_path.name} ===\nError: {e}")
 
             return {
                 "success": True,
@@ -398,23 +399,31 @@ class MyCoder:
         self, context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Handle directory listing in recovery mode."""
-        try:
-            directory = context.get("working_directory", self.working_directory)
 
+        def _list_files(directory: Path) -> Union[List[str], bool]:
             if not directory.exists():
-                return {
-                    "success": False,
-                    "content": f"Directory not found: {directory}",
-                    "source": "recovery",
-                }
+                return False
 
             files = []
             for item in directory.iterdir():
                 item_type = "dir" if item.is_dir() else "file"
                 size = item.stat().st_size if item.is_file() else 0
                 files.append(f"{item_type:4} {size:>10} {item.name}")
+            return sorted(files)
 
-            content = f"Directory listing for {directory}:\n" + "\n".join(sorted(files))
+        try:
+            directory = context.get("working_directory", self.working_directory)
+
+            files_or_exists = await asyncio.to_thread(_list_files, directory)
+            if files_or_exists is False:
+                return {
+                    "success": False,
+                    "content": f"Directory not found: {directory}",
+                    "source": "recovery",
+                }
+
+            files = files_or_exists  # type: ignore
+            content = f"Directory listing for {directory}:\n" + "\n".join(files)
 
             return {
                 "success": True,
