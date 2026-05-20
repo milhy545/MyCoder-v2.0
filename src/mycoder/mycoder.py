@@ -333,11 +333,15 @@ class MyCoder:
                         file_path, mode="r", encoding="utf-8"
                     ) as f:
                         content = await f.read(2000)  # Limit size
-                    prompt_parts.append(f"File: {file_path.name}\n```\n{content}\n```\n")
+                    prompt_parts.append(
+                        f"File: {file_path.name}\n```\n{content}\n```\n"
+                    )
                 except (FileNotFoundError, IsADirectoryError, PermissionError):
                     continue
                 except Exception as e:
-                    prompt_parts.append(f"File: {file_path.name} (error reading: {e})\n")
+                    prompt_parts.append(
+                        f"File: {file_path.name} (error reading: {e})\n"
+                    )
 
         # Add user prompt
         prompt_parts.append("=== USER REQUEST ===")
