@@ -3,6 +3,7 @@
 **Note:** This file is the primary source of truth for all AI agents (Claude Code, Jules/Gemini, Codex) working on this project. It defines the project's architecture, conventions, and operational protocols.
 
 ## Recent Changes & Updates
+- 2026-03-11: Jules - Optimized `ClaudeAnthropicProvider` to execute multiple tool calls concurrently using `asyncio.gather`, reducing latency during tool-heavy interactions; tests run: `poetry run pytest tests/providers/llm/test_providers.py`, `poetry run black`, `poetry run flake8`.
 - 2026-03-11: Jules - Fixed CodeQL security alerts by removing unused imports `Mock` from `tests/unit/test_tool_registry.py` and `subprocess` from `src/mycoder/providers/llm/ollama.py`; tests run: `poetry run flake8`, `poetry run mypy`, `poetry run pytest`.
 *Agents: Add entries here when making significant changes*
 

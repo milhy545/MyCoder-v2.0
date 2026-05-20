@@ -4,6 +4,7 @@
 
 ## Nedávné změny a aktualizace
 *Agenti: Zde přidávejte záznamy při provádění významných změn*
+- 2026-03-11: Jules - Optimalizace `ClaudeAnthropicProvider` pro paralelní provádění nástrojů pomocí `asyncio.gather`, což snižuje latenci při intenzivním používání nástrojů; testy: `poetry run pytest tests/providers/llm/test_providers.py`, `poetry run black`, `poetry run flake8`.
 - 2026-01-30: Codex - Opraveny CodeQL alerty (nepoužité importy, smíšené návraty, nedosažitelný kód, guard proti nevolatelnému objektu) a upraveny testy; testy: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
 - 2026-01-30: Codex - Zpřísněny kontroly instancování OverlayButton kvůli CodeQL; testy: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
 - 2026-01-30: Codex - Přesun OverlayApp pod PyQt guard a přidána tovární funkce pro CodeQL; testy: `poetry run pytest tests/unit/ -v`, `poetry run pytest tests/providers/ -v`.
