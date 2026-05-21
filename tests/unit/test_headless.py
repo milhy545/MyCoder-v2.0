@@ -2,7 +2,6 @@ import io
 import json
 import logging
 import sys
-import asyncio
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
