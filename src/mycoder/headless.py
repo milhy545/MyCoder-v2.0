@@ -13,6 +13,7 @@ import json
 import logging
 import sys
 from pathlib import Path
+from typing import Optional, TextIO
 
 # Ensure src is in path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -24,7 +25,11 @@ from mycoder.enhanced_mycoder_v2 import EnhancedMyCoderV2
 class JsonlHandler(logging.Handler):
     """Logs events as JSONL lines for machine parsing."""
 
-    def emit(self, record):
+    def __init__(self, stream: Optional[TextIO] = None) -> None:
+        super().__init__()
+        self.stream = stream or sys.stderr
+
+    def emit(self, record: logging.LogRecord) -> None:
         try:
             log_entry = {
                 "timestamp": record.created,
@@ -32,15 +37,15 @@ class JsonlHandler(logging.Handler):
                 "logger": record.name,
                 "message": record.getMessage(),
             }
-            # Avoid using logging to print to stdout to prevent recursion if configured wrong,
-            # but here we just print to stdout (or stderr).
-            # CI logs usually go to stdout/stderr.
-            print(json.dumps(log_entry), file=sys.stdout)
+            # Log to the specified stream (usually stderr or a file)
+            # to keep stdout clean for the final result.
+            print(json.dumps(log_entry), file=self.stream)
+            self.stream.flush()
         except Exception:
             self.handleError(record)
 
 
-async def main():
+async def main() -> None:
     parser = argparse.ArgumentParser(description="MyCoder Headless Runner")
     parser.add_argument("prompt", nargs="?", help="Task description")
     parser.add_argument(
@@ -50,16 +55,31 @@ async def main():
         help="Execute tools without confirmation",
     )
     parser.add_argument("--working-dir", "-w", default=".", help="Working directory")
+    parser.add_argument("--output", "-o", help="Output result JSON to a file")
+    parser.add_argument("--log-file", help="Log JSONL to a specific file")
 
     args = parser.parse_args()
 
     # Configure Logging
+    log_stream = sys.stderr
+    log_file_handle = None
+
+    if args.log_file:
+        try:
+            log_path = Path(args.log_file)
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            log_file_handle = log_path.open("a", encoding="utf-8")
+            log_stream = log_file_handle
+        except Exception as e:
+            print(f"Error opening log file: {e}", file=sys.stderr)
+            sys.exit(1)
+
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
     # Remove default handlers
     for h in root_logger.handlers[:]:
         root_logger.removeHandler(h)
-    root_logger.addHandler(JsonlHandler())
+    root_logger.addHandler(JsonlHandler(stream=log_stream))
 
     # Determine Prompt
     prompt = args.prompt
@@ -106,13 +126,22 @@ async def main():
             "error": response.get("error"),
         }
 
-        # Use a distinct prefix or file for output if mixed with logs?
-        # Standard: Last line is result? Or just log it.
-        # Required: "výstup čistý JSONL (pro logy)"
-        logging.info(f"Task complete. Success: {result_payload['success']}")
+        result_json = json.dumps(result_payload)
+        if args.output:
+            try:
+                output_path = Path(args.output)
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                output_path.write_text(result_json, encoding="utf-8")
+                logging.info(f"Result written to {args.output}")
+            except Exception as e:
+                logging.error(f"Failed to write result to {args.output}: {e}")
+                # Fallback to stdout if file write fails
+                print(result_json)
+        else:
+            # Print to stdout for caller to capture
+            print(result_json)
 
-        # If caller needs the response content, they can parse the last log message or we can print it specifically.
-        # But for CI/CD, usually exit code is key.
+        logging.info(f"Task complete. Success: {result_payload['success']}")
 
         if response.get("success"):
             sys.exit(0)
@@ -122,6 +151,9 @@ async def main():
     except Exception as e:
         logging.exception("Fatal error in headless runner")
         sys.exit(1)
+    finally:
+        if log_file_handle:
+            log_file_handle.close()
 
 
 if __name__ == "__main__":
