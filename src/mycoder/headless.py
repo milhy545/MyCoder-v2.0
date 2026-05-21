@@ -13,7 +13,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Optional, Any, TextIO
+from typing import Optional, TextIO
 
 # Ensure src is in path
 sys.path.append(str(Path(__file__).parent.parent))
