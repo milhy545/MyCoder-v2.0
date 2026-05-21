@@ -66,7 +66,9 @@ async def main() -> None:
 
     if args.log_file:
         try:
-            log_file_handle = open(args.log_file, "a", encoding="utf-8")
+            log_path = Path(args.log_file)
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            log_file_handle = log_path.open("a", encoding="utf-8")
             log_stream = log_file_handle
         except Exception as e:
             print(f"Error opening log file: {e}", file=sys.stderr)
